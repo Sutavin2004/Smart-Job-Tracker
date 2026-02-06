@@ -21,7 +21,6 @@ def create_app() -> FastAPI:
     app.include_router(applications_router)
     app.include_router(imports_router)
     app.include_router(bulk_router)
-    app.include_router(analytics_router)
 
     return app
 
