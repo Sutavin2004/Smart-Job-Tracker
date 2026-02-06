@@ -1,0 +1,119 @@
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session
+from uuid import UUID
+
+from app.utils.auth import get_current_user, get_db
+from app.models.user import User
+from app.models.job_application import JobApplication
+from app.models.application_status_history import ApplicationStatusHistory
+from app.schemas.job_application import (
+    JobApplicationCreate,
+    JobApplicationUpdate,
+    JobApplicationResponse,
+    PaginatedApplications,
+)
+
+router = APIRouter(prefix="/applications", tags=["applications"])
+
+@router.post("", response_model=JobApplicationResponse, status_code=201)
+def create_application(
+    payload: JobApplicationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    application = JobApplication(
+        user_id=current_user.id,
+        **payload.dict()
+    )
+    db.add(application)
+    db.flush()
+
+    history = ApplicationStatusHistory(
+        application_id=application.id,
+        old_status=None,
+        new_status=payload.current_status,
+    )
+    db.add(history)
+
+    db.commit()
+    db.refresh(application)
+    return application
+
+@router.get("", response_model=PaginatedApplications)
+def list_applications(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    query = db.query(JobApplication).filter(
+        JobApplication.user_id == current_user.id
+    )
+
+    total = query.count()
+
+    items = (
+        query
+        .order_by(JobApplication.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+        .all()
+    )
+
+    return {"total": total, "items": items}
+
+@router.get("/{application_id}", response_model=JobApplicationResponse)
+def get_application(
+    application_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    application = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.id == application_id,
+            JobApplication.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    return application
+
+@router.put("/{application_id}", response_model=JobApplicationResponse)
+def update_application(
+    application_id: UUID,
+    payload: JobApplicationUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    application = (
+        db.query(JobApplication)
+        .filter(
+            JobApplication.id == application_id,
+            JobApplication.user_id == current_user.id,
+        )
+        .first()
+    )
+
+    if not application:
+        raise HTTPException(status_code=404, detail="Application not found")
+
+    old_status = application.current_status
+
+    for field, value in payload.dict(exclude_unset=True).items():
+        setattr(application, field, value)
+
+    if payload.current_status and payload.current_status != old_status:
+        history = ApplicationStatusHistory(
+            application_id=application.id,
+            old_status=old_status,
+            new_status=payload.current_status,
+        )
+        db.add(history)
+
+    db.commit()
+    db.refresh(application)
+    return application

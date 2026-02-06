@@ -15,7 +15,6 @@ def create_app() -> FastAPI:
         init_db()
 
     app.include_router(auth_router)
-    app.include_router(applications_router)
 
     return app
 
