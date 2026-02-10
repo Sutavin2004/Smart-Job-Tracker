@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.job_application import JobApplication
-from app.models.application_status_history import ApplicationStatusHistory
+from app.models.application_status import ApplicationStatus
 from app.models.resume_versions import ResumeVersion  # make sure this model exists
 from app.models.enums import ApplicationStatus
 from app.schemas.analytics import (
@@ -104,22 +104,22 @@ def _compute_time_to_response(db: Session, user_id) -> TimeToResponseStats:
             JobApplication.id,
             JobApplication.applied_at,
             JobApplication.created_at,
-            ApplicationStatusHistory.changed_at,
-            ApplicationStatusHistory.new_status,
+            ApplicationStatus.changed_at,
+            ApplicationStatus.new_status,
         )
         .join(
-            ApplicationStatusHistory,
-            ApplicationStatusHistory.application_id == JobApplication.id,
+            ApplicationStatus,
+            ApplicationStatus.application_id == JobApplication.id,
         )
         .filter(
             JobApplication.user_id == user_id,
-            ApplicationStatusHistory.new_status.not_in(
+            ApplicationStatus.new_status.not_in(
                 [ApplicationStatus.draft, ApplicationStatus.applied]
             ),
         )
         .order_by(
             JobApplication.id,
-            ApplicationStatusHistory.changed_at.asc(),
+            ApplicationStatus.changed_at.asc(),
         )
         .all()
     )

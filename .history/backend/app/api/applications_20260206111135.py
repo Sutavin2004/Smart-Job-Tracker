@@ -5,7 +5,7 @@ from uuid import UUID
 from app.api.deps import get_current_user, get_db
 from app.models.user import User
 from app.models.job_application import JobApplication
-from app.models.application_status_history import ApplicationStatusHistory
+from app.models.application_status import ApplicationStatus
 from app.schemas.job_application import (
     JobApplicationCreate,
     JobApplicationUpdate,

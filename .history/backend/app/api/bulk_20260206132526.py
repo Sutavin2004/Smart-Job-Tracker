@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user, get_db
 from app.schemas.bulk import BulkStatusUpdate
 from app.models.job_application import JobApplication
-from app.models.application_status_history import ApplicationStatusHistory
+from app.models.application_status import ApplicationStatus
 from app.models.user import User
 
 router = APIRouter(prefix="/bulk", tags=["bulk"])
@@ -23,7 +23,7 @@ def bulk_update_status(
 
     for app in apps:
         if app.current_status != payload.new_status:
-            history = ApplicationStatusHistory(
+            history = ApplicationStatus(
                 application_id=app.id,
                 old_status=app.current_status,
                 new_status=payload.new_status,

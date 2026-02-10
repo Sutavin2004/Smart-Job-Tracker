@@ -5,7 +5,7 @@ from uuid import UUID
 from app.api.deps import get_current_user, get_db
 from app.models.user import User
 from app.models.job_application import JobApplication
-from app.models.application_status_history import ApplicationStatusHistory
+from app.models.application_status import ApplicationStatus
 from app.schemas.job_application import (
     JobApplicationCreate,
     JobApplicationUpdate,
@@ -28,7 +28,7 @@ def create_application(
     db.add(application)
     db.flush()
 
-    history = ApplicationStatusHistory(
+    history = ApplicationStatus(
         application_id=application.id,
         old_status=None,
         new_status=payload.current_status,
@@ -107,7 +107,7 @@ def update_application(
         setattr(application, field, value)
 
     if payload.current_status and payload.current_status != old_status:
-        history = ApplicationStatusHistory(
+        history = ApplicationStatus(
             application_id=application.id,
             old_status=old_status,
             new_status=payload.current_status,
