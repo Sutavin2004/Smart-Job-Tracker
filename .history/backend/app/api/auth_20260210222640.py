@@ -7,9 +7,8 @@ from app.schemas.user import (
     UserLogin,
     UserResponse,
     TokenResponse,
-    RefreshRequest,
 )
-
+from app.schemas.token import RefreshRequest
 from app.core.security import (
     verify_password,
     hash_password,
@@ -19,6 +18,7 @@ from app.core.security import (
 from app.api.deps import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
 
 @router.post(
     "/register",
@@ -90,13 +90,13 @@ def login_user(
     response_model=TokenResponse,
     status_code=status.HTTP_200_OK,
 )
-def refresh_token(payload: RefreshRequest):
+def refresh_token(refresh_token: str):
     from jose import JWTError, jwt
     from app.core.config import settings
 
     try:
         payload = jwt.decode(
-            payload.refresh_token,
+            refresh_token,
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
