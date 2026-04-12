@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: file:./dev.db
+
+      # API routes require a live server and can't be statically exported.
+      # Remove them before the build — they live on Railway (added later).
+      # They're safe to delete here because CI checks out a fresh copy every run.
+      - name: Remove server-only API routes for static export
+        run: rm -rf src/app/api
+
+      - name: Build static export
+        run: npm run build
+        env:
+          # Sets the base path so assets load at /Smart-Job-Tracker/...
+          NEXT_PUBLIC_BASE_PATH: /Smart-Job-Tracker
+          # Point to Railway backend when available — leave blank for now (app shows empty state)
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./out
+          # Prevents Jekyll processing (needed for Next.js _next/ folder)
+          enable_jekyll: false

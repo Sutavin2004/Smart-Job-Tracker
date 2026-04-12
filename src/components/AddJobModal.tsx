@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG } from '@/lib/types'
+import { apiClient } from '@/lib/api-client'
 
 interface Props {
   onClose: () => void
@@ -23,22 +24,14 @@ export function AddJobModal({ onClose, onCreated }: Props) {
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          jobUrl: form.jobUrl || undefined,
-          location: form.location || undefined,
-          salary: form.salary || undefined,
-          notes: form.notes || undefined,
-          deadline: form.deadline || undefined,
-        }),
+      await apiClient.createJob({
+        ...form,
+        jobUrl: form.jobUrl || undefined,
+        location: form.location || undefined,
+        salary: form.salary || undefined,
+        notes: form.notes || undefined,
+        deadline: form.deadline || undefined,
       })
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to create job')
-      }
       onCreated()
       onClose()
     } catch (err) {

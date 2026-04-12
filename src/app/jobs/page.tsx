@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, LayoutGrid, List, Search, Filter, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type Job, JOB_STATUSES, STATUS_CONFIG } from '@/lib/types'
+import { apiClient } from '@/lib/api-client'
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge'
 import { AddJobModal } from '@/components/AddJobModal'
 import { JobDetailPanel } from '@/components/JobDetailPanel'
@@ -25,13 +26,14 @@ function JobsPageInner() {
   const selectedJob = jobs.find(j => j.id === selectedId) ?? null
 
   const loadJobs = useCallback(async () => {
-    const params = new URLSearchParams()
-    if (search) params.set('search', search)
-    if (statusFilter !== 'all') params.set('status', statusFilter)
-    const res = await fetch(`/api/jobs?${params}`)
-    const data = await res.json()
-    setJobs(data)
-    setLoading(false)
+    try {
+      const data = await apiClient.getJobs({ search: search || undefined, status: statusFilter }) as Job[]
+      setJobs(data)
+    } catch {
+      // leave empty
+    } finally {
+      setLoading(false)
+    }
   }, [search, statusFilter])
 
   useEffect(() => {

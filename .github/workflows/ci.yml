@@ -30,6 +30,8 @@ jobs:
 
       - name: Type check
         run: npm run type-check
+        env:
+          NEXT_PUBLIC_BASE_PATH: ''
 
       - name: Lint
         run: npm run lint

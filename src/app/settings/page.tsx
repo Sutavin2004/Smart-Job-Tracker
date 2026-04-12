@@ -5,6 +5,7 @@ import { Sun, Moon, Trash2, Download, AlertTriangle } from 'lucide-react'
 import { useTheme } from '@/components/ThemeProvider'
 import { useToast } from '@/components/ToastProvider'
 import { useRouter } from 'next/navigation'
+import { apiClient } from '@/lib/api-client'
 
 export default function SettingsPage() {
   const { theme, toggle } = useTheme()
@@ -14,8 +15,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
 
   async function handleExport() {
-    const res = await fetch('/api/jobs')
-    const jobs = await res.json()
+    const jobs = await apiClient.getJobs()
     const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -29,9 +29,8 @@ export default function SettingsPage() {
   async function handleDeleteAll() {
     setDeleting(true)
     try {
-      const res = await fetch('/api/jobs')
-      const jobs = await res.json()
-      await Promise.all(jobs.map((j: { id: string }) => fetch(`/api/jobs/${j.id}`, { method: 'DELETE' })))
+      const jobs = await apiClient.getJobs() as { id: string }[]
+      await Promise.all(jobs.map((j) => apiClient.deleteJob(j.id)))
       toast('All data deleted')
       setConfirming(false)
       router.refresh()

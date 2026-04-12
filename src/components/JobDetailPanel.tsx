@@ -11,6 +11,7 @@ import { formatDate, formatRelative, formatDateTime } from '@/lib/utils'
 import { type Job, JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, INTERVIEW_TYPES } from '@/lib/types'
 import { StatusBadge, PriorityBadge } from './StatusBadge'
 import { useToast } from './ToastProvider'
+import { apiClient } from '@/lib/api-client'
 
 type Tab = 'overview' | 'ai' | 'cover-letter' | 'interviews' | 'activity'
 
@@ -54,11 +55,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   async function handleSave() {
     setSaving(true)
     try {
-      await fetch(`/api/jobs/${job.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, priority, notes, salary, location }),
-      })
+      await apiClient.updateJob(job.id, { status, priority, notes, salary, location })
       toast('Changes saved')
       onUpdated()
     } catch {
@@ -72,7 +69,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     if (!confirm(`Delete "${job.company} — ${job.role}"?`)) return
     setDeleting(true)
     try {
-      await fetch(`/api/jobs/${job.id}`, { method: 'DELETE' })
+      await apiClient.deleteJob(job.id)
       toast('Application deleted')
       onDeleted()
     } catch {
@@ -84,8 +81,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   async function handleAnalyze() {
     setAnalyzing(true)
     try {
-      const res = await fetch(`/api/jobs/${job.id}/analyze`, { method: 'POST' })
-      const data = await res.json()
+      const data = await apiClient.analyzeJob(job.id) as { aiSuggestion: string }
       setAiSuggestion(data.aiSuggestion)
       toast('AI analysis ready ✨')
       onUpdated()
@@ -99,12 +95,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   async function handleCoverLetter() {
     setGeneratingCL(true)
     try {
-      const res = await fetch(`/api/jobs/${job.id}/cover-letter`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ background }),
-      })
-      const data = await res.json()
+      const data = await apiClient.generateCoverLetter(job.id, background)
       setCoverLetter(data.coverLetter)
       toast('Cover letter generated ✨')
     } catch {
@@ -117,12 +108,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   async function handleInterviewPrep() {
     setGeneratingPrep(true)
     try {
-      const res = await fetch(`/api/jobs/${job.id}/interview-prep`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ interviewType: prepType }),
-      })
-      const data = await res.json()
+      const data = await apiClient.generateInterviewPrep(job.id, prepType)
       setPrep(data.prep)
       toast('Interview prep ready ✨')
     } catch {
@@ -136,11 +122,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     if (!intDate) return
     setAddingInterview(true)
     try {
-      await fetch(`/api/jobs/${job.id}/interviews`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: intType, scheduledAt: intDate, notes: intNotes }),
-      })
+      await apiClient.createInterview(job.id, { type: intType, scheduledAt: intDate, notes: intNotes })
       toast('Interview scheduled')
       setShowAddInterview(false)
       setIntDate('')
