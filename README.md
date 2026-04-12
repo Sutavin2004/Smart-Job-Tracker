@@ -1,81 +1,112 @@
 # Smart Job Tracker
 
-A full-stack job application tracker with AI-powered suggestions.
+A full-stack job application tracker with AI-powered next-step suggestions.
 
-- **Backend**: FastAPI + SQLite
-- **Frontend**: Next.js 16 + TypeScript + Tailwind CSS
-- **AI**: Claude (Anthropic API) for application analysis
+| Layer | Tech | Hosting |
+|-------|------|---------|
+| Backend | FastAPI + SQLite | Render (free tier, always on) |
+| Frontend | React + TypeScript + Vite | GitHub Pages (free, always on) |
+| AI | Claude (Anthropic API) | via backend |
 
-## Quick Start
+## Live URLs
+
+| Service | URL |
+|---------|-----|
+| Frontend | https://sutavin2004.github.io/Smart-Job-Tracker/ |
+| Backend API | https://smart-job-tracker-api.onrender.com |
+| API Docs | https://smart-job-tracker-api.onrender.com/docs |
+| Health check | https://smart-job-tracker-api.onrender.com/health |
+
+> **Note:** Render free tier spins down after 15 min of inactivity. The first request after idle may take ~30 seconds.
+
+---
+
+## Local Development
 
 ### Backend
 
 ```bash
 cd backend
 
-# Create and activate virtual environment
+# Create and activate a virtual environment
 python3 -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Configure environment
+# (Optional) add your Anthropic key for AI suggestions
 cp .env.example .env
-# Edit .env and set ANTHROPIC_API_KEY if you want AI suggestions
+# then edit .env and set ANTHROPIC_API_KEY
 
-# Start the server
-uvicorn app.main:app --reload
+# Run from the PROJECT ROOT (not inside backend/)
+cd ..
+uvicorn backend.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`.  
-Interactive docs: `http://localhost:8000/docs`
+API available at `http://localhost:8000`.  
+Interactive docs at `http://localhost:8000/docs`.
 
 ### Frontend
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start the dev server
-npm run dev
+npm run dev      # http://localhost:5173
 ```
 
-The app will be available at `http://localhost:3000`.
+The dev server points to `http://localhost:8000` via `.env.development`.
 
-## Environment Variables
+---
 
-Copy `backend/.env.example` to `backend/.env` and fill in:
+## Deploying
 
-| Variable | Description | Default |
-|---|---|---|
-| `DATABASE_URL` | SQLite path | `sqlite:///./jobs.db` |
-| `JWT_SECRET_KEY` | Secret for JWT tokens | *(required — change in production)* |
-| `ANTHROPIC_API_KEY` | Anthropic API key for AI suggestions | *(optional — app works without it)* |
+### Backend → Render
 
-## Features
+1. Go to [render.com](https://render.com) → **New** → **Web Service**
+2. Connect your GitHub account and select `Sutavin2004/Smart-Job-Tracker`
+3. Render auto-detects `render.yaml` — no manual config needed
+4. In the Environment section, add:
+   - `ANTHROPIC_API_KEY` = your key from [console.anthropic.com](https://console.anthropic.com)
+5. Click **Create Web Service** — first deploy takes ~2 min
 
-- Register / Login with JWT authentication
-- Add, edit, delete job applications
-- Track status: Applied, Recruiter Screen, Interviewing, Offer, Rejected, etc.
-- Color-coded status badges
-- AI-powered next-step suggestions via Claude
-- Dashboard with stats (total, interviewing, offers)
-- Kanban board view
+### Frontend → GitHub Pages
+
+GitHub Actions deploys automatically on every push to `main`.
+
+To enable GitHub Pages the first time:
+1. Push the code (the Actions workflow creates the `gh-pages` branch)
+2. Go to **Settings → Pages**
+3. Set **Source** to **Deploy from a branch**
+4. Select branch: `gh-pages`, folder: `/ (root)`
+5. Save — the site will be live at `https://sutavin2004.github.io/Smart-Job-Tracker/`
+
+---
 
 ## API Endpoints
 
 | Method | Path | Description |
-|---|---|---|
-| `POST` | `/auth/register` | Register a new user |
-| `POST` | `/auth/login` | Login and get JWT tokens |
-| `POST` | `/auth/refresh` | Refresh access token |
-| `GET` | `/applications` | List all applications |
-| `POST` | `/applications` | Create a new application |
-| `GET` | `/applications/{id}` | Get a single application |
-| `PUT` | `/applications/{id}` | Update an application |
-| `DELETE` | `/applications/{id}` | Delete an application |
-| `POST` | `/applications/{id}/analyze` | Get AI suggestion for an application |
-| `GET` | `/analytics/overview` | Get analytics overview |
+|--------|------|-------------|
+| `GET` | `/health` | Health check |
+| `GET` | `/jobs` | List all jobs |
+| `POST` | `/jobs` | Create a job |
+| `PUT` | `/jobs/{id}` | Update a job |
+| `DELETE` | `/jobs/{id}` | Delete a job |
+| `POST` | `/jobs/{id}/analyze` | Get AI suggestion (Claude) |
+
+### Job fields
+
+```json
+{
+  "id": 1,
+  "company": "Acme Corp",
+  "role": "Software Engineer",
+  "status": "applied",
+  "date_applied": "2026-04-12",
+  "job_url": "https://acme.com/jobs/123",
+  "notes": "Referred by Jane",
+  "ai_suggestion": "Follow up with your contact at Acme..."
+}
+```
+
+**Status values:** `saved` · `applied` · `interviewing` · `offered` · `rejected`

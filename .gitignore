@@ -3,12 +3,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
-.Python
 *.egg-info/
-dist/
-build/
 *.egg
-.eggs/
 
 # Virtual environments
 backend/venv/
@@ -27,8 +23,6 @@ backend/*.db
 
 # macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 
 # Editors
 .vscode/
@@ -36,17 +30,19 @@ backend/*.db
 *.swp
 *.swo
 
-# Next.js
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
+# Vite / Next.js build output
+frontend/dist/
 frontend/.next/
 frontend/out/
 frontend/.vercel
 
-# Node
-frontend/node_modules/
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# gh-pages temp dir
+frontend/.cache/
 
 # History plugin artifacts
 .history/
