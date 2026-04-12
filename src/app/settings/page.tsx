@@ -6,6 +6,7 @@ import { useTheme } from '@/components/ThemeProvider'
 import { useToast } from '@/components/ToastProvider'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
+import { store } from '@/lib/store'
 
 export default function SettingsPage() {
   const { theme, toggle } = useTheme()
@@ -29,8 +30,13 @@ export default function SettingsPage() {
   async function handleDeleteAll() {
     setDeleting(true)
     try {
-      const jobs = await apiClient.getJobs() as { id: string }[]
-      await Promise.all(jobs.map((j) => apiClient.deleteJob(j.id)))
+      const hasBackend = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
+      if (!hasBackend) {
+        store.clearAll()
+      } else {
+        const jobs = await apiClient.getJobs() as { id: string }[]
+        await Promise.all(jobs.map((j) => apiClient.deleteJob(j.id)))
+      }
       toast('All data deleted')
       setConfirming(false)
       router.refresh()

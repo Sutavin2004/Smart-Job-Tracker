@@ -35,13 +35,11 @@ export default function DashboardPage() {
   const [upcomingInterviews, setUpcomingInterviews] = useState<UpcomingInterview[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, saved: 0, applied: 0, interviewing: 0, offered: 0, rejected: 0 })
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
 
   useEffect(() => { loadData() }, [])
 
   async function loadData() {
     setLoading(true)
-    setError('')
     try {
       const [jobsData, statsData, actsData] = await Promise.all([
         apiClient.getJobs() as Promise<Job[]>,
@@ -67,8 +65,6 @@ export default function DashboardPage() {
       }
       upcoming.sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
       setUpcomingInterviews(upcoming.slice(0, 5))
-    } catch {
-      setError('Could not connect to the backend. Run `npm run dev` to start the local server.')
     } finally {
       setLoading(false)
     }
@@ -98,12 +94,6 @@ export default function DashboardPage() {
           <Plus className="w-4 h-4" /> Add Application
         </button>
       </div>
-
-      {error && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
-          ⚠ {error}
-        </div>
-      )}
 
       {loading ? (
         <div className="text-center py-16 text-slate-400 text-sm animate-pulse">Loading…</div>
