@@ -17,7 +17,7 @@ def import_csv(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if not file.filename.endswith(".csv"):
+    if not file.filename or not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Invalid file type")
 
     reader = csv.DictReader(line.decode("utf-8") for line in file.file)
@@ -26,13 +26,13 @@ def import_csv(
     skipped = 0
 
     for row in reader:
-        company = row["company"].strip().lower()
-        title = row["job_title"].strip().lower()
+        company = row.get("company", "").strip().lower()
+        title = row.get("job_title", "").strip().lower()
 
         exists = db.query(JobApplication).filter(
-            JobApplication.user_id == current_user.id,
-            JobApplication.company_name.ilike(company),
-            JobApplication.job_title.ilike(title),
+            JobApplication.user_id == str(current_user.id),
+            JobApplication.company.ilike(company),
+            JobApplication.role.ilike(title),
         ).first()
 
         if exists:
@@ -40,9 +40,9 @@ def import_csv(
             continue
 
         app = JobApplication(
-            user_id=current_user.id,
-            company_name=row["company"],
-            job_title=row["job_title"],
+            user_id=str(current_user.id),
+            company=row.get("company", ""),
+            role=row.get("job_title", ""),
             current_status=ApplicationStatus.applied,
             applied_at=date.today(),
         )

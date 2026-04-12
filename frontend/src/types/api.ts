@@ -11,20 +11,37 @@ export type ApplicationStatus =
 
 export interface JobApplication {
   id: string;
-  company_name: string;
-  job_title: string;
+  company: string;
+  role: string;
   job_location?: string | null;
   job_url?: string | null;
   current_status: ApplicationStatus;
   applied_at?: string | null; // ISO date
   notes?: string | null;
+  ai_suggestion?: string | null;
+  resume_version_id?: string | null;
   created_at: string; // ISO datetime
   updated_at: string; // ISO datetime
 }
 
-export interface Paginated<T> {
-  total: number;
-  items: T[];
+export interface ApplicationCreate {
+  company: string;
+  role: string;
+  job_location?: string;
+  job_url?: string;
+  status?: ApplicationStatus;
+  applied_at?: string;
+  notes?: string;
+}
+
+export interface ApplicationUpdate {
+  company?: string;
+  role?: string;
+  job_location?: string;
+  job_url?: string;
+  current_status?: ApplicationStatus;
+  applied_at?: string;
+  notes?: string;
 }
 
 export interface TimeToResponseStats {
@@ -53,7 +70,7 @@ export interface AnalyticsOverview {
 export interface ResumePerformanceEntry {
   resume_id: string;
   resume_name: string;
-  created_at: string; // ISO date
+  created_at: string;
   total_applications: number;
   responded_applications: number;
   response_rate: number;

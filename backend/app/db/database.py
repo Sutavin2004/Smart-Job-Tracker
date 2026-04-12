@@ -2,9 +2,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 
+# SQLite requires check_same_thread=False; other DBs don't use this arg
+connect_args = (
+    {"check_same_thread": False}
+    if settings.DATABASE_URL.startswith("sqlite")
+    else {}
+)
+
 engine = create_engine(
     settings.DATABASE_URL,
     pool_pre_ping=True,
+    connect_args=connect_args,
 )
 
 SessionLocal = sessionmaker(
@@ -12,8 +20,3 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine,
 )
-
-def init_db() -> None:
-    # Intentionally empty for now
-    # Models + Alembic will handle schema creation
-    pass

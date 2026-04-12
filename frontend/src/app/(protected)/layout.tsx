@@ -1,10 +1,7 @@
 import { ReactNode } from "react";
 import ProtectedClient from "@/components/guards/ProtectedClient";
+import NavBar from "@/components/NavBar";
 
-/**
- * Protected routes depend on runtime auth state.
- * Static prerendering MUST be disabled.
- */
 export const dynamic = "force-dynamic";
 
 export default function ProtectedLayout({
@@ -12,5 +9,12 @@ export default function ProtectedLayout({
 }: {
   children: ReactNode;
 }) {
-  return <ProtectedClient>{children}</ProtectedClient>;
+  return (
+    <ProtectedClient>
+      <div className="min-h-screen bg-gray-50">
+        <NavBar />
+        <main>{children}</main>
+      </div>
+    </ProtectedClient>
+  );
 }

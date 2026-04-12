@@ -1,4 +1,4 @@
-from uuid import UUID
+import os
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -6,14 +6,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user
 from app.models.job_application import JobApplication
-from app.models.application_status import ApplicationStatus
 from app.models.user import User
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationUpdate,
     ApplicationRead,
-    ApplicationStatusCreate,
-    ApplicationStatusRead,
 )
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
@@ -22,34 +19,27 @@ router = APIRouter(prefix="/applications", tags=["Applications"])
 # =========================
 # Create application
 # =========================
-@router.post(
-    "",
-    response_model=ApplicationRead,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("", response_model=ApplicationRead, status_code=status.HTTP_201_CREATED)
 def create_application(
     data: ApplicationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     application = JobApplication(
-        user_id=current_user.id,
+        user_id=str(current_user.id),
         company=data.company,
         role=data.role,
+        job_location=data.job_location,
+        job_url=str(data.job_url) if data.job_url else None,
+        current_status=data.status,
+        applied_at=data.applied_at,
+        notes=data.notes,
         resume_version_id=data.resume_version_id,
     )
 
     db.add(application)
     db.commit()
     db.refresh(application)
-
-    # Initial status
-    initial_status = ApplicationStatus(
-        application_id=application.id,
-        status=data.status,
-    )
-    db.add(initial_status)
-    db.commit()
 
     return application
 
@@ -64,7 +54,8 @@ def get_applications(
 ):
     return (
         db.query(JobApplication)
-        .filter(JobApplication.user_id == current_user.id)
+        .filter(JobApplication.user_id == str(current_user.id))
+        .order_by(JobApplication.created_at.desc())
         .all()
     )
 
@@ -74,7 +65,7 @@ def get_applications(
 # =========================
 @router.get("/{application_id}", response_model=ApplicationRead)
 def get_application(
-    application_id: UUID,
+    application_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -82,7 +73,7 @@ def get_application(
         db.query(JobApplication)
         .filter(
             JobApplication.id == application_id,
-            JobApplication.user_id == current_user.id,
+            JobApplication.user_id == str(current_user.id),
         )
         .first()
     )
@@ -98,7 +89,7 @@ def get_application(
 # =========================
 @router.put("/{application_id}", response_model=ApplicationRead)
 def update_application(
-    application_id: UUID,
+    application_id: str,
     data: ApplicationUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
@@ -107,7 +98,7 @@ def update_application(
         db.query(JobApplication)
         .filter(
             JobApplication.id == application_id,
-            JobApplication.user_id == current_user.id,
+            JobApplication.user_id == str(current_user.id),
         )
         .first()
     )
@@ -115,7 +106,10 @@ def update_application(
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    for field, value in data.model_dump(exclude_unset=True).items():
+    update_data = data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        if field == "job_url" and value is not None:
+            value = str(value)
         setattr(application, field, value)
 
     db.commit()
@@ -129,7 +123,7 @@ def update_application(
 # =========================
 @router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_application(
-    application_id: UUID,
+    application_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -137,7 +131,7 @@ def delete_application(
         db.query(JobApplication)
         .filter(
             JobApplication.id == application_id,
-            JobApplication.user_id == current_user.id,
+            JobApplication.user_id == str(current_user.id),
         )
         .first()
     )
@@ -152,16 +146,11 @@ def delete_application(
 
 
 # =========================
-# Add status update
+# AI analyze endpoint
 # =========================
-@router.post(
-    "/{application_id}/status",
-    response_model=ApplicationStatusRead,
-    status_code=status.HTTP_201_CREATED,
-)
-def add_application_status(
-    application_id: UUID,
-    data: ApplicationStatusCreate,
+@router.post("/{application_id}/analyze", response_model=ApplicationRead)
+def analyze_application(
+    application_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -169,7 +158,7 @@ def add_application_status(
         db.query(JobApplication)
         .filter(
             JobApplication.id == application_id,
-            JobApplication.user_id == current_user.id,
+            JobApplication.user_id == str(current_user.id),
         )
         .first()
     )
@@ -177,13 +166,41 @@ def add_application_status(
     if not application:
         raise HTTPException(status_code=404, detail="Application not found")
 
-    status_entry = ApplicationStatus(
-        application_id=application.id,
-        status=data.status,
-    )
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        application.ai_suggestion = (
+            "AI suggestions unavailable — set ANTHROPIC_API_KEY in backend/.env to enable this feature."
+        )
+        db.commit()
+        db.refresh(application)
+        return application
 
-    db.add(status_entry)
+    try:
+        import anthropic
+
+        client = anthropic.Anthropic(api_key=api_key)
+        prompt = (
+            f"Given this job application:\n"
+            f"Company: {application.company}\n"
+            f"Role: {application.role}\n"
+            f"Status: {application.current_status.value}\n"
+            f"Notes: {application.notes or 'None'}\n\n"
+            f"What should the applicant do next to maximize their chances? "
+            f"Be concise (2-3 sentences)."
+        )
+
+        message = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=256,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        suggestion = message.content[0].text
+    except Exception as exc:
+        suggestion = f"AI analysis failed: {exc}"
+
+    application.ai_suggestion = suggestion
     db.commit()
-    db.refresh(status_entry)
+    db.refresh(application)
 
-    return status_entry
+    return application

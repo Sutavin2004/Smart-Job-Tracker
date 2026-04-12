@@ -6,6 +6,7 @@ import {
   useState,
   ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api";
 
 type User = {
@@ -36,8 +37,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const router = useRouter();
 
-  // No bootstrap yet → not loading
   const isLoading = false;
 
   const login = async (email: string, password: string) => {
@@ -49,15 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setAccessToken(res.access_token);
     apiClient.setAccessToken(res.access_token);
-
     setUser({ id: "me", email });
+
+    router.push("/dashboard");
   };
 
   const logout = () => {
     setUser(null);
     setAccessToken(null);
     apiClient.setAccessToken(null);
-    window.location.href = "/login";
+    router.push("/login");
   };
 
   return (

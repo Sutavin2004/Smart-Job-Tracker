@@ -1,20 +1,12 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from typing import Optional, List
-from uuid import UUID
 from datetime import date, datetime
 
 from app.models.enums import ApplicationStatus
 
 
-# =========================
-# Status timeline schemas
-# =========================
-class ApplicationStatusCreate(BaseModel):
-    status: ApplicationStatus
-
-
-class ApplicationStatusRead(BaseModel):
-    id: UUID
+class ApplicationStatusHistoryRead(BaseModel):
+    id: str
     status: ApplicationStatus
     created_at: datetime
 
@@ -22,46 +14,52 @@ class ApplicationStatusRead(BaseModel):
         from_attributes = True
 
 
-# =========================
-# Application schemas
-# =========================
+# Keep old name as alias for any code that still uses it
+ApplicationStatusRead = ApplicationStatusHistoryRead
+
+
 class ApplicationCreate(BaseModel):
     company: str
     role: str
     job_location: Optional[str] = None
-    job_url: Optional[HttpUrl] = None
-    status: ApplicationStatus
+    job_url: Optional[str] = None
+    status: ApplicationStatus = ApplicationStatus.applied
     applied_at: Optional[date] = None
     notes: Optional[str] = None
-    resume_version_id: Optional[UUID] = None
+    resume_version_id: Optional[str] = None
 
 
 class ApplicationUpdate(BaseModel):
     company: Optional[str] = None
     role: Optional[str] = None
     job_location: Optional[str] = None
-    job_url: Optional[HttpUrl] = None
+    job_url: Optional[str] = None
+    current_status: Optional[ApplicationStatus] = None
     applied_at: Optional[date] = None
     notes: Optional[str] = None
-    resume_version_id: Optional[UUID] = None
+    resume_version_id: Optional[str] = None
 
 
 class ApplicationRead(BaseModel):
-    id: UUID
+    id: str
     company: str
     role: str
-    job_location: Optional[str]
-    job_url: Optional[str]
-    applied_at: Optional[date]
-    notes: Optional[str]
-    resume_version_id: Optional[UUID]
+    job_location: Optional[str] = None
+    job_url: Optional[str] = None
+    current_status: ApplicationStatus
+    applied_at: Optional[date] = None
+    notes: Optional[str] = None
+    ai_suggestion: Optional[str] = None
+    resume_version_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
-    statuses: List[ApplicationStatusRead] = []
-
     class Config:
         from_attributes = True
+
+
+# Legacy alias used by some routes
+ApplicationStatusCreate = ApplicationStatusHistoryRead
 
 
 class PaginatedApplications(BaseModel):

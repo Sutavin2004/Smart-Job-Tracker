@@ -1,6 +1,4 @@
-from sqlalchemy import Column, DateTime, Enum
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.sql import func
+from sqlalchemy import Column, String, DateTime, Enum, ForeignKey, func
 import uuid
 
 from app.db.base import Base
@@ -10,11 +8,13 @@ from app.models.enums import ApplicationStatus
 class ApplicationStatusHistory(Base):
     __tablename__ = "application_status_history"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
 
     job_application_id = Column(
-        UUID(as_uuid=True),
+        String(36),
+        ForeignKey("job_applications.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
 
     status = Column(
@@ -22,4 +22,4 @@ class ApplicationStatusHistory(Base):
         nullable=False,
     )
 
-    changed_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
