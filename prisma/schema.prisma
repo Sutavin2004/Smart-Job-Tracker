@@ -8,56 +8,178 @@ datasource db {
 }
 
 model Job {
-  id            String    @id @default(cuid())
-  company       String
-  role          String
-  status        String    @default("saved")
-  priority      String    @default("medium")
-  jobUrl        String?
-  location      String?
-  salary        String?
-  notes         String?
-  aiSuggestion  String?
-  coverLetter   String?
-  dateApplied   DateTime  @default(now())
-  deadline      DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  company         String
+  role            String
+  status          String    @default("saved")
+  priority        String    @default("medium")
+  excitement      Int?
+  jobUrl          String?
+  jobDescription  String?
+  salary          String?
+  salaryMin       Int?
+  salaryMax       Int?
+  currency        String?   @default("CAD")
+  location        String?
+  remote          Boolean   @default(false)
+  hybrid          Boolean   @default(false)
+  notes           String?
+  aiSuggestion    String?
+  aiScore         Int?
+  aiStrengths     String?
+  aiRisks         String?
+  aiNextSteps     String?
+  coverLetter     String?
+  resumeVersion   String?
+  source          String?
+  referralContact String?
+  recruiterName   String?
+  recruiterEmail  String?
+  companySize     String?
+  industry        String?
+  techStack       String?
+  benefits        String?
+  visaSponsorship Boolean   @default(false)
+  dateApplied     DateTime  @default(now())
+  deadline        DateTime?
+  followUpDate    DateTime?
+  lastContactDate DateTime?
+  offerDeadline   DateTime?
+  offerAmount     String?
+  rejectionReason String?
+  pinned          Boolean   @default(false)
+  archived        Boolean   @default(false)
+  tags            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  interviews    Interview[]
-  activities    Activity[]
-  documents     Document[]
+  interviews         Interview[]
+  activities         Activity[]
+  documents          Document[]
+  contacts           Contact[]
+  tasks              Task[]
+  salaryNegotiations SalaryNegotiation[]
 }
 
 model Interview {
-  id          String    @id @default(cuid())
-  jobId       String
-  type        String    // phone, technical, behavioral, panel, final, offer
-  scheduledAt DateTime
-  notes       String?
-  outcome     String?   // pending, passed, failed
-  createdAt   DateTime  @default(now())
+  id               String   @id @default(cuid())
+  jobId            String
+  round            Int      @default(1)
+  type             String
+  scheduledAt      DateTime
+  duration         Int?
+  interviewers     String?
+  platform         String?
+  location         String?
+  notes            String?
+  prepNotes        String?
+  questionsAsked   String?
+  outcome          String   @default("pending")
+  feedbackReceived String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model Activity {
   id        String   @id @default(cuid())
   jobId     String
-  type      String   // status_change, note_added, interview_scheduled, ai_analyzed, document_added
+  type      String
   message   String
+  metadata  String?
   createdAt DateTime @default(now())
 
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
 model Document {
   id        String   @id @default(cuid())
   jobId     String
   name      String
-  type      String   // resume, cover_letter, portfolio, other
+  type      String
   content   String
+  version   String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Contact {
+  id           String    @id @default(cuid())
+  jobId        String
+  name         String
+  title        String?
+  email        String?
+  phone        String?
+  linkedin     String?
+  relationship String    @default("other")
+  notes        String?
+  lastContact  DateTime?
+  createdAt    DateTime  @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  jobId       String
+  title       String
+  description String?
+  dueDate     DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  priority    String    @default("medium")
+  createdAt   DateTime  @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model SalaryNegotiation {
+  id         String   @id @default(cuid())
+  jobId      String
+  round      Int      @default(1)
+  theirOffer String?
+  myCounter  String?
+  notes      String?
+  outcome    String?
+  date       DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  name            String   @default("")
+  email           String   @default("")
+  phone           String   @default("")
+  linkedin        String   @default("")
+  github          String   @default("")
+  portfolio       String   @default("")
+  currentTitle    String   @default("")
+  yearsExperience Int      @default(0)
+  targetRoles     String   @default("")
+  targetSalaryMin Int      @default(0)
+  targetSalaryMax Int      @default(0)
+  currency        String   @default("CAD")
+  skills          String   @default("")
+  bio             String   @default("")
+  weeklyGoal      Int      @default(5)
+  defaultSource   String   @default("LinkedIn")
+  timezone        String   @default("America/Toronto")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  subject   String
+  body      String
+  type      String
+  isDefault Boolean  @default(false)
+  useCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

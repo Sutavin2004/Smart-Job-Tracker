@@ -1,47 +1,48 @@
 'use client'
 
-import { useState } from 'react'
-import { Sun, Moon, Trash2, Download, AlertTriangle } from 'lucide-react'
-import { useTheme } from '@/components/ThemeProvider'
-import { useToast } from '@/components/ToastProvider'
+import { useState, useEffect } from 'react'
+import { Sun, Moon, Trash2, Download, AlertTriangle, Upload } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
-import { store } from '@/lib/store'
 
 export default function SettingsPage() {
-  const { theme, toggle } = useTheme()
-  const { toast } = useToast()
+  const { resolvedTheme, setTheme } = useTheme()
   const router = useRouter()
   const [confirming, setConfirming] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  const isDark = resolvedTheme === 'dark'
 
   async function handleExport() {
-    const jobs = await apiClient.getJobs()
-    const blob = new Blob([JSON.stringify(jobs, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `smart-job-tracker-export-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    toast('Data exported successfully')
+    try {
+      const data = await apiClient.exportAll()
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `smart-job-tracker-export-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('Data exported successfully')
+    } catch {
+      toast.error('Export failed')
+    }
   }
 
   async function handleDeleteAll() {
     setDeleting(true)
     try {
-      const hasBackend = typeof window !== 'undefined' && process.env.NEXT_PUBLIC_API_URL
-      if (!hasBackend) {
-        store.clearAll()
-      } else {
-        const jobs = await apiClient.getJobs() as { id: string }[]
-        await Promise.all(jobs.map((j) => apiClient.deleteJob(j.id)))
-      }
-      toast('All data deleted')
+      await apiClient.clearAll()
+      toast.success('All data deleted')
       setConfirming(false)
       router.refresh()
     } catch {
-      toast('Failed to delete', 'error')
+      toast.error('Failed to delete data')
     } finally {
       setDeleting(false)
     }
@@ -60,14 +61,18 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-medium">Theme</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Currently using {theme} mode
-            </p>
+            {mounted && (
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Currently using {isDark ? 'dark' : 'light'} mode
+              </p>
+            )}
           </div>
-          <button onClick={toggle} className="btn-secondary">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            Switch to {theme === 'dark' ? 'Light' : 'Dark'}
-          </button>
+          {mounted && (
+            <button onClick={() => setTheme(isDark ? 'light' : 'dark')} className="btn-secondary">
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              Switch to {isDark ? 'Light' : 'Dark'}
+            </button>
+          )}
         </div>
       </div>
 

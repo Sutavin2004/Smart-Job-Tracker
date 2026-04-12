@@ -2,67 +2,118 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Briefcase, BarChart2, Calendar, Settings, Sun, Moon, Sparkles } from 'lucide-react'
+import {
+  LayoutDashboard, Briefcase, BarChart2, Calendar, Settings,
+  Sun, Moon, Sparkles, ChevronLeft, ChevronRight,
+  CheckSquare, Mail, PanelLeftClose, PanelLeftOpen,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useTheme } from './ThemeProvider'
+import { useTheme } from 'next-themes'
+import { useUIStore } from '@/lib/store'
+import { useEffect, useState } from 'react'
 
 const NAV = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/jobs', label: 'Jobs Board', icon: Briefcase },
+  { href: '/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/analytics', label: 'Analytics', icon: BarChart2 },
   { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/templates', label: 'Templates', icon: Mail },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
-  const { theme, toggle } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
+  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => setMounted(true), [])
+
+  const isDark = resolvedTheme === 'dark'
 
   return (
-    <aside className="w-56 h-screen flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shrink-0">
+    <aside
+      className={cn(
+        'h-screen flex flex-col bg-white dark:bg-[#1a1826] border-r border-slate-200 dark:border-slate-700/60 shrink-0 transition-all duration-300',
+        sidebarCollapsed ? 'w-16' : 'w-56'
+      )}
+    >
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-700">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-brand-600 rounded-lg flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Smart Job</p>
-            <p className="text-xs text-brand-500 font-medium leading-tight">Tracker</p>
-          </div>
+      <div className={cn(
+        'flex items-center border-b border-slate-100 dark:border-slate-700/60 shrink-0',
+        sidebarCollapsed ? 'px-3 py-4 justify-center' : 'px-4 py-4 gap-2'
+      )}>
+        <div className="w-8 h-8 bg-gradient-brand rounded-xl flex items-center justify-center shadow-glow-brand shrink-0">
+          <Sparkles className="w-4 h-4 text-white" />
         </div>
+        {!sidebarCollapsed && (
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Smart Job</p>
+            <p className="text-xs font-medium leading-tight gradient-text">Tracker</p>
+          </div>
+        )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5">
+      <nav className={cn('flex-1 py-3 space-y-0.5 overflow-y-auto', sidebarCollapsed ? 'px-2' : 'px-3')}>
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
             <Link
               key={href}
               href={href}
+              title={sidebarCollapsed ? label : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all',
-                active
-                  ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-slate-100'
+                'sidebar-nav-item',
+                active ? 'active' : '',
+                sidebarCollapsed && 'justify-center px-2'
               )}
             >
-              <Icon className={cn('w-4 h-4', active ? 'text-brand-600 dark:text-brand-400' : '')} />
-              {label}
+              <Icon className="w-4 h-4 shrink-0" />
+              {!sidebarCollapsed && <span className="truncate">{label}</span>}
             </Link>
           )
         })}
       </nav>
 
-      {/* Theme toggle */}
-      <div className="px-3 py-4 border-t border-slate-100 dark:border-slate-700">
+      {/* Bottom actions */}
+      <div className={cn(
+        'border-t border-slate-100 dark:border-slate-700/60 py-3 space-y-0.5',
+        sidebarCollapsed ? 'px-2' : 'px-3'
+      )}>
+        {/* Theme toggle */}
+        {mounted && (
+          <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            title={isDark ? 'Light mode' : 'Dark mode'}
+            className={cn(
+              'sidebar-nav-item w-full',
+              sidebarCollapsed && 'justify-center px-2'
+            )}
+          >
+            {isDark
+              ? <Sun className="w-4 h-4 shrink-0" />
+              : <Moon className="w-4 h-4 shrink-0" />
+            }
+            {!sidebarCollapsed && (isDark ? 'Light mode' : 'Dark mode')}
+          </button>
+        )}
+
+        {/* Collapse toggle */}
         <button
-          onClick={toggle}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all"
+          onClick={toggleSidebar}
+          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className={cn(
+            'sidebar-nav-item w-full',
+            sidebarCollapsed && 'justify-center px-2'
+          )}
         >
-          {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          {sidebarCollapsed
+            ? <PanelLeftOpen className="w-4 h-4 shrink-0" />
+            : <PanelLeftClose className="w-4 h-4 shrink-0" />
+          }
+          {!sidebarCollapsed && 'Collapse'}
         </button>
       </div>
     </aside>

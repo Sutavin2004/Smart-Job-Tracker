@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 import { formatDate, formatRelative, formatDateTime } from '@/lib/utils'
 import { type Job, JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, INTERVIEW_TYPES } from '@/lib/types'
 import { StatusBadge, PriorityBadge } from './StatusBadge'
-import { useToast } from './ToastProvider'
+import { toast } from 'sonner'
 import { apiClient } from '@/lib/api-client'
 
 type Tab = 'overview' | 'ai' | 'cover-letter' | 'interviews' | 'activity'
@@ -23,7 +23,6 @@ interface Props {
 }
 
 export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
-  const { toast } = useToast()
   const [tab, setTab] = useState<Tab>('overview')
 
   // Edit state
@@ -56,10 +55,10 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     setSaving(true)
     try {
       await apiClient.updateJob(job.id, { status, priority, notes, salary, location })
-      toast('Changes saved')
+      toast.success('Changes saved')
       onUpdated()
     } catch {
-      toast('Failed to save', 'error')
+      toast.error('Failed to save')
     } finally {
       setSaving(false)
     }
@@ -70,10 +69,10 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     setDeleting(true)
     try {
       await apiClient.deleteJob(job.id)
-      toast('Application deleted')
+      toast.success('Application deleted')
       onDeleted()
     } catch {
-      toast('Failed to delete', 'error')
+      toast.error('Failed to delete')
       setDeleting(false)
     }
   }
@@ -83,10 +82,10 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     try {
       const data = await apiClient.analyzeJob(job.id) as { aiSuggestion: string }
       setAiSuggestion(data.aiSuggestion)
-      toast('AI analysis ready ✨')
+      toast.success('AI analysis ready')
       onUpdated()
     } catch {
-      toast('Analysis failed', 'error')
+      toast.error('Analysis failed')
     } finally {
       setAnalyzing(false)
     }
@@ -97,9 +96,9 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     try {
       const data = await apiClient.generateCoverLetter(job.id, background)
       setCoverLetter(data.coverLetter)
-      toast('Cover letter generated ✨')
+      toast.success('Cover letter generated')
     } catch {
-      toast('Generation failed', 'error')
+      toast.error('Generation failed')
     } finally {
       setGeneratingCL(false)
     }
@@ -110,9 +109,9 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     try {
       const data = await apiClient.generateInterviewPrep(job.id, prepType)
       setPrep(data.prep)
-      toast('Interview prep ready ✨')
+      toast.success('Interview prep ready')
     } catch {
-      toast('Generation failed', 'error')
+      toast.error('Generation failed')
     } finally {
       setGeneratingPrep(false)
     }
@@ -122,14 +121,14 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
     if (!intDate) return
     setAddingInterview(true)
     try {
-      await apiClient.createInterview(job.id, { type: intType, scheduledAt: intDate, notes: intNotes })
-      toast('Interview scheduled')
+      await apiClient.createInterview(job.id, { type: intType, scheduledAt: intDate, notes: intNotes || null })
+      toast.success('Interview scheduled')
       setShowAddInterview(false)
       setIntDate('')
       setIntNotes('')
       onUpdated()
     } catch {
-      toast('Failed to add interview', 'error')
+      toast.error('Failed to add interview')
     } finally {
       setAddingInterview(false)
     }
@@ -331,7 +330,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Cover Letter</p>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(coverLetter); toast('Copied to clipboard') }}
+                    onClick={() => { navigator.clipboard.writeText(coverLetter); toast.success('Copied to clipboard') }}
                     className="text-xs text-brand-600 hover:underline"
                   >
                     Copy

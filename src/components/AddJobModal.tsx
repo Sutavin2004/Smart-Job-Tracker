@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG } from '@/lib/types'
+import { JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, type JobStatus, type JobPriority } from '@/lib/types'
 import { apiClient } from '@/lib/api-client'
 
 interface Props {
@@ -26,6 +26,8 @@ export function AddJobModal({ onClose, onCreated }: Props) {
     try {
       await apiClient.createJob({
         ...form,
+        status: form.status as JobStatus,
+        priority: form.priority as JobPriority,
         jobUrl: form.jobUrl || undefined,
         location: form.location || undefined,
         salary: form.salary || undefined,

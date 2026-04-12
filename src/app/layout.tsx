@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { ThemeProvider } from '@/components/ThemeProvider'
-import { ToastProvider } from '@/components/ToastProvider'
+import { ThemeProvider } from 'next-themes'
+import { Toaster } from 'sonner'
 import { Sidebar } from '@/components/Sidebar'
+import { QueryProvider } from '@/components/QueryProvider'
 
 export const metadata: Metadata = {
   title: 'Smart Job Tracker',
@@ -13,15 +14,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ThemeProvider>
-          <ToastProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <QueryProvider>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
               <main className="flex-1 overflow-y-auto">
                 {children}
               </main>
             </div>
-          </ToastProvider>
+            <Toaster
+              position="bottom-right"
+              toastOptions={{
+                classNames: {
+                  toast: 'dark:bg-slate-800 dark:text-white dark:border-slate-700',
+                },
+              }}
+            />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
