@@ -1,25 +1,29 @@
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.egg-info/
-*.egg
+# dependencies
+node_modules/
+.pnp
+.pnp.js
 
-# Virtual environments
-backend/venv/
-backend/.venv/
-venv/
-.venv/
+# testing
+/coverage
 
-# Environment variables (never commit secrets)
-backend/.env
-.env
+# Next.js
+.next/
+out/
+
+# production
+build/
+dist/
 
 # Database
-backend/jobs.db
-backend/*.db
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
 *.db
+
+# Environment
+.env
+.env.local
+.env.*.local
 
 # macOS
 .DS_Store
@@ -30,19 +34,8 @@ backend/*.db
 *.swp
 *.swo
 
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-
-# Vite / Next.js build output
-frontend/dist/
-frontend/.next/
-frontend/out/
-frontend/.vercel
-
-# gh-pages temp dir
-frontend/.cache/
-
 # History plugin artifacts
 .history/
+
+# Vercel
+.vercel

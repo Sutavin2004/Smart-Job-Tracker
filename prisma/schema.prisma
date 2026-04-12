@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  company       String
+  role          String
+  status        String    @default("saved")
+  priority      String    @default("medium")
+  jobUrl        String?
+  location      String?
+  salary        String?
+  notes         String?
+  aiSuggestion  String?
+  coverLetter   String?
+  dateApplied   DateTime  @default(now())
+  deadline      DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  interviews    Interview[]
+  activities    Activity[]
+  documents     Document[]
+}
+
+model Interview {
+  id          String    @id @default(cuid())
+  jobId       String
+  type        String    // phone, technical, behavioral, panel, final, offer
+  scheduledAt DateTime
+  notes       String?
+  outcome     String?   // pending, passed, failed
+  createdAt   DateTime  @default(now())
+
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  jobId     String
+  type      String   // status_change, note_added, interview_scheduled, ai_analyzed, document_added
+  message   String
+  createdAt DateTime @default(now())
+
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  jobId     String
+  name      String
+  type      String   // resume, cover_letter, portfolio, other
+  content   String
+  createdAt DateTime @default(now())
+
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
