@@ -6,7 +6,7 @@
 
 import type {
   Job, Interview, Activity, Document, Contact, Task,
-  SalaryNegotiation, UserProfile, EmailTemplate, Stats,
+  SalaryNegotiation, UserProfile, EmailTemplate,
 } from './types'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -246,17 +246,30 @@ export const localStore = {
       aiStrengths: null,
       aiRisks: null,
       aiNextSteps: null,
+      aiKeySkills: null,
+      aiSalaryInsight: null,
+      aiCultureFit: null,
+      aiLastAnalyzed: null,
       coverLetter: data.coverLetter ?? null,
       resumeVersion: data.resumeVersion ?? null,
       source: data.source ?? null,
       referralContact: data.referralContact ?? null,
       recruiterName: data.recruiterName ?? null,
       recruiterEmail: data.recruiterEmail ?? null,
+      recruiterPhone: data.recruiterPhone ?? null,
       companySize: data.companySize ?? null,
+      companyStage: data.companyStage ?? null,
       industry: data.industry ?? null,
       techStack: data.techStack ?? null,
+      parsedKeywords: data.parsedKeywords ?? null,
+      parsedTechStack: data.parsedTechStack ?? null,
       benefits: data.benefits ?? null,
       visaSponsorship: data.visaSponsorship ?? false,
+      color: data.color ?? null,
+      salaryRaw: data.salaryRaw ?? null,
+      discoveredBy: data.discoveredBy ?? null,
+      agentSessionId: data.agentSessionId ?? null,
+      agentNotes: data.agentNotes ?? null,
       dateApplied: data.dateApplied ?? t,
       deadline: data.deadline ?? null,
       followUpDate: data.followUpDate ?? null,
@@ -339,7 +352,7 @@ export const localStore = {
 
   // ── stats ──────────────────────────────────────────────────────────────────
 
-  getStats(): Stats {
+  getStats(): Record<string, unknown> {
     const jobs = db.jobs.all().filter(j => !j.archived)
     const counts = {
       total: jobs.length,
@@ -412,7 +425,8 @@ export const localStore = {
       notes: data.notes ?? null,
       prepNotes: data.prepNotes ?? null,
       questionsAsked: data.questionsAsked ?? null,
-      outcome: data.outcome ?? 'pending',
+      myQuestions: data.myQuestions ?? null,
+      outcome: data.outcome ?? 'scheduled',
       feedbackReceived: data.feedbackReceived ?? null,
       createdAt: t,
     }
@@ -612,7 +626,14 @@ export const localStore = {
       targetSalaryMax: 0,
       currency: 'CAD',
       skills: '',
+      education: '',
       bio: '',
+      masterResume: '',
+      jobSearchGoals: '',
+      preferRemote: false,
+      preferHybrid: true,
+      targetLocations: '',
+      excludeKeywords: '',
       weeklyGoal: 5,
       defaultSource: 'LinkedIn',
       timezone: 'America/Toronto',

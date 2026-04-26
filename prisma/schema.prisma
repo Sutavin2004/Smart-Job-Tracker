@@ -14,42 +14,66 @@ model Job {
   status          String    @default("saved")
   priority        String    @default("medium")
   excitement      Int?
+  pinned          Boolean   @default(false)
+  archived        Boolean   @default(false)
+  color           String?
+  tags            String?
+
   jobUrl          String?
   jobDescription  String?
-  salary          String?
-  salaryMin       Int?
-  salaryMax       Int?
-  currency        String?   @default("CAD")
+  parsedKeywords  String?
+  parsedTechStack String?
+
   location        String?
   remote          Boolean   @default(false)
   hybrid          Boolean   @default(false)
-  notes           String?
-  aiSuggestion    String?
-  aiScore         Int?
-  aiStrengths     String?
-  aiRisks         String?
-  aiNextSteps     String?
-  coverLetter     String?
-  resumeVersion   String?
-  source          String?
-  referralContact String?
-  recruiterName   String?
-  recruiterEmail  String?
+
+  salary          String?
+  salaryRaw       String?
+  salaryMin       Int?
+  salaryMax       Int?
+  currency        String?   @default("CAD")
+
   companySize     String?
+  companyStage    String?
   industry        String?
-  techStack       String?
   benefits        String?
   visaSponsorship Boolean   @default(false)
+
+  source          String?
+  referralContact String?
+  resumeVersion   String?
   dateApplied     DateTime  @default(now())
   deadline        DateTime?
   followUpDate    DateTime?
   lastContactDate DateTime?
+  recruiterName   String?
+  recruiterEmail  String?
+  recruiterPhone  String?
+
   offerDeadline   DateTime?
   offerAmount     String?
   rejectionReason String?
-  pinned          Boolean   @default(false)
-  archived        Boolean   @default(false)
-  tags            String?
+
+  notes           String?
+
+  aiScore         Int?
+  aiSuggestion    String?
+  aiStrengths     String?
+  aiRisks         String?
+  aiNextSteps     String?
+  aiKeySkills     String?
+  aiSalaryInsight String?
+  aiCultureFit    String?
+  aiLastAnalyzed  DateTime?
+
+  discoveredBy    String?
+  agentSessionId  String?
+  agentNotes      String?
+
+  coverLetter     String?
+  techStack       String?
+
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -59,6 +83,7 @@ model Job {
   contacts           Contact[]
   tasks              Task[]
   salaryNegotiations SalaryNegotiation[]
+  applicationQAs     ApplicationQA[]
 }
 
 model Interview {
@@ -74,7 +99,8 @@ model Interview {
   notes            String?
   prepNotes        String?
   questionsAsked   String?
-  outcome          String   @default("pending")
+  myQuestions      String?
+  outcome          String   @default("scheduled")
   feedbackReceived String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -149,6 +175,17 @@ model SalaryNegotiation {
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 }
 
+model ApplicationQA {
+  id        String   @id @default(cuid())
+  jobId     String
+  question  String
+  answer    String
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
 model UserProfile {
   id              String   @id @default(cuid())
   name            String   @default("")
@@ -164,12 +201,32 @@ model UserProfile {
   targetSalaryMax Int      @default(0)
   currency        String   @default("CAD")
   skills          String   @default("")
+  education       String   @default("")
   bio             String   @default("")
+  masterResume    String   @default("")
+  jobSearchGoals  String   @default("")
+  preferRemote    Boolean  @default(false)
+  preferHybrid    Boolean  @default(true)
+  targetLocations String   @default("")
+  excludeKeywords String   @default("")
   weeklyGoal      Int      @default(5)
   defaultSource   String   @default("LinkedIn")
   timezone        String   @default("America/Toronto")
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+model AgentSession {
+  id            String    @id @default(cuid())
+  status        String    @default("running")
+  searchQueries String?
+  jobsFound     Int       @default(0)
+  jobsAdded     Int       @default(0)
+  jobsFiltered  Int       @default(0)
+  log           String?
+  error         String?
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
 }
 
 model EmailTemplate {
