@@ -8,6 +8,7 @@ import { formatRelative } from '@/lib/utils'
 import { type Job, type Activity, STATUS_CONFIG } from '@/lib/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { AddJobModal } from '@/components/AddJobModal'
+import { RemindersWidget } from '@/components/RemindersWidget'
 import { useUIStore } from '@/lib/store'
 import { useRouter } from 'next/navigation'
 
@@ -268,8 +269,9 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Right: stats */}
+              {/* Right: reminders + stats */}
               <div className="space-y-4">
+                <RemindersWidget />
                 <div className="card p-4 shadow-sm">
                   <div className="flex items-center gap-2 mb-3">
                     <TrendingUp className="w-4 h-4 text-brand-500" />

@@ -32,21 +32,52 @@ Return ONLY a valid JSON object with these exact keys:
   "skillsToEmphasize": ["list of 5 skills to highlight"],
   "rewrittenBullets": [{"original": "...", "improved": "..."}],
   "tailoredSummary": "a 2-3 sentence summary tailored to this role",
+  "tailoredResume": "full tailored resume text incorporating all improvements",
   "atsScoreBefore": number (0-100),
   "atsScoreAfter": number (0-100)
 }`
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1500,
+    max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
   })
 
   const text = msg.content.filter(b => b.type === 'text').map(b => (b as { type: 'text'; text: string }).text).join('')
+
+  let result = { topKeywords: [], presentKeywords: [], missingKeywords: [], skillsToEmphasize: [], rewrittenBullets: [], tailoredSummary: text, tailoredResume: '', atsScoreBefore: 0, atsScoreAfter: 0 }
   try {
     const match = text.match(/\{[\s\S]*\}/)
-    if (match) return NextResponse.json(JSON.parse(match[0]))
-  } catch { /* fall through */ }
+    if (match) result = { ...result, ...JSON.parse(match[0]) }
+  } catch { /* keep defaults */ }
 
-  return NextResponse.json({ topKeywords: [], presentKeywords: [], missingKeywords: [], skillsToEmphasize: [], rewrittenBullets: [], tailoredSummary: text, atsScoreBefore: 0, atsScoreAfter: 0 })
+  // Save tailored resume as a Document record
+  if (result.tailoredResume) {
+    const version = `v${Date.now()}`
+    await prisma.document.create({
+      data: {
+        jobId: id,
+        name: `Tailored Resume — ${job.company} ${job.role}`,
+        type: 'resume',
+        content: result.tailoredResume,
+        version,
+        isActive: true,
+      },
+    })
+
+    await prisma.job.update({
+      where: { id },
+      data: { resumeVersion: version },
+    })
+
+    await prisma.activity.create({
+      data: {
+        jobId: id,
+        type: 'document_added',
+        message: `Resume tailored for ${job.role} at ${job.company} (ATS: ${result.atsScoreBefore}% → ${result.atsScoreAfter}%)`,
+      },
+    })
+  }
+
+  return NextResponse.json(result)
 }

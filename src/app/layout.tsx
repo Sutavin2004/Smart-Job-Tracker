@@ -7,6 +7,7 @@ import { QueryProvider } from '@/components/QueryProvider'
 import { CommandPalette } from '@/components/CommandPalette'
 import { MobileNav } from '@/components/layout/MobileNav'
 import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
+import { FollowUpBanner } from '@/components/FollowUpBanner'
 
 export const metadata: Metadata = {
   title: 'JobTrack — AI Job Search',
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <MobileNav />
             <CommandPalette />
             <KeyboardShortcuts />
+            <FollowUpBanner />
             <Toaster
               position="bottom-right"
               richColors
