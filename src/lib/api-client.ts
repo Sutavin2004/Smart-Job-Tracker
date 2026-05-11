@@ -1,24 +1,27 @@
 /**
  * Unified API client.
  *
- * - NEXT_PUBLIC_API_URL set (e.g. Railway) → HTTP requests to that URL
- * - Not set (GitHub Pages / local static)  → localStorage store (no backend needed)
- *
- * When switching to Railway later, set NEXT_PUBLIC_API_URL in GitHub secrets
- * and trigger a redeploy — no code changes required.
+ * - NEXT_PUBLIC_API_URL set (e.g. Railway/Vercel) → HTTP requests to that base URL
+ * - Not set (local Next.js dev)                   → relative fetch calls to /api/...
+ * - NEXT_PUBLIC_USE_LOCAL=true                    → localStorage fallback (static export only)
  */
 
 import { localStore } from './local-store'
 import type { Job, Interview, Contact, Task, SalaryNegotiation, UserProfile, EmailTemplate } from './types'
 
 const REMOTE_URL = (process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '')
+const FORCE_LOCAL = process.env.NEXT_PUBLIC_USE_LOCAL === 'true'
 
+// Only use localStorage when explicitly opted-in (static export / GitHub Pages mode).
+// When running Next.js normally (dev or production), always use HTTP API routes.
 function useLocal(): boolean {
-  return typeof window !== 'undefined' && REMOTE_URL === ''
+  return FORCE_LOCAL && typeof window !== 'undefined'
 }
 
 async function remoteRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${REMOTE_URL}${path}`, {
+  // Relative path when no base URL configured — works in Next.js dev + production
+  const url = REMOTE_URL ? `${REMOTE_URL}${path}` : path
+  const res = await fetch(url, {
     ...init,
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   })

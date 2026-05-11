@@ -1,7 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Bot, Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw, ExternalLink } from 'lucide-react'
+import {
+  Bot, Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
+  ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
+  Sparkles, Briefcase, ArrowUpRight,
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatRelative } from '@/lib/utils'
@@ -13,6 +17,221 @@ interface LogLine {
   message: string
   type: 'log' | 'job_added' | 'found' | 'error' | 'complete'
   timestamp: string
+}
+
+interface SessionJob {
+  id: string
+  company: string
+  role: string
+  location: string | null
+  remote: boolean
+  hybrid: boolean
+  salary: string | null
+  salaryRaw: string | null
+  aiScore: number | null
+  aiSuggestion: string | null
+  source: string | null
+  jobUrl: string | null
+  industry: string | null
+  priority: string
+  status: string
+}
+
+function ScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return null
+  const color = score >= 75 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+    : score >= 55 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+  return (
+    <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full tabular-nums', color)}>
+      {score}/100
+    </span>
+  )
+}
+
+function SessionJobRow({ job }: { job: SessionJob }) {
+  const sourceLabel = job.source ?? 'AI'
+  const hasLink = !!job.jobUrl
+
+  return (
+    <div className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
+      {/* Company avatar */}
+      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">
+        {job.company[0]?.toUpperCase()}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{job.company}</span>
+          <ScoreBadge score={job.aiScore} />
+          <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-medium">
+            {sourceLabel}
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">{job.role}</p>
+        <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+          {job.location && (
+            <span className="flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
+              {job.location}
+              {job.remote && ' · Remote'}
+              {job.hybrid && ' · Hybrid'}
+            </span>
+          )}
+          {(job.salary || job.salaryRaw) && (
+            <span>{job.salary ?? job.salaryRaw}</span>
+          )}
+        </div>
+        {job.aiSuggestion && (
+          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 line-clamp-1 italic">{job.aiSuggestion}</p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <Link
+          href={`/jobs?id=${job.id}`}
+          className="flex items-center gap-1 text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline"
+          title="View in job board"
+        >
+          <Briefcase className="w-3.5 h-3.5" />
+          Board
+        </Link>
+        {hasLink ? (
+          <a
+            href={job.jobUrl!}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-1 rounded-lg transition-colors"
+            title={`Open on ${sourceLabel}`}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" />
+            Apply
+          </a>
+        ) : (
+          <span className="text-[11px] text-slate-300 dark:text-slate-600 italic">no link</span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SessionRow({ session }: { session: AgentSession }) {
+  const [expanded, setExpanded] = useState(false)
+  const [jobs, setJobs] = useState<SessionJob[]>([])
+  const [loadingJobs, setLoadingJobs] = useState(false)
+
+  async function toggleExpand() {
+    if (!expanded && jobs.length === 0 && session.jobsAdded > 0) {
+      setLoadingJobs(true)
+      try {
+        const data = await fetch(`/api/agent/sessions/${session.id}/jobs`).then(r => r.json())
+        setJobs(Array.isArray(data) ? data : [])
+      } catch {
+        toast.error('Failed to load session jobs')
+      } finally {
+        setLoadingJobs(false)
+      }
+    }
+    setExpanded(v => !v)
+  }
+
+  const isClickable = session.status === 'completed' && session.jobsAdded > 0
+
+  return (
+    <div className="border-b border-slate-100 dark:border-slate-700/60 last:border-0">
+      <button
+        onClick={isClickable ? toggleExpand : undefined}
+        className={cn(
+          'w-full px-5 py-4 flex items-center gap-4 text-left transition-colors',
+          isClickable
+            ? 'hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer'
+            : 'cursor-default'
+        )}
+      >
+        {/* Status dot */}
+        <div className={cn(
+          'w-2 h-2 rounded-full shrink-0',
+          session.status === 'completed' ? 'bg-green-500'
+            : session.status === 'failed' ? 'bg-red-500'
+            : 'bg-amber-500 animate-pulse'
+        )} />
+
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-slate-900 dark:text-white">
+            {session.status === 'completed'
+              ? `Found ${session.jobsFound} jobs · Added ${session.jobsAdded} new`
+              : session.status === 'failed'
+              ? `Failed: ${session.error ?? 'Unknown error'}`
+              : 'Running...'}
+          </p>
+          <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {formatRelative(session.startedAt)}
+          </p>
+        </div>
+
+        {/* Badge + chevron */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={cn(
+            'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+            session.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+              : session.status === 'failed' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
+              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+          )}>
+            {session.status}
+          </span>
+          {isClickable && (
+            <div className="text-slate-400">
+              {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </div>
+          )}
+        </div>
+      </button>
+
+      {/* Expanded job list */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/30">
+              {loadingJobs ? (
+                <div className="px-5 py-6 text-center text-xs text-slate-400 animate-pulse">Loading jobs…</div>
+              ) : jobs.length === 0 ? (
+                <div className="px-5 py-6 text-center text-xs text-slate-400">No jobs found in this session</div>
+              ) : (
+                <>
+                  <div className="px-5 py-2.5 flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                      {jobs.length} job{jobs.length !== 1 ? 's' : ''} added · hover to see actions
+                    </span>
+                    <Link
+                      href={`/jobs?discoveredBy=agent`}
+                      className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
+                    >
+                      View all on board <ExternalLink className="w-3 h-3" />
+                    </Link>
+                  </div>
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
+                    {jobs.map(job => (
+                      <SessionJobRow key={job.id} job={job} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
 }
 
 export default function AgentPage() {
@@ -85,12 +304,10 @@ export default function AgentPage() {
             if (data.type === 'complete') {
               setResult({ added: data.added ?? 0, skipped: data.skipped ?? 0 })
               setStep(4)
-              toast.success(`🤖 Agent found ${data.added} new jobs!`)
+              toast.success(`🤖 Agent added ${data.added} new jobs!`)
               loadSessions()
             }
-            if (data.type === 'error') {
-              toast.error(data.message)
-            }
+            if (data.type === 'error') toast.error(data.message)
           } catch { /* skip malformed */ }
         }
       }
@@ -103,7 +320,6 @@ export default function AgentPage() {
   }
 
   const profileIncomplete = !profile?.targetRoles || !profile?.skills
-
   const STEPS = ['Searching', 'Analyzing', 'Adding Jobs', 'Complete']
 
   return (
@@ -112,19 +328,16 @@ export default function AgentPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Bot className="w-6 h-6 text-brand-500" />
-            Job Discovery Agent
+            <Bot className="w-6 h-6 text-brand-500" /> Job Discovery Agent
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Your personal AI that finds, scores, and tracks jobs automatically
+            Searches LinkedIn, Indeed & Glassdoor — scores every posting — adds the best matches automatically
           </p>
         </div>
         <div className={cn(
           'flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full',
-          running
-            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-            : result
-            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+          running ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+            : result ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
             : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
         )}>
           <span className={cn('w-2 h-2 rounded-full', running ? 'bg-amber-500 animate-pulse' : result ? 'bg-green-500' : 'bg-slate-400')} />
@@ -132,7 +345,7 @@ export default function AgentPage() {
         </div>
       </div>
 
-      {/* Profile incomplete warning */}
+      {/* Profile warning */}
       {profileIncomplete && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
@@ -142,9 +355,7 @@ export default function AgentPage() {
           <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Profile incomplete</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
-              The agent needs your target roles and skills to find relevant jobs.
-            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">The agent needs your target roles and skills to find relevant jobs.</p>
           </div>
           <Link href="/settings" className="ml-auto shrink-0 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline">
             Complete profile →
@@ -158,15 +369,13 @@ export default function AgentPage() {
           <div className="w-20 h-20 rounded-2xl bg-gradient-brand flex items-center justify-center shadow-glow-brand shrink-0 animate-float">
             <Bot className="w-10 h-10 text-white" />
           </div>
-
           <div className="flex-1 text-center sm:text-left">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">
               {running ? 'Agent is running...' : 'Ready to find your next opportunity'}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              The agent searches job boards, scores each posting for fit, and adds the best matches automatically.
+              Pulls real listings from LinkedIn, Indeed & Glassdoor via JSearch · RemoteOK · AI-augmented search
             </p>
-
             {profile && (
               <div className="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
                 {profile.targetRoles.split(',').filter(Boolean).slice(0, 3).map(r => (
@@ -176,37 +385,27 @@ export default function AgentPage() {
                 ))}
                 {profile.preferRemote && (
                   <span className="text-xs bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-full font-medium">
-                    Remote
+                    🌐 Remote
                   </span>
                 )}
               </div>
             )}
           </div>
-
           <div className="shrink-0">
             <button
               onClick={runAgent}
               disabled={running || profileIncomplete}
               className={cn(
                 'flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all',
-                running
-                  ? 'bg-slate-400 cursor-not-allowed'
-                  : profileIncomplete
-                  ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                running ? 'bg-slate-400 cursor-not-allowed'
+                  : profileIncomplete ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                   : 'bg-gradient-brand shadow-glow-brand hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]'
               )}
             >
-              {running ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" />
-                  Start Agent
-                </>
-              )}
+              {running
+                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Running...</>
+                : <><Play className="w-4 h-4" /> Start Agent</>
+              }
             </button>
           </div>
         </div>
@@ -216,7 +415,7 @@ export default function AgentPage() {
       {(running || result) && (
         <div className="flex items-center gap-2">
           {STEPS.map((s, i) => {
-            const done = step > i + 1 || (result && i < 4)
+            const done = step > i + 1 || (!!result && i < 4)
             const active = step === i + 1 && running
             return (
               <div key={s} className="flex items-center gap-2 flex-1 last:flex-none">
@@ -226,7 +425,9 @@ export default function AgentPage() {
                     : active ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
                     : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
                 )}>
-                  {done ? <CheckCircle className="w-3 h-3" /> : active ? <Zap className="w-3 h-3 animate-pulse" /> : <span className="w-3 h-3 rounded-full border border-current flex items-center justify-center text-[8px]">{i + 1}</span>}
+                  {done ? <CheckCircle className="w-3 h-3" />
+                    : active ? <Zap className="w-3 h-3 animate-pulse" />
+                    : <span className="w-3 h-3 rounded-full border border-current flex items-center justify-center text-[8px]">{i + 1}</span>}
                   {s}
                 </div>
                 {i < STEPS.length - 1 && (
@@ -249,10 +450,7 @@ export default function AgentPage() {
             </div>
             <span className="text-xs text-slate-400 font-mono ml-1">agent.log</span>
           </div>
-          <div
-            ref={terminalRef}
-            className="bg-[#0d0c18] font-mono text-xs p-4 h-56 overflow-y-auto space-y-1"
-          >
+          <div ref={terminalRef} className="bg-[#0d0c18] font-mono text-xs p-4 h-56 overflow-y-auto space-y-1">
             {log.map((line, i) => (
               <div key={i} className={cn(
                 'leading-relaxed',
@@ -265,9 +463,7 @@ export default function AgentPage() {
                 {line.message}
               </div>
             ))}
-            {running && (
-              <div className="text-slate-500 animate-pulse">█</div>
-            )}
+            {running && <div className="text-slate-500 animate-pulse">█</div>}
           </div>
         </div>
       )}
@@ -292,19 +488,11 @@ export default function AgentPage() {
                 </p>
               </div>
               <div className="ml-auto flex gap-2">
-                <button
-                  onClick={runAgent}
-                  className="btn-secondary text-xs py-1.5 px-3"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Run Again
+                <button onClick={runAgent} className="btn-secondary text-xs py-1.5 px-3">
+                  <RotateCcw className="w-3.5 h-3.5" /> Run Again
                 </button>
-                <Link
-                  href="/jobs?discoveredBy=agent"
-                  className="btn-primary text-xs py-1.5 px-3"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  View Jobs
+                <Link href="/jobs?discoveredBy=agent" className="btn-primary text-xs py-1.5 px-3">
+                  <Briefcase className="w-3.5 h-3.5" /> View on Board
                 </Link>
               </div>
             </div>
@@ -314,43 +502,31 @@ export default function AgentPage() {
 
       {/* Past sessions */}
       {sessions.length > 0 && (
-        <div className="card">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past Sessions</h2>
+        <div className="card overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past Sessions</h2>
+              <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs were found · hover a job to apply or view</p>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Sparkles className="w-3.5 h-3.5 text-brand-400" />
+              <span>{sessions.reduce((a, s) => a + (s.jobsAdded ?? 0), 0)} total added</span>
+            </div>
           </div>
-          <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
+          <div>
             {sessions.map(session => (
-              <div key={session.id} className="px-5 py-3.5 flex items-center gap-4">
-                <div className={cn(
-                  'w-2 h-2 rounded-full shrink-0',
-                  session.status === 'completed' ? 'bg-green-500'
-                    : session.status === 'failed' ? 'bg-red-500'
-                    : 'bg-amber-500 animate-pulse'
-                )} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">
-                    {session.status === 'completed'
-                      ? `Found ${session.jobsFound} jobs, added ${session.jobsAdded}`
-                      : session.status === 'failed'
-                      ? `Failed: ${session.error ?? 'Unknown error'}`
-                      : 'Running...'}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {formatRelative(session.startedAt)}
-                  </p>
-                </div>
-                <span className={cn(
-                  'text-[10px] font-semibold px-2 py-0.5 rounded-full',
-                  session.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                    : session.status === 'failed' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
-                    : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-                )}>
-                  {session.status}
-                </span>
-              </div>
+              <SessionRow key={session.id} session={session} />
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Empty sessions */}
+      {sessions.length === 0 && !running && (
+        <div className="card p-10 text-center">
+          <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No sessions yet</p>
+          <p className="text-xs text-slate-400 mt-1">Run the agent to start discovering jobs automatically</p>
         </div>
       )}
     </div>
