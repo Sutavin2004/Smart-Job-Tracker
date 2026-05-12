@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import {
-  Save, User, Target, Brain, Download, Trash2, Sun, Moon, AlertTriangle,
-  Upload, Link2, Github, Linkedin, Globe, Briefcase, DollarSign, MapPin,
+  Save, User, Brain, Download, Trash2, Sun, Moon, AlertTriangle,
+  Upload, Link2, Github, Linkedin, Globe, Briefcase,
   Keyboard, Sparkles, Database, Shield, Bell, Palette, CheckCircle2,
   ChevronRight, Loader2, Info,
 } from 'lucide-react'
@@ -11,7 +11,6 @@ import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { UserProfile } from '@/lib/types'
-import { CURRENCY_OPTIONS } from '@/lib/types'
 
 type Tab = 'profile' | 'preferences' | 'data' | 'about'
 
@@ -37,11 +36,9 @@ const PROFILE_FIELDS: { completion: (p: UserProfile) => boolean; label: string }
   { label: 'Full name', completion: p => !!p.name },
   { label: 'Email', completion: p => !!p.email },
   { label: 'Current title', completion: p => !!p.currentTitle },
-  { label: 'Target roles', completion: p => !!p.targetRoles },
-  { label: 'Skills', completion: p => !!p.skills },
   { label: 'Bio', completion: p => !!p.bio },
-  { label: 'Target locations', completion: p => !!p.targetLocations },
-  { label: 'Salary range', completion: p => p.targetSalaryMin > 0 },
+  { label: 'LinkedIn', completion: p => !!p.linkedin },
+  { label: 'Education', completion: p => !!p.education },
 ]
 
 function SectionCard({ title, icon, description, children }: {
@@ -288,75 +285,6 @@ export default function SettingsPage() {
                         </div>
                       </FieldRow>
                     ))}
-                  </div>
-                </SectionCard>
-
-                {/* Job search targets */}
-                <SectionCard title="Job Search Targets" icon={<Target className="w-4 h-4" />} description="The AI agent uses these to find and rank jobs for you">
-                  <div className="space-y-5">
-                    <FieldRow label="Target Roles (comma-separated)">
-                      <input value={profile.targetRoles} onChange={e => update('targetRoles', e.target.value)} placeholder="Software Engineer, Frontend Developer, Full Stack Developer" className="input text-sm" />
-                    </FieldRow>
-                    <FieldRow label="Skills (comma-separated)">
-                      <input value={profile.skills} onChange={e => update('skills', e.target.value)} placeholder="TypeScript, React, Next.js, Python, Node.js" className="input text-sm" />
-                    </FieldRow>
-                    <div className="grid sm:grid-cols-2 gap-5">
-                      <FieldRow label="Target Locations (comma-separated)">
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                          <input value={profile.targetLocations} onChange={e => update('targetLocations', e.target.value)} placeholder="Toronto, Vancouver, Remote" className="input text-sm pl-8" />
-                        </div>
-                      </FieldRow>
-                      <FieldRow label="Keywords to Exclude">
-                        <input value={profile.excludeKeywords} onChange={e => update('excludeKeywords', e.target.value)} placeholder="senior, lead, manager" className="input text-sm" />
-                      </FieldRow>
-                    </div>
-                    {/* Work style */}
-                    <div>
-                      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Work Style</p>
-                      <div className="flex flex-wrap gap-2">
-                        {([['preferRemote', 'Remote OK', '🌍'], ['preferHybrid', 'Hybrid OK', '🏢']] as [keyof UserProfile, string, string][]).map(([key, label, emoji]) => (
-                          <label key={key as string} className={cn(
-                            'flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all select-none',
-                            profile[key]
-                              ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
-                              : 'border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
-                          )}>
-                            <input type="checkbox" checked={profile[key] as boolean} onChange={e => update(key, e.target.checked)} className="sr-only" />
-                            {emoji} {label}
-                            {profile[key] && <CheckCircle2 className="w-3.5 h-3.5 text-brand-500" />}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </SectionCard>
-
-                {/* Compensation */}
-                <SectionCard title="Compensation" icon={<DollarSign className="w-4 h-4" />}>
-                  <div className="flex flex-wrap gap-5 items-end">
-                    <FieldRow label="Currency">
-                      <select value={profile.currency} onChange={e => update('currency', e.target.value)} className="input text-sm w-28">
-                        {CURRENCY_OPTIONS.map(c => <option key={c}>{c}</option>)}
-                      </select>
-                    </FieldRow>
-                    <FieldRow label="Min Salary (thousands)">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                        <input type="number" value={profile.targetSalaryMin} onChange={e => update('targetSalaryMin', Number(e.target.value))} className="input text-sm pl-6 w-32" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">k</span>
-                      </div>
-                    </FieldRow>
-                    <FieldRow label="Max Salary (thousands)">
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                        <input type="number" value={profile.targetSalaryMax} onChange={e => update('targetSalaryMax', Number(e.target.value))} className="input text-sm pl-6 w-32" />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">k</span>
-                      </div>
-                    </FieldRow>
-                    <FieldRow label="Weekly Application Goal">
-                      <input type="number" min="1" max="50" value={profile.weeklyGoal} onChange={e => update('weeklyGoal', Number(e.target.value))} className="input text-sm w-24" />
-                    </FieldRow>
                   </div>
                 </SectionCard>
 
