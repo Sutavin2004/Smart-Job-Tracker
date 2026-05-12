@@ -4,13 +4,15 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Bot, Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
   ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
-  Sparkles, Briefcase, ArrowUpRight,
+  Sparkles, Briefcase, ArrowUpRight, Save, Settings2, Loader2,
+  Target, Brain, DollarSign, Wifi, ChevronUp,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatRelative } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { AgentSession, UserProfile } from '@/lib/types'
+import { CURRENCY_OPTIONS } from '@/lib/types'
 import Link from 'next/link'
 
 interface LogLine {
@@ -55,12 +57,9 @@ function SessionJobRow({ job }: { job: SessionJob }) {
 
   return (
     <div className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
-      {/* Company avatar */}
       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0 mt-0.5">
         {job.company[0]?.toUpperCase()}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{job.company}</span>
@@ -87,13 +86,10 @@ function SessionJobRow({ job }: { job: SessionJob }) {
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 line-clamp-1 italic">{job.aiSuggestion}</p>
         )}
       </div>
-
-      {/* Actions */}
       <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
         <Link
           href={`/jobs?id=${job.id}`}
           className="flex items-center gap-1 text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline"
-          title="View in job board"
         >
           <Briefcase className="w-3.5 h-3.5" />
           Board
@@ -104,7 +100,6 @@ function SessionJobRow({ job }: { job: SessionJob }) {
             target="_blank"
             rel="noreferrer"
             className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-1 rounded-lg transition-colors"
-            title={`Open on ${sourceLabel}`}
           >
             <ArrowUpRight className="w-3.5 h-3.5" />
             Apply
@@ -150,15 +145,12 @@ function SessionRow({ session }: { session: AgentSession }) {
             : 'cursor-default'
         )}
       >
-        {/* Status dot */}
         <div className={cn(
           'w-2 h-2 rounded-full shrink-0',
           session.status === 'completed' ? 'bg-green-500'
             : session.status === 'failed' ? 'bg-red-500'
             : 'bg-amber-500 animate-pulse'
         )} />
-
-        {/* Text */}
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
             {session.status === 'completed'
@@ -172,8 +164,6 @@ function SessionRow({ session }: { session: AgentSession }) {
             {formatRelative(session.startedAt)}
           </p>
         </div>
-
-        {/* Badge + chevron */}
         <div className="flex items-center gap-2 shrink-0">
           <span className={cn(
             'text-[10px] font-semibold px-2 py-0.5 rounded-full',
@@ -191,7 +181,6 @@ function SessionRow({ session }: { session: AgentSession }) {
         </div>
       </button>
 
-      {/* Expanded job list */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -213,7 +202,7 @@ function SessionRow({ session }: { session: AgentSession }) {
                       {jobs.length} job{jobs.length !== 1 ? 's' : ''} added · hover to see actions
                     </span>
                     <Link
-                      href={`/jobs?discoveredBy=agent`}
+                      href="/jobs?discoveredBy=agent"
                       className="text-[11px] text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
                     >
                       View all on board <ExternalLink className="w-3 h-3" />
@@ -233,6 +222,222 @@ function SessionRow({ session }: { session: AgentSession }) {
     </div>
   )
 }
+
+// ── Inline search preferences panel ─────────────────────────────────────────
+
+function SearchPreferencesPanel({
+  profile,
+  onSaved,
+}: {
+  profile: UserProfile
+  onSaved: (p: UserProfile) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<UserProfile>(profile)
+  const [saving, setSaving] = useState(false)
+
+  // Sync if parent profile changes (initial load)
+  useEffect(() => { setDraft(profile) }, [profile])
+
+  function update(key: keyof UserProfile, value: unknown) {
+    setDraft(d => ({ ...d, [key]: value }))
+  }
+
+  async function save() {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(draft),
+      })
+      if (!res.ok) throw new Error()
+      const saved = await res.json()
+      onSaved(saved)
+      toast.success('Search preferences saved!')
+      setOpen(false)
+    } catch {
+      toast.error('Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const isComplete = !!draft.targetRoles && !!draft.skills
+
+  return (
+    <div className="card overflow-hidden">
+      {/* Header — always visible */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors text-left"
+      >
+        <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+          <Settings2 className="w-4.5 h-4.5 text-brand-600 dark:text-brand-400" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">Search Preferences</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+            {isComplete
+              ? `${draft.targetRoles.split(',').filter(Boolean).slice(0, 2).map(r => r.trim()).join(', ')}${draft.preferRemote ? ' · Remote' : ''}${draft.preferHybrid ? ' · Hybrid' : ''}`
+              : 'Set your target roles and skills to enable the agent'}
+          </p>
+        </div>
+        {!isComplete && (
+          <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
+            Required
+          </span>
+        )}
+        {open ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
+      </button>
+
+      {/* Expandable form */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="border-t border-slate-100 dark:border-slate-700/60 p-5 space-y-5">
+
+              {/* Target roles + skills */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                    <Target className="w-3.5 h-3.5 text-brand-500" /> Target Roles *
+                  </label>
+                  <input
+                    value={draft.targetRoles}
+                    onChange={e => update('targetRoles', e.target.value)}
+                    placeholder="Software Engineer, Frontend Developer"
+                    className="input text-sm"
+                  />
+                  <p className="text-[10px] text-slate-400">Comma-separated · up to 3 used per search</p>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                    <Brain className="w-3.5 h-3.5 text-brand-500" /> Skills *
+                  </label>
+                  <input
+                    value={draft.skills}
+                    onChange={e => update('skills', e.target.value)}
+                    placeholder="TypeScript, React, Next.js, Python"
+                    className="input text-sm"
+                  />
+                  <p className="text-[10px] text-slate-400">Used to score how well each job fits you</p>
+                </div>
+              </div>
+
+              {/* Locations */}
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                  <MapPin className="w-3.5 h-3.5 text-brand-500" /> Target Locations
+                </label>
+                <input
+                  value={draft.targetLocations}
+                  onChange={e => update('targetLocations', e.target.value)}
+                  placeholder="Toronto, Vancouver, New York (comma-separated)"
+                  className="input text-sm"
+                />
+              </div>
+
+              {/* Salary + work style in one row */}
+              <div className="flex flex-wrap gap-4 items-end">
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                    <DollarSign className="w-3.5 h-3.5 text-brand-500" /> Salary Range
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={draft.currency}
+                      onChange={e => update('currency', e.target.value)}
+                      className="input text-sm w-20"
+                    >
+                      {CURRENCY_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
+                      <input
+                        type="number"
+                        value={draft.targetSalaryMin}
+                        onChange={e => update('targetSalaryMin', Number(e.target.value))}
+                        placeholder="60"
+                        className="input text-sm pl-5 w-24"
+                      />
+                    </div>
+                    <span className="text-slate-400 text-sm">–</span>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
+                      <input
+                        type="number"
+                        value={draft.targetSalaryMax}
+                        onChange={e => update('targetSalaryMax', Number(e.target.value))}
+                        placeholder="120"
+                        className="input text-sm pl-5 w-24"
+                      />
+                    </div>
+                    <span className="text-slate-400 text-xs">k/yr</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                    <Wifi className="w-3.5 h-3.5 text-brand-500" /> Work Style
+                  </label>
+                  <div className="flex gap-2">
+                    {([['preferRemote', '🌍 Remote'] , ['preferHybrid', '🏢 Hybrid']] as [keyof UserProfile, string][]).map(([key, label]) => (
+                      <label key={key as string} className={cn(
+                        'flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all select-none',
+                        draft[key]
+                          ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
+                          : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+                      )}>
+                        <input
+                          type="checkbox"
+                          checked={draft[key] as boolean}
+                          onChange={e => update(key, e.target.checked)}
+                          className="sr-only"
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Exclude keywords */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wide">
+                  Exclude Keywords
+                </label>
+                <input
+                  value={draft.excludeKeywords}
+                  onChange={e => update('excludeKeywords', e.target.value)}
+                  placeholder="senior, lead, manager, 10+ years (comma-separated)"
+                  className="input text-sm"
+                />
+                <p className="text-[10px] text-slate-400">Jobs containing these words will be filtered out</p>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60">
+                <p className="text-xs text-slate-400">Changes apply on the next agent run</p>
+                <button onClick={save} disabled={saving} className="btn-primary text-sm py-2 px-5">
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  {saving ? 'Saving…' : 'Save Preferences'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ── Main page ────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -345,25 +550,15 @@ export default function AgentPage() {
         </div>
       </div>
 
-      {/* Profile warning */}
-      {profileIncomplete && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800"
-        >
-          <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">Profile incomplete</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">The agent needs your target roles and skills to find relevant jobs.</p>
-          </div>
-          <Link href="/settings" className="ml-auto shrink-0 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline">
-            Complete profile →
-          </Link>
-        </motion.div>
+      {/* Search preferences (replaces the old warning banner) */}
+      {profile && (
+        <SearchPreferencesPanel
+          profile={profile}
+          onSaved={setProfile}
+        />
       )}
 
-      {/* Agent card */}
+      {/* Agent launch card */}
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <div className="w-20 h-20 rounded-2xl bg-gradient-brand flex items-center justify-center shadow-glow-brand shrink-0 animate-float">
@@ -376,7 +571,7 @@ export default function AgentPage() {
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Pulls real listings from LinkedIn, Indeed & Glassdoor via JSearch · RemoteOK · AI-augmented search
             </p>
-            {profile && (
+            {profile && profile.targetRoles && (
               <div className="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
                 {profile.targetRoles.split(',').filter(Boolean).slice(0, 3).map(r => (
                   <span key={r} className="text-xs bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300 px-2.5 py-1 rounded-full font-medium">
@@ -388,7 +583,18 @@ export default function AgentPage() {
                     🌐 Remote
                   </span>
                 )}
+                {profile.preferHybrid && (
+                  <span className="text-xs bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2.5 py-1 rounded-full font-medium">
+                    🏢 Hybrid
+                  </span>
+                )}
               </div>
+            )}
+            {profileIncomplete && (
+              <p className="mt-3 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                Set your target roles and skills above to enable the agent
+              </p>
             )}
           </div>
           <div className="shrink-0">
@@ -521,7 +727,6 @@ export default function AgentPage() {
         </div>
       )}
 
-      {/* Empty sessions */}
       {sessions.length === 0 && !running && (
         <div className="card p-10 text-center">
           <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />

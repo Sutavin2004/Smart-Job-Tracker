@@ -1,6 +1,6 @@
 -- CreateTable
 CREATE TABLE "Job" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "company" TEXT NOT NULL,
     "role" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'saved',
@@ -30,14 +30,14 @@ CREATE TABLE "Job" (
     "source" TEXT,
     "referralContact" TEXT,
     "resumeVersion" TEXT,
-    "dateApplied" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "deadline" TIMESTAMP(3),
-    "followUpDate" TIMESTAMP(3),
-    "lastContactDate" TIMESTAMP(3),
+    "dateApplied" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "deadline" DATETIME,
+    "followUpDate" DATETIME,
+    "lastContactDate" DATETIME,
     "recruiterName" TEXT,
     "recruiterEmail" TEXT,
     "recruiterPhone" TEXT,
-    "offerDeadline" TIMESTAMP(3),
+    "offerDeadline" DATETIME,
     "offerAmount" TEXT,
     "rejectionReason" TEXT,
     "notes" TEXT,
@@ -49,25 +49,23 @@ CREATE TABLE "Job" (
     "aiKeySkills" TEXT,
     "aiSalaryInsight" TEXT,
     "aiCultureFit" TEXT,
-    "aiLastAnalyzed" TIMESTAMP(3),
+    "aiLastAnalyzed" DATETIME,
     "discoveredBy" TEXT,
     "agentSessionId" TEXT,
     "agentNotes" TEXT,
     "coverLetter" TEXT,
     "techStack" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Job_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "Interview" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "round" INTEGER NOT NULL DEFAULT 1,
     "type" TEXT NOT NULL,
-    "scheduledAt" TIMESTAMP(3) NOT NULL,
+    "scheduledAt" DATETIME NOT NULL,
     "duration" INTEGER,
     "interviewers" TEXT,
     "platform" TEXT,
@@ -78,41 +76,38 @@ CREATE TABLE "Interview" (
     "myQuestions" TEXT,
     "outcome" TEXT NOT NULL DEFAULT 'scheduled',
     "feedbackReceived" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "Interview_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    CONSTRAINT "Interview_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Activity" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "message" TEXT NOT NULL,
     "metadata" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Activity_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Activity_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Document" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "version" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Document_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Document_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Contact" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "title" TEXT,
@@ -121,56 +116,52 @@ CREATE TABLE "Contact" (
     "linkedin" TEXT,
     "relationship" TEXT NOT NULL DEFAULT 'other',
     "notes" TEXT,
-    "lastContact" TIMESTAMP(3),
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Contact_pkey" PRIMARY KEY ("id")
+    "lastContact" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Contact_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "Task" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
-    "dueDate" TIMESTAMP(3),
+    "dueDate" DATETIME,
     "completed" BOOLEAN NOT NULL DEFAULT false,
-    "completedAt" TIMESTAMP(3),
+    "completedAt" DATETIME,
     "priority" TEXT NOT NULL DEFAULT 'medium',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Task_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "SalaryNegotiation" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "round" INTEGER NOT NULL DEFAULT 1,
     "theirOffer" TEXT,
     "myCounter" TEXT,
     "notes" TEXT,
     "outcome" TEXT,
-    "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "SalaryNegotiation_pkey" PRIMARY KEY ("id")
+    "date" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "SalaryNegotiation_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "ApplicationQA" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "jobId" TEXT NOT NULL,
     "question" TEXT NOT NULL,
     "answer" TEXT NOT NULL,
     "approved" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "ApplicationQA_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ApplicationQA_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
 CREATE TABLE "UserProfile" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL DEFAULT '',
     "email" TEXT NOT NULL DEFAULT '',
     "phone" TEXT NOT NULL DEFAULT '',
@@ -195,15 +186,13 @@ CREATE TABLE "UserProfile" (
     "weeklyGoal" INTEGER NOT NULL DEFAULT 5,
     "defaultSource" TEXT NOT NULL DEFAULT 'LinkedIn',
     "timezone" TEXT NOT NULL DEFAULT 'America/Toronto',
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "UserProfile_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "AgentSession" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "status" TEXT NOT NULL DEFAULT 'running',
     "searchQueries" TEXT,
     "jobsFound" INTEGER NOT NULL DEFAULT 0,
@@ -211,44 +200,19 @@ CREATE TABLE "AgentSession" (
     "jobsFiltered" INTEGER NOT NULL DEFAULT 0,
     "log" TEXT,
     "error" TEXT,
-    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "completedAt" TIMESTAMP(3),
-
-    CONSTRAINT "AgentSession_pkey" PRIMARY KEY ("id")
+    "startedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" DATETIME
 );
 
 -- CreateTable
 CREATE TABLE "EmailTemplate" (
-    "id" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "subject" TEXT NOT NULL,
     "body" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "isDefault" BOOLEAN NOT NULL DEFAULT false,
     "useCount" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "EmailTemplate_pkey" PRIMARY KEY ("id")
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL
 );
-
--- AddForeignKey
-ALTER TABLE "Interview" ADD CONSTRAINT "Interview_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Activity" ADD CONSTRAINT "Activity_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Document" ADD CONSTRAINT "Document_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Contact" ADD CONSTRAINT "Contact_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Task" ADD CONSTRAINT "Task_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "SalaryNegotiation" ADD CONSTRAINT "SalaryNegotiation_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ApplicationQA" ADD CONSTRAINT "ApplicationQA_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "Job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
