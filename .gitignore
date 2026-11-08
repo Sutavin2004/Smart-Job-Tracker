@@ -39,3 +39,4 @@ prisma/*.db
 
 # Vercel
 .vercel
+*.tsbuildinfo

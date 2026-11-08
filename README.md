@@ -1,112 +1,66 @@
 # Smart Job Tracker
 
-A full-stack job application tracker with AI-powered next-step suggestions.
+An AI-powered job search assistant. Tell it what roles and locations you want, and its **Job Agent** searches live job boards, scores every listing against your profile with Claude, and drops the best matches straight onto your board. From there it helps you through the whole process: tailored resumes and cover letters, interview prep, follow-ups and salary negotiation.
 
-| Layer | Tech | Hosting |
-|-------|------|---------|
-| Backend | FastAPI + SQLite | Render (free tier, always on) |
-| Frontend | React + TypeScript + Vite | GitHub Pages (free, always on) |
-| AI | Claude (Anthropic API) | via backend |
+**Live app:** https://smart-job-tracker-peach.vercel.app
 
-## Live URLs
+## Features
 
-| Service | URL |
-|---------|-----|
-| Frontend | https://sutavin2004.github.io/Smart-Job-Tracker/ |
-| Backend API | https://smart-job-tracker-api.onrender.com |
-| API Docs | https://smart-job-tracker-api.onrender.com/docs |
-| Health check | https://smart-job-tracker-api.onrender.com/health |
+| Area | What it does |
+|------|--------------|
+| **Job Agent** | Searches LinkedIn, Indeed and Glassdoor (via JSearch), Adzuna and RemoteOK for your target roles, ranks results by fit, and saves the top matches. Streams its progress live. |
+| **Jobs Board** | Kanban pipeline (saved → applied → interviewing → offer → rejected) with drag and drop, priorities, pins, tags, bulk actions and archive. |
+| **AI job analysis** | Per-job fit score, strengths, risks, key skills, salary insight and next steps. Parses job descriptions into keywords and tech stack. |
+| **Application tools** | Tailored cover letters, resume tailoring, answers to application questions, and follow-up emails, each generated from the job and your profile. |
+| **Interviews & offers** | Interview scheduling and prep, contacts, salary negotiation tracking with AI advice. |
+| **Resume Tools** | Analyze your master resume against target roles. |
+| **Dashboard, Analytics & Calendar** | Weekly goals, funnel and response-rate stats, an activity heatmap, and upcoming deadlines and interviews. |
+| **Tasks & Email Templates** | Per-job to-dos and reusable outreach templates. |
+| **Quality of life** | Command palette, keyboard shortcuts, dark mode, CSV export, follow-up reminders. |
 
-> **Note:** Render free tier spins down after 15 min of inactivity. The first request after idle may take ~30 seconds.
+## Tech stack
 
----
+- **Next.js 15** (App Router) + **React 19** + **TypeScript**
+- **Tailwind CSS**, Radix UI, Framer Motion, Recharts
+- **Prisma** + **PostgreSQL** (Neon)
+- **Anthropic Claude API** for analysis, generation and discovery
+- Hosted on **Vercel**; every push to `main` deploys
 
-## Local Development
-
-### Backend
-
-```bash
-cd backend
-
-# Create and activate a virtual environment
-python3 -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# (Optional) add your Anthropic key for AI suggestions
-cp .env.example .env
-# then edit .env and set ANTHROPIC_API_KEY
-
-# Run from the PROJECT ROOT (not inside backend/)
-cd ..
-uvicorn backend.main:app --reload
-```
-
-API available at `http://localhost:8000`.  
-Interactive docs at `http://localhost:8000/docs`.
-
-### Frontend
+## Running locally
 
 ```bash
-cd frontend
+git clone https://github.com/Sutavin2004/Smart-Job-Tracker.git
+cd Smart-Job-Tracker
 npm install
-npm run dev      # http://localhost:5173
+
+cp .env.example .env      # then fill in the values (see below)
+npx prisma migrate deploy # creates the tables
+npm run dev               # http://localhost:3000
 ```
 
-The dev server points to `http://localhost:8000` via `.env.development`.
+### Environment variables
 
----
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `DATABASE_URL` | Yes | Pooled Postgres connection string (Neon) |
+| `DATABASE_URL_UNPOOLED` | Yes | Direct connection, used for migrations |
+| `ANTHROPIC_API_KEY` | For AI features | Analysis, cover letters, prep and agent ranking. Without it, the AI endpoints return 503 and everything else works. |
+| `RAPIDAPI_KEY` | Optional | JSearch (LinkedIn, Indeed, Glassdoor) |
+| `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Optional | Adzuna listings |
 
-## Deploying
+RemoteOK needs no key. On Vercel, the Neon integration sets the two database variables automatically.
 
-### Backend → Render
+## Deployment
 
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub account and select `Sutavin2004/Smart-Job-Tracker`
-3. Render auto-detects `render.yaml` — no manual config needed
-4. In the Environment section, add:
-   - `ANTHROPIC_API_KEY` = your key from [console.anthropic.com](https://console.anthropic.com)
-5. Click **Create Web Service** — first deploy takes ~2 min
+The app is deployed on Vercel with a Neon Postgres database attached through the Vercel Marketplace. The build command in `vercel.json` runs `prisma migrate deploy` before `next build`, so schema changes go out with each deploy.
 
-### Frontend → GitHub Pages
+## Scripts
 
-GitHub Actions deploys automatically on every push to `main`.
-
-To enable GitHub Pages the first time:
-1. Push the code (the Actions workflow creates the `gh-pages` branch)
-2. Go to **Settings → Pages**
-3. Set **Source** to **Deploy from a branch**
-4. Select branch: `gh-pages`, folder: `/ (root)`
-5. Save — the site will be live at `https://sutavin2004.github.io/Smart-Job-Tracker/`
-
----
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/jobs` | List all jobs |
-| `POST` | `/jobs` | Create a job |
-| `PUT` | `/jobs/{id}` | Update a job |
-| `DELETE` | `/jobs/{id}` | Delete a job |
-| `POST` | `/jobs/{id}/analyze` | Get AI suggestion (Claude) |
-
-### Job fields
-
-```json
-{
-  "id": 1,
-  "company": "Acme Corp",
-  "role": "Software Engineer",
-  "status": "applied",
-  "date_applied": "2026-04-12",
-  "job_url": "https://acme.com/jobs/123",
-  "notes": "Referred by Jane",
-  "ai_suggestion": "Follow up with your contact at Acme..."
-}
-```
-
-**Status values:** `saved` · `applied` · `interviewing` · `offered` · `rejected`
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start the dev server |
+| `npm run build` | Production build |
+| `npm run type-check` | TypeScript check |
+| `npm run db:migrate` | Create a new migration during development |
+| `npm run db:seed` | Load sample data |
+| `npm run db:studio` | Browse the database in Prisma Studio |

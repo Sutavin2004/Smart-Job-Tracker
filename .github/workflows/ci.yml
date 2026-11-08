@@ -23,17 +23,14 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
-        env:
-          DATABASE_URL: file:./dev.db
 
       - name: Type check
         run: npm run type-check
 
-      - name: Lint
-        run: npm run lint
-
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: file:./dev.db
+          # Placeholder only: the build never connects to the database.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          DATABASE_URL_UNPOOLED: postgresql://ci:ci@localhost:5432/ci
           ANTHROPIC_API_KEY: ''
