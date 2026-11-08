@@ -47,6 +47,7 @@ npm run dev               # http://localhost:3000
 | `ANTHROPIC_API_KEY` | For AI features | Analysis, cover letters, prep and agent ranking. Without it, the AI endpoints return 503 and everything else works. |
 | `RAPIDAPI_KEY` | Optional | JSearch (LinkedIn, Indeed, Glassdoor) |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Optional | Adzuna listings |
+| `APP_PASSWORD` | Recommended in production | Puts the whole app and API behind a password screen. Leave it unset to keep the app open (for example in local dev). |
 
 RemoteOK needs no key. On Vercel, the Neon integration sets the two database variables automatically.
 
