@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_MODELS } from '@/lib/ai-models'
 import { prisma } from '@/lib/prisma'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -31,7 +32,7 @@ Notes: ${job.notes || 'None'}
 Write a complete, ready-to-send cover letter (3-4 paragraphs). Use [Your Name] as placeholder. Make it specific to the company and role. Be enthusiastic but professional.`
 
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: AI_MODELS.fast,
       max_tokens: 800,
       messages: [{ role: 'user', content: prompt }],
     })

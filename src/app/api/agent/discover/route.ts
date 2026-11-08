@@ -1,8 +1,23 @@
 import { NextRequest } from 'next/server'
+import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/prisma'
 import { fetchRealJobs } from '@/lib/job-boards'
 import { scoreAndRankJobs } from '@/lib/scoring'
+
+/** Compare URLs without protocol, www, trailing slash, hash or tracking params. */
+function normalizeUrl(raw: string): string {
+  try {
+    const u = new URL(raw.trim())
+    for (const k of [...u.searchParams.keys()]) {
+      if (/^(utm_|ref$|refid$|trk|src$|from$)/i.test(k)) u.searchParams.delete(k)
+    }
+    u.hash = ''
+    return (u.host.replace(/^www\./, '') + u.pathname.replace(/\/+$/, '') + (u.search || '')).toLowerCase()
+  } catch {
+    return raw.trim().toLowerCase()
+  }
+}
 
 export async function POST(_req: NextRequest) {
   const profile = await prisma.userProfile.findFirst()
@@ -68,6 +83,7 @@ export async function POST(_req: NextRequest) {
 
         // ── Step 2: AI-powered discovery (always runs if Anthropic key set) ──
         let aiJobs: typeof realJobs = []
+        const searchedUrls = new Set<string>()
 
         if (hasAnthropic) {
           const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -76,9 +92,12 @@ export async function POST(_req: NextRequest) {
           if (needed > 0) {
             log(`🧠 AI searching for ${needed} more matches...`, { step: 2 })
 
-            // Step 2a: Discovery — try web search, fall back to knowledge
+            // Step 2a: Discovery via live web search only.
+            // Every AI-sourced listing must link to a page the search actually
+            // returned, so the agent never saves postings invented from memory.
             let rawJobsText = ''
-            const searchPrompt = `Find ${needed} real, current (2024–2025) job postings matching this candidate profile.
+            const today = new Date().toISOString().slice(0, 10)
+            const searchPrompt = `Today is ${today}. Use web search to find up to ${needed} job postings that are currently open and match this candidate profile.
 
 Target roles: ${profile.targetRoles}
 Skills: ${profile.skills}
@@ -89,42 +108,40 @@ Target salary: ${profile.currency} ${profile.targetSalaryMin}k–${profile.targe
 Exclude keywords: ${profile.excludeKeywords || 'None'}
 
 Search LinkedIn, Indeed, Glassdoor, and company career pages.
-For each job include: company name, role title, location, salary if shown, job URL, and a brief description.`
+Only include postings you found in the search results. For each one give: company name, role title, location, salary if shown, the exact URL of the posting from the search results, and a brief description. If you find fewer than ${needed}, list only what you found.`
 
             try {
               const res = await anthropic.messages.create({
-                model: 'claude-opus-4-5',
+                model: AI_MODELS.search,
                 max_tokens: 3000,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                tools: [{ type: 'web_search_20250305', name: 'web_search' } as any],
+                tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 } as any],
                 messages: [{ role: 'user', content: searchPrompt }],
               })
-              rawJobsText = res.content
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const blocks = res.content as any[]
+              for (const b of blocks) {
+                if (b.type === 'web_search_tool_result' && Array.isArray(b.content)) {
+                  for (const r of b.content) if (r?.url) searchedUrls.add(normalizeUrl(r.url))
+                }
+                if (b.type === 'text' && Array.isArray(b.citations)) {
+                  for (const c of b.citations) if (c?.url) searchedUrls.add(normalizeUrl(c.url))
+                }
+              }
+              rawJobsText = blocks
                 .filter(b => b.type === 'text')
-                .map(b => (b as { type: 'text'; text: string }).text)
+                .map(b => b.text as string)
                 .join('\n')
-              log('🌐 Web search complete', { step: 2 })
-            } catch {
-              log('ℹ️ Web search unavailable — using AI market knowledge', { step: 2 })
-              const res = await anthropic.messages.create({
-                model: 'claude-opus-4-5',
-                max_tokens: 2000,
-                messages: [{
-                  role: 'user',
-                  content: `Based on your knowledge of the 2024–2025 job market, list ${needed} realistic job opportunities for this candidate:\n\n${searchPrompt}\n\nBe specific: real company names, realistic titles, actual salary ranges for these markets.`,
-                }],
-              })
-              rawJobsText = res.content
-                .filter(b => b.type === 'text')
-                .map(b => (b as { type: 'text'; text: string }).text)
-                .join('\n')
+              log(`🌐 Web search complete (${searchedUrls.size} pages checked)`, { step: 2 })
+            } catch (err) {
+              log(`ℹ️ Web search unavailable (${err instanceof Error ? err.message : 'unknown error'}) — skipping AI discovery`, { step: 2 })
             }
 
-            // Step 2b: Parse into structured JSON using Haiku (fast + reliable)
-            log('🔬 Structuring AI results...', { step: 3 })
-            try {
+            // Step 2b: Parse into structured JSON
+            if (rawJobsText.trim()) try {
+              log('🔬 Structuring AI results...', { step: 3 })
               const parseRes = await anthropic.messages.create({
-                model: 'claude-haiku-4-5-20251001',
+                model: AI_MODELS.fast,
                 max_tokens: 3000,
                 messages: [{
                   role: 'user',
@@ -140,7 +157,7 @@ Each element must have exactly these fields:
   "salaryRaw": "salary string or null",
   "salaryMin": salary minimum in thousands as number or null,
   "salaryMax": salary maximum in thousands as number or null,
-  "jobUrl": "URL or null",
+  "jobUrl": "the exact posting URL from the results (omit the job if there is none)",
   "jobDescription": "1-2 sentence description",
   "source": "LinkedIn or Indeed or Company Website or Glassdoor",
   "industry": "industry name or null",
@@ -181,8 +198,12 @@ ${rawJobsText}`,
               }
 
               if (parsed && Array.isArray(parsed)) {
-                aiJobs = parsed
-                log(`🤖 AI found ${aiJobs.length} additional listings`, { step: 3 })
+                const verified = parsed.filter(j =>
+                  typeof j?.jobUrl === 'string' && searchedUrls.has(normalizeUrl(j.jobUrl)))
+                aiJobs = verified.map(j => ({ ...j, source: j.source || 'Web search' }))
+                const dropped = parsed.length - verified.length
+                log(`🤖 AI found ${aiJobs.length} verified listings` +
+                  (dropped ? ` (dropped ${dropped} without a confirmed posting URL)` : ''), { step: 3 })
               } else {
                 log('⚠️ Could not parse AI results', { step: 3 })
               }
@@ -222,7 +243,12 @@ ${rawJobsText}`,
           const role = String(job.role ?? 'Unknown')
 
           const existing = await prisma.job.findFirst({
-            where: { company: { equals: company }, role: { equals: role } },
+            where: {
+              OR: [
+                { company: { equals: company, mode: 'insensitive' }, role: { equals: role, mode: 'insensitive' } },
+                ...(job.jobUrl ? [{ jobUrl: job.jobUrl }] : []),
+              ],
+            },
           })
 
           if (existing) {

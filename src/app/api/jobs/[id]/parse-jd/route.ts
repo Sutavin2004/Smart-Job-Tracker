@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
@@ -37,7 +38,7 @@ Job Description:
 ${jobDescription.slice(0, 4000)}`
 
   const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: AI_MODELS.fast,
     max_tokens: 800,
     messages: [{ role: 'user', content: prompt }],
   })

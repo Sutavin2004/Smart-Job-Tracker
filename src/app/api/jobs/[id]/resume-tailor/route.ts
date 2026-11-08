@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_MODELS } from '@/lib/ai-models'
 import { prisma } from '@/lib/prisma'
 import Anthropic from '@anthropic-ai/sdk'
 
@@ -38,7 +39,7 @@ Return ONLY a valid JSON object with these exact keys:
 }`
 
   const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: AI_MODELS.fast,
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
   })
