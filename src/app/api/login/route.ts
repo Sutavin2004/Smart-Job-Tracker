@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AUTH_COOKIE, AUTH_MAX_AGE, authEnabled, safeEqual, sessionToken } from '@/lib/auth'
 
+/** Lets the UI know whether to show the Sign out button. */
+export async function GET() {
+  return NextResponse.json({ enabled: authEnabled() })
+}
+
 export async function POST(req: NextRequest) {
   if (!authEnabled()) return NextResponse.json({ ok: true })
 

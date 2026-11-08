@@ -19,6 +19,9 @@ function normalizeUrl(raw: string): string {
   }
 }
 
+// Board fetches + web search + parsing can take a while; don't let Vercel cut the stream off.
+export const maxDuration = 300
+
 export async function POST(_req: NextRequest) {
   const profile = await prisma.userProfile.findFirst()
   if (!profile || !profile.targetRoles) {

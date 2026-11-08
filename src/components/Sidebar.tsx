@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Briefcase, BarChart2, Calendar, Settings,
   Sun, Moon, CheckSquare, Mail, FileText,
-  PanelLeftClose, PanelLeftOpen, Bot, Sparkles,
+  PanelLeftClose, PanelLeftOpen, Bot, Sparkles, LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
@@ -34,6 +34,17 @@ export function Sidebar() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => setMounted(true), [])
+
+  // Only show "Sign out" when the password gate is switched on.
+  const [authOn, setAuthOn] = useState(false)
+  useEffect(() => {
+    fetch('/api/login').then(r => r.json()).then(d => setAuthOn(Boolean(d.enabled))).catch(() => {})
+  }, [])
+
+  async function signOut() {
+    await fetch('/api/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }
 
   const isDark = resolvedTheme === 'dark'
 
@@ -152,6 +163,16 @@ export function Sidebar() {
           }
           {!sidebarCollapsed && 'Collapse'}
         </button>
+        {authOn && (
+          <button
+            onClick={signOut}
+            title="Sign out"
+            className={cn('sidebar-nav-item w-full', sidebarCollapsed && 'justify-center px-2')}
+          >
+            <LogOut className="w-4 h-4 shrink-0" />
+            {!sidebarCollapsed && 'Sign out'}
+          </button>
+        )}
       </div>
     </aside>
   )
