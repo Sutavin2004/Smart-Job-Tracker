@@ -1,16 +1,17 @@
+import { consumeQuota } from '@/lib/quota'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db, user }: Auth) => {
   const { id } = await params
   const body = await req.json().catch(() => ({}))
   const { interviewType = 'general', round = 1 } = body as { interviewType?: string; round?: number }
 
-  const job = await prisma.job.findUnique({ where: { id } })
+  const job = await db.job.findUnique({ where: { id } })
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (!anthropic) {
@@ -37,6 +38,7 @@ Return ONLY a valid JSON object:
   "starStories": [{"situation": "...", "task": "...", "action": "...", "result": "...", "usedFor": "..."}]
 }`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 2000,
@@ -50,4 +52,4 @@ Return ONLY a valid JSON object:
   } catch { /* fall through */ }
 
   return NextResponse.json({ prep: text })
-}
+})

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string; qid: string }> }) {
+export const PUT = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string; qid: string }> }, { db }: Auth) => {
   const { qid } = await params
   const body = await req.json()
-  const qa = await prisma.applicationQA.update({
+  const qa = await db.applicationQA.update({
     where: { id: qid },
     data: {
       answer: body.answer ?? undefined,
@@ -12,10 +12,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   })
   return NextResponse.json(qa)
-}
+})
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string; qid: string }> }) {
+export const DELETE = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string; qid: string }> }, { db }: Auth) => {
   const { qid } = await params
-  await prisma.applicationQA.delete({ where: { id: qid } })
+  await db.applicationQA.delete({ where: { id: qid } })
   return NextResponse.json({ success: true })
-}
+})

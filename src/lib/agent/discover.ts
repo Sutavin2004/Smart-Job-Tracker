@@ -1,6 +1,6 @@
 import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
-import { prisma } from '@/lib/prisma'
+import type { ScopedDb } from '@/lib/scoped-db'
 import { fetchRealJobs } from '@/lib/job-boards'
 import { scoreAndRankJobs } from '@/lib/scoring'
 import { normalizeUrl } from '@/lib/url'
@@ -19,15 +19,18 @@ export interface DiscoveryResult {
  * Anthropic key is set), score against the profile, and save new matches.
  * `emit` receives live progress events (the UI streams them; cron ignores them).
  */
-export async function runDiscovery(
-  { trigger = 'manual', emit = () => {} }: { trigger?: 'manual' | 'scheduled'; emit?: (e: DiscoveryEvent) => void } = {},
-): Promise<DiscoveryResult> {
-  const profile = await prisma.userProfile.findFirst()
+export async function runDiscovery({ db, userId, trigger = 'manual', emit = () => {} }: {
+  db: ScopedDb
+  userId: string
+  trigger?: 'manual' | 'scheduled'
+  emit?: (e: DiscoveryEvent) => void
+}): Promise<DiscoveryResult> {
+  const profile = await db.userProfile.findFirst()
   if (!profile || !profile.targetRoles) {
     return { sessionId: null, added: 0, skipped: 0, error: 'Set up your profile with target roles first' }
   }
 
-  const session = await prisma.agentSession.create({ data: { status: 'running', trigger } })
+  const session = await db.agentSession.create({ data: { userId, status: 'running', trigger } })
   let result: DiscoveryResult = { sessionId: session.id, added: 0, skipped: 0 }
 
   const logLines: string[] = []
@@ -45,9 +48,9 @@ export async function runDiscovery(
     const hasRapidApi = !!process.env.RAPIDAPI_KEY
     const hasAnthropic = !!process.env.ANTHROPIC_API_KEY
 
-    log('🤖 Agent starting up...', { step: 1 })
-    log(`🔍 Searching for: ${roles.slice(0, 3).join(', ')}`, { step: 2 })
-    log(`📍 Locations: ${locations.join(', ')}${profile.preferRemote ? ' + Remote' : ''}`, { step: 2 })
+    log('Starting', { step: 1 })
+    log(`Searching for: ${roles.slice(0, 3).join(', ')}`, { step: 2 })
+    log(`Locations: ${locations.join(', ')}${profile.preferRemote ? ' + Remote' : ''}`, { step: 2 })
 
     const boardLabels: string[] = []
     if (hasRapidApi) boardLabels.push('LinkedIn · Indeed · Glassdoor (JSearch)')
@@ -55,16 +58,16 @@ export async function runDiscovery(
     if (profile.preferRemote || locations.some(l => /remote/i.test(l))) boardLabels.push('RemoteOK · Remotive · Jobicy')
     if (hasAnthropic) boardLabels.push('AI-augmented search')
     log(boardLabels.length
-      ? `🌐 Sources: ${boardLabels.join(', ')}`
-      : '⚠️ No job sources match these settings. Add "Remote" as a location, or set Adzuna / JSearch keys for local searches.', { step: 2 })
+      ? `Sources: ${boardLabels.join(', ')}`
+      : 'No job sources match these settings. Add "Remote" as a location, or set Adzuna / JSearch keys for local searches.', { step: 2 })
 
-    await prisma.agentSession.update({
+    await db.agentSession.update({
       where: { id: session.id },
       data: { searchQueries: JSON.stringify(roles.slice(0, 3)) },
     })
 
     // ── Step 1: Real job board APIs ──────────────────────────────────────
-    log('🔌 Connecting to live job boards...', { step: 2 })
+    log('Connecting to live job boards...', { step: 2 })
 
     const { jobs: realJobs, sources } = await fetchRealJobs({
       roles: roles.slice(0, 3),
@@ -73,7 +76,7 @@ export async function runDiscovery(
     })
 
     if (realJobs.length > 0) {
-      log(`✅ Live boards: ${realJobs.length} listings from ${sources.join(', ')}`, { step: 2 })
+      log(`Live boards: ${realJobs.length} listings from ${sources.join(', ')}`, { step: 2 })
     } else {
       log('ℹ️ Live boards returned 0 results — running AI discovery', { step: 2 })
     }
@@ -87,7 +90,7 @@ export async function runDiscovery(
       const needed = Math.max(0, 12 - realJobs.length)
 
       if (needed > 0) {
-        log(`🧠 AI searching for ${needed} more matches...`, { step: 2 })
+        log(`AI searching for ${needed} more matches...`, { step: 2 })
 
         // Step 2a: Discovery via live web search only.
         // Every AI-sourced listing must link to a page the search actually
@@ -129,14 +132,14 @@ Only include postings you found in the search results. For each one give: compan
             .filter(b => b.type === 'text')
             .map(b => b.text as string)
             .join('\n')
-          log(`🌐 Web search complete (${searchedUrls.size} pages checked)`, { step: 2 })
+          log(`Web search complete (${searchedUrls.size} pages checked)`, { step: 2 })
         } catch (err) {
           log(`ℹ️ Web search unavailable (${err instanceof Error ? err.message : 'unknown error'}) — skipping AI discovery`, { step: 2 })
         }
 
         // Step 2b: Parse into structured JSON
         if (rawJobsText.trim()) try {
-          log('🔬 Structuring AI results...', { step: 3 })
+          log('Structuring AI results...', { step: 3 })
           const parseRes = await anthropic.messages.create({
             model: AI_MODELS.fast,
             max_tokens: 3000,
@@ -199,20 +202,20 @@ ${rawJobsText}`,
               typeof j?.jobUrl === 'string' && searchedUrls.has(normalizeUrl(j.jobUrl)))
             aiJobs = verified.map(j => ({ ...j, source: j.source || 'Web search' }))
             const dropped = parsed.length - verified.length
-            log(`🤖 AI found ${aiJobs.length} verified listings` +
+            log(`AI found ${aiJobs.length} verified listings` +
               (dropped ? ` (dropped ${dropped} without a confirmed posting URL)` : ''), { step: 3 })
           } else {
-            log('⚠️ Could not parse AI results', { step: 3 })
+            log('Could not parse AI results', { step: 3 })
           }
         } catch (parseErr) {
-          log(`⚠️ AI parsing error: ${parseErr instanceof Error ? parseErr.message : 'unknown'}`, { step: 3 })
+          log(`AI parsing error: ${parseErr instanceof Error ? parseErr.message : 'unknown'}`, { step: 3 })
         }
       }
     }
 
     // ── Step 3: Merge, score, rank ────────────────────────────────────────
     const allRaw = [...realJobs, ...aiJobs]
-    log(`📊 Scoring ${allRaw.length} total listings...`, { step: 3 })
+    log(`Scoring ${allRaw.length} total listings...`, { step: 3 })
 
     const scored = scoreAndRankJobs(allRaw, {
       targetRoles: profile.targetRoles,
@@ -228,7 +231,7 @@ ${rawJobsText}`,
 
     // Keep reasonable matches; irrelevant titles were already scored 0.
     const qualified = scored.filter(j => j.fitScore >= 30)
-    log(`✅ ${qualified.length} jobs matched your profile`, { step: 3 })
+    log(`${qualified.length} jobs matched your profile`, { step: 3 })
     emit({ type: 'found', count: qualified.length })
 
     // ── Step 4: Save to database ─────────────────────────────────────────
@@ -239,7 +242,7 @@ ${rawJobsText}`,
       const company = String(job.company ?? 'Unknown')
       const role = String(job.role ?? 'Unknown')
 
-      const existing = await prisma.job.findFirst({
+      const existing = await db.job.findFirst({
         where: {
           OR: [
             { company: { equals: company, mode: 'insensitive' }, role: { equals: role, mode: 'insensitive' } },
@@ -254,8 +257,9 @@ ${rawJobsText}`,
         continue
       }
 
-      await prisma.job.create({
+      await db.job.create({
         data: {
+          userId,
           company,
           role,
           status: 'saved',
@@ -283,21 +287,21 @@ ${rawJobsText}`,
           activities: {
             create: {
               type: 'agent',
-              message: `🤖 Discovered via ${job.source ?? 'AI'} · Fit: ${job.fitScore}/100 · ${job.fitReason}`,
+              message: `Discovered via ${job.source ?? 'AI'} · Fit: ${job.fitScore}/100 · ${job.fitReason}`,
             },
           },
         },
       })
 
       added++
-      log(`➕ Added: ${company} — ${role} (${job.fitScore}/100 · ${job.source ?? 'AI'})`, {
+      log(`Added: ${company} — ${role} (${job.fitScore}/100 · ${job.source ?? 'AI'})`, {
         step: 4,
         type: 'job_added',
         job: { company, role, score: job.fitScore, source: job.source },
       })
     }
 
-    await prisma.agentSession.update({
+    await db.agentSession.update({
       where: { id: session.id },
       data: {
         status: 'completed',
@@ -315,16 +319,16 @@ ${rawJobsText}`,
       added,
       skipped,
       sessionId: session.id,
-      message: `🎉 Done! Added ${added} new jobs, skipped ${skipped} duplicates.`,
+      message: `Done. Added ${added} new ${added === 1 ? 'job' : 'jobs'}, skipped ${skipped} already on your board.`,
     })
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
-    await prisma.agentSession.update({
+    await db.agentSession.update({
       where: { id: session.id },
       data: { status: 'failed', error: msg, log: logLines.join('\n'), completedAt: new Date() },
     })
     result = { sessionId: session.id, added: 0, skipped: 0, error: msg }
-    emit({ type: 'error', message: `❌ Agent error: ${msg}` })
+    emit({ type: 'error', message: `Agent error: ${msg}` })
   }
   return result
 }

@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 
 export interface Reminder {
   id: string
@@ -13,7 +13,7 @@ export interface Reminder {
   dueDate?: string
 }
 
-export async function GET() {
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
   const now = new Date()
   const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
   const in3days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
@@ -23,7 +23,7 @@ export async function GET() {
   const reminders: Reminder[] = []
 
   // ── 1. Jobs applied 7+ days ago with no response (still 'applied') ──────
-  const staleApplied = await prisma.job.findMany({
+  const staleApplied = await db.job.findMany({
     where: {
       status: 'applied',
       archived: false,
@@ -51,7 +51,7 @@ export async function GET() {
   }
 
   // ── 2. Passed follow-up dates ────────────────────────────────────────────
-  const overdueFollowUps = await prisma.job.findMany({
+  const overdueFollowUps = await db.job.findMany({
     where: {
       followUpDate: { lte: now },
       status: { in: ['saved', 'applied'] },
@@ -75,7 +75,7 @@ export async function GET() {
   }
 
   // ── 3. Upcoming interviews (within 48 hours) ─────────────────────────────
-  const upcomingInterviews = await prisma.interview.findMany({
+  const upcomingInterviews = await db.interview.findMany({
     where: {
       scheduledAt: { gte: now, lte: in48h },
       outcome: { in: ['scheduled', 'pending'] },
@@ -98,7 +98,7 @@ export async function GET() {
   }
 
   // ── 4. Upcoming application deadlines (within 3 days) ───────────────────
-  const upcomingDeadlines = await prisma.job.findMany({
+  const upcomingDeadlines = await db.job.findMany({
     where: {
       deadline: { gte: now, lte: in3days },
       status: { in: ['saved', 'applied'] },
@@ -123,7 +123,7 @@ export async function GET() {
 
   // Auto-create tasks for high-urgency follow-ups that don't have a pending task
   for (const reminder of reminders.filter(r => r.urgency === 'high' && r.type === 'stale_application')) {
-    const existingTask = await prisma.task.findFirst({
+    const existingTask = await db.task.findFirst({
       where: {
         jobId: reminder.jobId,
         completed: false,
@@ -134,7 +134,7 @@ export async function GET() {
     if (!existingTask) {
       const dueDate = new Date()
       dueDate.setDate(dueDate.getDate() + 1)
-      await prisma.task.create({
+      await db.task.create({
         data: {
           jobId: reminder.jobId,
           title: `Follow up with ${reminder.company}`,
@@ -160,4 +160,4 @@ export async function GET() {
   })
 
   return NextResponse.json(reminders)
-}
+})

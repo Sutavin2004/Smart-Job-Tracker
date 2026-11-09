@@ -1,15 +1,16 @@
+import { consumeQuota } from '@/lib/quota'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db, user }: Auth) => {
   const { id } = await params
   const [job, profile] = await Promise.all([
-    prisma.job.findUnique({ where: { id } }),
-    prisma.userProfile.findFirst(),
+    db.job.findUnique({ where: { id } }),
+    db.userProfile.findFirst(),
   ])
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -38,6 +39,7 @@ Return ONLY a valid JSON object with these exact keys:
   "atsScoreAfter": number (0-100)
 }`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 2000,
@@ -55,7 +57,7 @@ Return ONLY a valid JSON object with these exact keys:
   // Save tailored resume as a Document record
   if (result.tailoredResume) {
     const version = `v${Date.now()}`
-    await prisma.document.create({
+    await db.document.create({
       data: {
         jobId: id,
         name: `Tailored Resume — ${job.company} ${job.role}`,
@@ -66,12 +68,12 @@ Return ONLY a valid JSON object with these exact keys:
       },
     })
 
-    await prisma.job.update({
+    await db.job.update({
       where: { id },
       data: { resumeVersion: version },
     })
 
-    await prisma.activity.create({
+    await db.activity.create({
       data: {
         jobId: id,
         type: 'document_added',
@@ -81,4 +83,4 @@ Return ONLY a valid JSON object with these exact keys:
   }
 
   return NextResponse.json(result)
-}
+})

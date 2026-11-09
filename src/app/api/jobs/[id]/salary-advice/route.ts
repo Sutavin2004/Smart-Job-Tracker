@@ -1,18 +1,19 @@
+import { consumeQuota } from '@/lib/quota'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db, user }: Auth) => {
   const { id } = await params
   const body = await req.json()
   const { offerAmount, context } = body as { offerAmount: string; context?: string }
 
   const [job, profile] = await Promise.all([
-    prisma.job.findUnique({ where: { id } }),
-    prisma.userProfile.findFirst(),
+    db.job.findUnique({ where: { id } }),
+    db.userProfile.findFirst(),
   ])
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -39,6 +40,7 @@ Return JSON with these exact keys:
 }
 Only return the JSON object.`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 1000,
@@ -52,4 +54,4 @@ Only return the JSON object.`
   } catch { /* fall through */ }
 
   return NextResponse.json({ strategy: 'counter', reasoning: text, script: '', dos: [], donts: [], marketInsight: '' })
-}
+})

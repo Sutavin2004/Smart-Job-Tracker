@@ -1,30 +1,53 @@
-/**
- * Single-password gate. The password lives only in the APP_PASSWORD env var;
- * the session cookie holds an HMAC derived from it, so changing the password
- * signs everyone out. Uses Web Crypto so it runs in middleware (edge) too.
- */
-export const AUTH_COOKIE = 'sjt_session'
-export const AUTH_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
+import { randomBytes, createHash } from 'node:crypto'
+import { prisma } from './prisma'
+import { SESSION_COOKIE, SESSION_DAYS } from './auth-constants'
 
-export function authEnabled(): boolean {
-  return Boolean(process.env.APP_PASSWORD)
+export { SESSION_COOKIE, safeEqual } from './auth-constants'
+export { hashPassword, verifyPassword } from './password'
+
+const sha256 = (s: string) => createHash('sha256').update(s).digest('hex')
+
+/** Create a session; returns the raw token for the cookie (only its hash is stored). */
+export async function createSession(userId: string) {
+  const token = randomBytes(32).toString('base64url')
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000)
+  await prisma.session.create({ data: { id: sha256(token), userId, expiresAt } })
+  return { token, expiresAt }
 }
 
-export async function sessionToken(): Promise<string> {
-  const enc = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode(process.env.APP_PASSWORD ?? ''),
-    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode('smart-job-tracker-session-v1'))
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('')
+export async function getUserByToken(token: string | undefined | null) {
+  if (!token) return null
+  const session = await prisma.session.findUnique({ where: { id: sha256(token) }, include: { user: true } })
+  if (!session || session.expiresAt < new Date()) return null
+  return session.user
 }
 
-/** Constant-time string comparison. */
-export function safeEqual(a: string, b: string): boolean {
-  const enc = new TextEncoder()
-  const x = enc.encode(a), y = enc.encode(b)
-  let diff = x.length ^ y.length
-  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] ?? 0) ^ (y[i] ?? 0)
-  return diff === 0
+export async function deleteSession(token: string | undefined | null) {
+  if (token) await prisma.session.deleteMany({ where: { id: sha256(token) } })
+}
+
+export function sessionCookie(token: string, expiresAt: Date) {
+  return {
+    name: SESSION_COOKIE,
+    value: token,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    expires: expiresAt,
+  }
+}
+
+export const clearedSessionCookie = { name: SESSION_COOKIE, value: '', path: '/', maxAge: 0 }
+
+export type SessionUser = NonNullable<Awaited<ReturnType<typeof getUserByToken>>>
+
+/** Simple DB-backed rate limit: at most `max` attempts per key in the window. */
+export async function rateLimited(keys: string[], max = 10, windowMs = 15 * 60 * 1000): Promise<boolean> {
+  const since = new Date(Date.now() - windowMs)
+  const counts = await Promise.all(keys.map(key => prisma.authAttempt.count({ where: { key, createdAt: { gte: since } } })))
+  await prisma.authAttempt.createMany({ data: keys.map(key => ({ key })) })
+  // Opportunistic cleanup of old attempts.
+  if (Math.random() < 0.05) await prisma.authAttempt.deleteMany({ where: { createdAt: { lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } })
+  return counts.some(c => c >= max)
 }

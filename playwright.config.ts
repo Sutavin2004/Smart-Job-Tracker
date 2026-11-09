@@ -18,7 +18,18 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    // Signs in as the seeded demo user once and saves the session for the other tests.
+    { name: 'setup', testMatch: /auth\.setup\.ts/ },
+    {
+      name: 'chromium',
+      dependencies: ['setup'],
+      testIgnore: /auth\.(setup|spec)\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 }, storageState: 'e2e/.auth/demo.json' },
+    },
+    // Sign-up, sign-in and isolation tests start signed out.
+    { name: 'auth', testMatch: /auth\.spec\.ts/, use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
+  ],
   webServer: process.env.E2E_BASE_URL ? undefined : {
     command: 'npm run start',
     url: 'http://localhost:3000/api/health',

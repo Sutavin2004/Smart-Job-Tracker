@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
-  const negotiations = await prisma.salaryNegotiation.findMany({ where: { jobId: id }, orderBy: { date: 'asc' } })
+  const negotiations = await db.salaryNegotiation.findMany({ where: { jobId: id }, orderBy: { date: 'asc' } })
   return NextResponse.json(negotiations)
-}
+})
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
   const body = await req.json()
-  const count = await prisma.salaryNegotiation.count({ where: { jobId: id } })
-  const neg = await prisma.salaryNegotiation.create({
+  const count = await db.salaryNegotiation.count({ where: { jobId: id } })
+  const neg = await db.salaryNegotiation.create({
     data: {
       jobId: id,
       round: count + 1,
@@ -22,4 +22,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
   return NextResponse.json(neg, { status: 201 })
-}
+})

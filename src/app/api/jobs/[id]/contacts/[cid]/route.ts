@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string; cid: string }> }) {
+export const PUT = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string; cid: string }> }, { db }: Auth) => {
   const { cid } = await params
   const body = await req.json()
-  const contact = await prisma.contact.update({
+  const contact = await db.contact.update({
     where: { id: cid },
     data: {
       name: body.name,
@@ -18,10 +18,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   })
   return NextResponse.json(contact)
-}
+})
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string; cid: string }> }) {
+export const DELETE = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string; cid: string }> }, { db }: Auth) => {
   const { cid } = await params
-  await prisma.contact.delete({ where: { id: cid } })
+  await db.contact.delete({ where: { id: cid } })
   return NextResponse.json({ success: true })
-}
+})

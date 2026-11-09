@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Briefcase, BarChart2, Calendar, Settings,
   Sun, Moon, CheckSquare, Mail, FileText,
-  PanelLeftClose, PanelLeftOpen, Bot, Sparkles, LogOut,
+  PanelLeftClose, PanelLeftOpen, Bot, LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
@@ -14,163 +14,114 @@ import { useEffect, useState } from 'react'
 
 const NAV_MAIN = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/agent', label: 'Job Agent', icon: Bot, badge: 'AI', gradient: true },
-  { href: '/jobs', label: 'Jobs Board', icon: Briefcase },
-  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
-  { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/jobs', label: 'Board', icon: Briefcase },
+  { href: '/agent', label: 'Job agent', icon: Bot },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { href: '/calendar', label: 'Calendar', icon: Calendar },
+  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
 ]
 
 const NAV_TOOLS = [
-  { href: '/resume', label: 'Resume Tools', icon: FileText },
-  { href: '/templates', label: 'Email Templates', icon: Mail },
+  { href: '/resume', label: 'Résumé', icon: FileText },
+  { href: '/templates', label: 'Email templates', icon: Mail },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
-export function Sidebar() {
+export function initials(name: string, email: string) {
+  const parts = (name || email).trim().split(/\s+/).filter(Boolean)
+  const letters = parts.length > 1 ? parts[0][0] + parts[parts.length - 1][0] : (parts[0] ?? '?').slice(0, 2)
+  return letters.toUpperCase()
+}
+
+export async function signOut() {
+  await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+  window.location.href = '/login'
+}
+
+export function Sidebar({ user, demo }: { user: { name: string; email: string }; demo?: boolean }) {
   const pathname = usePathname()
   const { resolvedTheme, setTheme } = useTheme()
-  const { sidebarCollapsed, toggleSidebar } = useUIStore()
+  const { sidebarCollapsed: collapsed, toggleSidebar } = useUIStore()
   const [mounted, setMounted] = useState(false)
-
   useEffect(() => setMounted(true), [])
 
-  // Only show "Sign out" when the password gate is switched on.
-  const [authOn, setAuthOn] = useState(false)
-  useEffect(() => {
-    fetch('/api/login').then(r => r.json()).then(d => setAuthOn(Boolean(d.enabled))).catch(() => {})
-  }, [])
-
-  async function signOut() {
-    await fetch('/api/logout', { method: 'POST' })
-    window.location.href = '/login'
-  }
-
   const isDark = resolvedTheme === 'dark'
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
 
-  function isActive(href: string) {
-    return href === '/' ? pathname === '/' : pathname.startsWith(href)
+  function NavLink({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Bot }) {
+    const active = isActive(href)
+    return (
+      <Link
+        href={href}
+        title={collapsed ? label : undefined}
+        aria-current={active ? 'page' : undefined}
+        className={cn('sidebar-nav-item', active && 'active', collapsed && 'justify-center px-2')}
+      >
+        <Icon className={cn('h-4 w-4 shrink-0', active ? 'text-brand-600 dark:text-brand-400' : '')} strokeWidth={1.75} />
+        {!collapsed && <span className="truncate">{label}</span>}
+      </Link>
+    )
   }
 
   return (
     <aside
       className={cn(
-        'hidden md:flex h-full flex-col bg-white dark:bg-[#1a1826] border-r border-slate-200 dark:border-slate-700/60 shrink-0 transition-all duration-300',
-        sidebarCollapsed ? 'w-16' : 'w-56'
+        'hidden h-full shrink-0 flex-col border-r border-slate-200 bg-slate-50 transition-[width] duration-200 dark:border-[#2A2B2E] dark:bg-[#121314] md:flex',
+        collapsed ? 'w-14' : 'w-56'
       )}
     >
-      {/* Logo */}
-      <div className={cn(
-        'flex items-center border-b border-slate-100 dark:border-slate-700/60 shrink-0',
-        sidebarCollapsed ? 'px-3 py-4 justify-center' : 'px-4 py-4 gap-2'
-      )}>
-        <div className="w-8 h-8 bg-gradient-brand rounded-xl flex items-center justify-center shadow-glow-brand shrink-0">
-          <Sparkles className="w-4 h-4 text-white" />
-        </div>
-        {!sidebarCollapsed && (
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">JobTrack</p>
-            <p className="text-xs font-medium leading-tight gradient-text">AI Edition</p>
-          </div>
-        )}
+      <div className={cn('flex h-14 shrink-0 items-center', collapsed ? 'justify-center px-2' : 'justify-between pl-4 pr-2')}>
+        {!collapsed && <Link href="/" className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-white">JobTrack</Link>}
+        <button
+          onClick={toggleSidebar}
+          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="rounded-md p-1.5 text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white"
+        >
+          {collapsed ? <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} /> : <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />}
+        </button>
       </div>
 
-      {/* Nav */}
-      <nav className={cn('flex-1 py-3 overflow-y-auto', sidebarCollapsed ? 'px-2 space-y-0.5' : 'px-3 space-y-0.5')}>
-        {!sidebarCollapsed && (
-          <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Main</p>
-        )}
-        {NAV_MAIN.map(({ href, label, icon: Icon, badge, gradient }) => {
-          const active = isActive(href)
-          return (
-            <Link
-              key={href}
-              href={href}
-              title={sidebarCollapsed ? label : undefined}
-              className={cn(
-                'sidebar-nav-item group relative',
-                active ? 'active' : '',
-                sidebarCollapsed && 'justify-center px-2'
-              )}
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              {!sidebarCollapsed && <span className="truncate flex-1">{label}</span>}
-              {!sidebarCollapsed && badge && (
-                <span className={cn(
-                  'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
-                  gradient
-                    ? 'bg-gradient-brand text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500'
-                )}>
-                  {badge}
-                </span>
-              )}
-              {sidebarCollapsed && badge && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-brand-500" />
-              )}
-            </Link>
-          )
-        })}
-
-        <div className="pt-3">
-          {!sidebarCollapsed && (
-            <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Tools</p>
-          )}
-          {NAV_TOOLS.map(({ href, label, icon: Icon }) => {
-            const active = isActive(href)
-            return (
-              <Link
-                key={href}
-                href={href}
-                title={sidebarCollapsed ? label : undefined}
-                className={cn(
-                  'sidebar-nav-item',
-                  active ? 'active' : '',
-                  sidebarCollapsed && 'justify-center px-2'
-                )}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span className="truncate">{label}</span>}
-              </Link>
-            )
-          })}
-        </div>
+      <nav aria-label="Main" className={cn('flex-1 space-y-0.5 overflow-y-auto pb-3', collapsed ? 'px-2' : 'px-2.5')}>
+        {NAV_MAIN.map(item => <NavLink key={item.href} {...item} />)}
+        <div className="my-3 border-t border-slate-200 dark:border-[#2A2B2E]" role="separator" />
+        {NAV_TOOLS.map(item => <NavLink key={item.href} {...item} />)}
       </nav>
 
-      {/* Bottom */}
-      <div className={cn(
-        'border-t border-slate-100 dark:border-slate-700/60 py-3 space-y-0.5',
-        sidebarCollapsed ? 'px-2' : 'px-3'
-      )}>
+      <div className={cn('shrink-0 space-y-0.5 border-t border-slate-200 py-2.5 dark:border-[#2A2B2E]', collapsed ? 'px-2' : 'px-2.5')}>
         {mounted && (
           <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            title={isDark ? 'Light mode' : 'Dark mode'}
-            className={cn('sidebar-nav-item w-full', sidebarCollapsed && 'justify-center px-2')}
+            title={isDark ? 'Light theme' : 'Dark theme'}
+            className={cn('sidebar-nav-item w-full', collapsed && 'justify-center px-2')}
           >
-            {isDark ? <Sun className="w-4 h-4 shrink-0" /> : <Moon className="w-4 h-4 shrink-0" />}
-            {!sidebarCollapsed && (isDark ? 'Light mode' : 'Dark mode')}
+            {isDark ? <Sun className="h-4 w-4 shrink-0" strokeWidth={1.75} /> : <Moon className="h-4 w-4 shrink-0" strokeWidth={1.75} />}
+            {!collapsed && (isDark ? 'Light theme' : 'Dark theme')}
           </button>
         )}
-        <button
-          onClick={toggleSidebar}
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className={cn('sidebar-nav-item w-full', sidebarCollapsed && 'justify-center px-2')}
-        >
-          {sidebarCollapsed
-            ? <PanelLeftOpen className="w-4 h-4 shrink-0" />
-            : <PanelLeftClose className="w-4 h-4 shrink-0" />
-          }
-          {!sidebarCollapsed && 'Collapse'}
-        </button>
-        {authOn && (
-          <button
-            onClick={signOut}
-            title="Sign out"
-            className={cn('sidebar-nav-item w-full', sidebarCollapsed && 'justify-center px-2')}
+        <div className={cn('flex items-center gap-2.5 rounded-md py-1.5', collapsed ? 'justify-center' : 'px-2.5')}>
+          <span
+            aria-hidden="true"
+            title={collapsed ? `${user.name || user.email}` : undefined}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-semibold text-brand-800 dark:bg-brand-900 dark:text-brand-200"
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!sidebarCollapsed && 'Sign out'}
+            {initials(user.name, user.email)}
+          </span>
+          {!collapsed && (
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-medium leading-tight text-slate-900 dark:text-white">{user.name || 'Your account'}</p>
+              <p className="truncate text-[12px] leading-tight text-slate-500">{demo ? 'Demo account' : user.email}</p>
+            </div>
+          )}
+          {!collapsed && (
+            <button onClick={signOut} title="Sign out" aria-label="Sign out" className="rounded-md p-1.5 text-slate-500 hover:bg-slate-200/60 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white">
+              <LogOut className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
+        {collapsed && (
+          <button onClick={signOut} title="Sign out" aria-label="Sign out" className="sidebar-nav-item w-full justify-center px-2">
+            <LogOut className="h-4 w-4" strokeWidth={1.75} />
           </button>
         )}
       </div>

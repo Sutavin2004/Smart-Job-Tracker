@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 import { format } from 'date-fns'
 
-export async function GET() {
-  const jobs = await prisma.job.findMany({
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
+  const jobs = await db.job.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
       interviews: { orderBy: { scheduledAt: 'asc' } },
@@ -109,17 +109,17 @@ export async function GET() {
       'Content-Disposition': `attachment; filename="jobtrack-export-${format(new Date(), 'yyyy-MM-dd')}.csv"`,
     },
   })
-}
+})
 
-export async function POST() {
+export const POST = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
   // JSON export of everything
   const [jobs, profile, templates] = await Promise.all([
-    prisma.job.findMany({
+    db.job.findMany({
       include: { interviews: true, activities: true, documents: true, contacts: true, tasks: true, salaryNegotiations: true, applicationQAs: true },
     }),
-    prisma.userProfile.findFirst(),
-    prisma.emailTemplate.findMany(),
+    db.userProfile.findFirst(),
+    db.emailTemplate.findMany(),
   ])
 
   return NextResponse.json({ jobs, profile, templates, exportedAt: new Date().toISOString() })
-}
+})

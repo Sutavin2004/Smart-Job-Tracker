@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string; tid: string }> }) {
+export const PUT = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string; tid: string }> }, { db }: Auth) => {
   const { tid } = await params
   const body = await req.json()
   const data: Record<string, unknown> = {}
@@ -13,12 +13,12 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     data.completed = body.completed
     data.completedAt = body.completed ? new Date() : null
   }
-  const task = await prisma.task.update({ where: { id: tid }, data })
+  const task = await db.task.update({ where: { id: tid }, data })
   return NextResponse.json(task)
-}
+})
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string; tid: string }> }) {
+export const DELETE = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string; tid: string }> }, { db }: Auth) => {
   const { tid } = await params
-  await prisma.task.delete({ where: { id: tid } })
+  await db.task.delete({ where: { id: tid } })
   return NextResponse.json({ success: true })
-}
+})

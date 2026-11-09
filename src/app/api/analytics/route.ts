@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 import { subDays, subMonths, subWeeks, format } from 'date-fns'
 
-export async function GET() {
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
   const [jobs, interviews, tasks] = await Promise.all([
-    prisma.job.findMany({ include: { interviews: true } }),
-    prisma.interview.findMany({ orderBy: { scheduledAt: 'asc' } }),
-    prisma.task.findMany(),
+    db.job.findMany({ include: { interviews: true } }),
+    db.interview.findMany({ orderBy: { scheduledAt: 'asc' } }),
+    db.task.findMany(),
   ])
 
   const now = new Date()
@@ -83,4 +83,4 @@ export async function GET() {
     manuallyAddedCount: manualJobs.length,
     avgAiScore,
   })
-}
+})

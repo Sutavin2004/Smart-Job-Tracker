@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET() {
-  const tasks = await prisma.task.findMany({
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
+  const tasks = await db.task.findMany({
     orderBy: [{ completed: 'asc' }, { dueDate: 'asc' }],
     include: { job: { select: { company: true, role: true } } },
   })
   return NextResponse.json(tasks)
-}
+})

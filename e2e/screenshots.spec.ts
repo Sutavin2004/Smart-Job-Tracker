@@ -36,3 +36,12 @@ test('mobile dashboard', async ({ page }) => {
   await page.getByRole('button', { name: 'Dismiss all reminders' }).click()
   await page.screenshot({ path: 'e2e-screenshots/mobile-dashboard.png' })
 })
+
+test.describe('signed out', () => {
+  test.use({ storageState: { cookies: [], origins: [] }, viewport: { width: 1440, height: 900 } })
+  test('sign-in page', async ({ page }) => {
+    await page.goto('/login')
+    await page.waitForLoadState('networkidle')
+    await page.screenshot({ path: 'e2e-screenshots/sign-in.png' })
+  })
+})

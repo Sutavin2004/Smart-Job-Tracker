@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET() {
-  const profile = await prisma.userProfile.findFirst()
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db, user }: Auth) => {
+  const profile = await db.userProfile.findFirst()
   if (!profile) {
-    const newProfile = await prisma.userProfile.create({ data: {} })
+    const newProfile = await db.userProfile.create({ data: { userId: user.id, name: user.name, email: user.email } })
     return NextResponse.json(newProfile)
   }
   return NextResponse.json(profile)
-}
+})
 
-export async function PUT(req: NextRequest) {
+export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }: Auth) => {
   const body = await req.json()
-  const profile = await prisma.userProfile.findFirst()
+  const profile = await db.userProfile.findFirst()
 
   const data = {
     name: body.name ?? '',
@@ -46,10 +46,10 @@ export async function PUT(req: NextRequest) {
     // Partial update: only touch fields the client actually sent, so saving one
     // setting (e.g. the daily-agent toggle) can't blank out the rest of the profile.
     const patch = Object.fromEntries(Object.entries(data).filter(([k]) => k in body))
-    const updated = await prisma.userProfile.update({ where: { id: profile.id }, data: patch })
+    const updated = await db.userProfile.update({ where: { id: profile.id }, data: patch })
     return NextResponse.json(updated)
   }
 
-  const created = await prisma.userProfile.create({ data })
+  const created = await db.userProfile.create({ data: { ...data, userId: user.id } })
   return NextResponse.json(created)
-}
+})

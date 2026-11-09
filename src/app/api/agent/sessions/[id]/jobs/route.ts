@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
 
-  const jobs = await prisma.job.findMany({
+  const jobs = await db.job.findMany({
     where: { agentSessionId: id },
     orderBy: { aiScore: 'desc' },
     select: {
@@ -28,4 +28,4 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   })
 
   return NextResponse.json(jobs)
-}
+})

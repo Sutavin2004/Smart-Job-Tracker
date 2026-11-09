@@ -1,25 +1,28 @@
 import type { PrismaClient } from '@prisma/client'
+import { hashPassword } from './password'
+import { defaultTemplatesFor } from './default-templates'
+
+/** Credentials for the shared demo account (only created by the seed: demo + CI, never production). */
+import { DEMO_EMAIL, DEMO_PASSWORD } from './demo-credentials'
+export { DEMO_EMAIL, DEMO_PASSWORD }
 
 /**
  * Sample data: a student job-hunting in Toronto with ~10 applications across
  * every stage. Used by `npm run db:seed` locally and in CI, and to reset the
- * public demo each day. Wipes all existing data first.
+ * public demo each day. Wipes ALL users and data first: never run against a
+ * database with real accounts.
  */
 export async function seedDemoData(prisma: PrismaClient) {
-  await prisma.applicationQA.deleteMany()
-  await prisma.salaryNegotiation.deleteMany()
-  await prisma.task.deleteMany()
-  await prisma.contact.deleteMany()
-  await prisma.activity.deleteMany()
-  await prisma.document.deleteMany()
-  await prisma.interview.deleteMany()
-  await prisma.job.deleteMany()
-  await prisma.agentSession.deleteMany()
-  await prisma.userProfile.deleteMany()
-  await prisma.emailTemplate.deleteMany()
+  await prisma.user.deleteMany() // cascades to every user-owned row
+  await prisma.authAttempt.deleteMany()
+
+  const user = await prisma.user.create({
+    data: { email: DEMO_EMAIL, name: 'Alex Chen', passwordHash: await hashPassword(DEMO_PASSWORD) },
+  })
 
   await prisma.userProfile.create({
     data: {
+      userId: user.id,
       name: 'Alex Chen',
       email: 'alex.chen@example.com',
       phone: '+1 (416) 555-0198',
@@ -36,8 +39,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       targetLocations: 'Toronto, Vancouver, Remote',
       preferRemote: true,
       preferHybrid: true,
-      targetSalaryMin: 65000,
-      targetSalaryMax: 95000,
+      targetSalaryMin: 65, // thousands
+      targetSalaryMax: 95,
       currency: 'CAD',
       weeklyGoal: 5,
       defaultSource: 'LinkedIn',
@@ -46,11 +49,12 @@ export async function seedDemoData(prisma: PrismaClient) {
 
   const agentSession = await prisma.agentSession.create({
     data: {
+      userId: user.id,
       status: 'completed',
       jobsFound: 8,
       jobsAdded: 3,
       jobsFiltered: 2,
-      log: '🤖 Agent starting...\n🔍 Searching for: Software Engineer, Frontend Developer\n✅ Found 8 jobs\n➕ Added: Shopify — Frontend Engineer\n➕ Added: Wealthsimple — Software Engineer\n➕ Added: Notion — Full Stack Developer\n🎉 Done!',
+      log: 'Starting\nSearching for: Software Engineer, Frontend Developer\nFound 8 jobs\nAdded Shopify, Frontend Engineer\nAdded Wealthsimple, Software Engineer\nAdded Notion, Full Stack Developer\nDone',
       completedAt: new Date(Date.now() - 2 * 3600 * 1000),
     },
   })
@@ -65,8 +69,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       remote: true,
       hybrid: true,
       salary: '$80k - $105k CAD',
-      salaryMin: 80000,
-      salaryMax: 105000,
+      salaryMin: 80,
+      salaryMax: 105,
       source: 'LinkedIn',
       industry: 'E-commerce',
       techStack: 'React, TypeScript, Ruby on Rails, GraphQL',
@@ -91,8 +95,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Toronto, ON',
       remote: true,
       salary: '$70k - $90k CAD',
-      salaryMin: 70000,
-      salaryMax: 90000,
+      salaryMin: 70,
+      salaryMax: 90,
       source: 'LinkedIn',
       industry: 'Fintech',
       techStack: 'React, TypeScript, Python, PostgreSQL',
@@ -114,8 +118,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Remote',
       remote: true,
       salary: '$85k - $120k USD',
-      salaryMin: 85000,
-      salaryMax: 120000,
+      salaryMin: 85,
+      salaryMax: 120,
       currency: 'USD',
       source: 'Indeed',
       industry: 'Productivity',
@@ -137,8 +141,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       remote: false,
       hybrid: true,
       salary: '$65k - $75k CAD',
-      salaryMin: 65000,
-      salaryMax: 75000,
+      salaryMin: 65,
+      salaryMax: 75,
       source: 'Company Site',
       industry: 'Banking',
       techStack: 'Java, React, SQL, Spring Boot',
@@ -154,8 +158,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Toronto, ON',
       remote: true,
       salary: '$72k - $88k CAD',
-      salaryMin: 72000,
-      salaryMax: 88000,
+      salaryMin: 72,
+      salaryMax: 88,
       source: 'LinkedIn',
       industry: 'AI/SaaS',
       techStack: 'Python, React, TypeScript, AWS',
@@ -173,8 +177,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Remote',
       remote: true,
       salary: '$130k - $180k USD',
-      salaryMin: 130000,
-      salaryMax: 180000,
+      salaryMin: 130,
+      salaryMax: 180,
       currency: 'USD',
       source: 'LinkedIn',
       industry: 'Travel/Tech',
@@ -190,8 +194,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Remote',
       remote: true,
       salary: '$150k - $200k USD',
-      salaryMin: 150000,
-      salaryMax: 200000,
+      salaryMin: 150,
+      salaryMax: 200,
       currency: 'USD',
       source: 'Company Site',
       industry: 'Fintech',
@@ -208,8 +212,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       remote: true,
       hybrid: true,
       salary: '$95k CAD',
-      salaryMin: 95000,
-      salaryMax: 95000,
+      salaryMin: 95,
+      salaryMax: 95,
       source: 'Referral',
       industry: 'AI/ML',
       techStack: 'Python, TypeScript, React, Kubernetes',
@@ -229,8 +233,8 @@ export async function seedDemoData(prisma: PrismaClient) {
       location: 'Toronto, ON',
       hybrid: true,
       salary: '$62k - $78k CAD',
-      salaryMin: 62000,
-      salaryMax: 78000,
+      salaryMin: 62,
+      salaryMax: 78,
       source: 'Indeed',
       industry: 'Retail/Tech',
       techStack: 'React, Java, Spring Boot',
@@ -253,6 +257,7 @@ export async function seedDemoData(prisma: PrismaClient) {
     const job = await prisma.job.create({
       data: {
         ...rest,
+        userId: user.id,
         currency: (rest.currency as string) ?? 'CAD',
         dateApplied: new Date(dateApplied as string | Date),
         followUpDate: followUpDate ? new Date(followUpDate as string | Date) : null,
@@ -296,7 +301,7 @@ export async function seedDemoData(prisma: PrismaClient) {
         },
       })
       await prisma.activity.create({
-        data: { jobId: job.id, type: 'status_change', message: 'Offer received! 🎉 $95,000 CAD' },
+        data: { jobId: job.id, type: 'status_change', message: 'Offer received: $95,000 CAD' },
       })
     }
 
@@ -316,44 +321,6 @@ export async function seedDemoData(prisma: PrismaClient) {
     })
   }
 
-  await prisma.emailTemplate.createMany({
-    data: [
-      {
-        name: 'Follow-Up After Applying',
-        subject: 'Following up on my application — {{Role}} at {{Company}}',
-        body: "Hi {{Name}},\n\nI wanted to follow up on my application for the {{Role}} position at {{Company}}. I'm very excited about this opportunity and believe my skills in {{Skills}} would be a great fit.\n\nWould you have 15 minutes this week to chat?\n\nBest regards,\nAlex Chen",
-        type: 'follow_up',
-        isDefault: true,
-      },
-      {
-        name: 'Thank You After Interview',
-        subject: 'Thank you — {{Role}} Interview',
-        body: "Hi {{Name}},\n\nThank you so much for taking the time to speak with me today about the {{Role}} role. I really enjoyed learning more about the team and the exciting work happening at {{Company}}.\n\nThe discussion about {{Topic}} was particularly fascinating. I'm even more enthusiastic about joining the team.\n\nI look forward to hearing from you.\n\nBest,\nAlex Chen",
-        type: 'thank_you',
-        isDefault: true,
-      },
-      {
-        name: 'Withdrawing Application',
-        subject: 'Withdrawing my application — {{Role}}',
-        body: "Hi {{Name}},\n\nI wanted to let you know that I need to withdraw my application for the {{Role}} position. I have accepted another offer that is more aligned with my current career goals.\n\nThank you for your time and consideration. I have a lot of respect for {{Company}} and hope our paths cross in the future.\n\nBest regards,\nAlex Chen",
-        type: 'withdraw',
-        isDefault: true,
-      },
-      {
-        name: 'Salary Counter Offer',
-        subject: 'Re: Offer for {{Role}}',
-        body: "Hi {{Name}},\n\nThank you so much for the offer! I'm genuinely excited about joining {{Company}}.\n\nAfter reviewing the details, I'd like to respectfully discuss the base salary. Based on my research and the skills I bring, I was hoping we could get closer to {{Counter}}. I believe this reflects the market rate for someone with my background.\n\nI remain very enthusiastic about this role and hope we can find an agreement that works for both of us.\n\nBest,\nAlex Chen",
-        type: 'counter_offer',
-        isDefault: true,
-      },
-      {
-        name: 'Cold Outreach to Hiring Manager',
-        subject: 'Reaching out about {{Role}} opportunities at {{Company}}',
-        body: "Hi {{Name}},\n\nMy name is Alex Chen and I'm a Computer Science student passionate about building great software. I've been following {{Company}}'s work on {{Product/Area}} and am deeply impressed.\n\nI noticed you're hiring for {{Role}} and I'd love to learn more. My background in {{Skills}} aligns well with what I see in the job description.\n\nWould you be open to a 15-minute chat? I promise to make it worth your time.\n\nBest,\nAlex Chen",
-        type: 'cold_outreach',
-        isDefault: true,
-      },
-    ],
-  })
+  await prisma.emailTemplate.createMany({ data: defaultTemplatesFor(user.id) })
 
 }

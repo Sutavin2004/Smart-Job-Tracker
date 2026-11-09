@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
-  const job = await prisma.job.findUnique({ where: { id } })
+  const job = await db.job.findUnique({ where: { id } })
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const body = await request.json()
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'type and scheduledAt are required' }, { status: 400 })
   }
 
-  const interview = await prisma.interview.create({
+  const interview = await db.interview.create({
     data: {
       jobId: id,
       type,
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     },
   })
 
-  await prisma.activity.create({
+  await db.activity.create({
     data: {
       jobId: id,
       type: 'interview_scheduled',
@@ -33,25 +33,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   // Auto-update status to interviewing if still applied/saved
   if (job.status === 'applied' || job.status === 'saved') {
-    await prisma.job.update({
+    await db.job.update({
       where: { id },
       data: { status: 'interviewing' },
     })
   }
 
   return NextResponse.json(interview, { status: 201 })
-}
+})
 
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const PUT = withAuth(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
   const body = await request.json()
   const { interviewId, outcome, notes } = body
 
   // Make sure the interview belongs to this job before updating it.
-  const existing = await prisma.interview.findFirst({ where: { id: interviewId, jobId: id } })
+  const existing = await db.interview.findFirst({ where: { id: interviewId, jobId: id } })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const interview = await prisma.interview.update({
+  const interview = await db.interview.update({
     where: { id: interviewId },
     data: {
       ...(outcome !== undefined ? { outcome } : {}),
@@ -60,4 +60,4 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   })
 
   return NextResponse.json(interview)
-}
+})

@@ -64,7 +64,7 @@ export function FollowUpBanner() {
             {visible.length} Reminder{visible.length !== 1 ? 's' : ''}
           </span>
           {highUrgency.length > 0 && (
-            <span className="text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full">
               {highUrgency.length} urgent
             </span>
           )}

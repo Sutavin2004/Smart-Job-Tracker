@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Bell, Calendar, AlertCircle, Clock, ChevronRight } from 'lucide-react'
+import { Bell, Calendar, AlertCircle, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Reminder } from '@/app/api/reminders/route'
 
-const TYPE_CONFIG: Record<Reminder['type'], { icon: React.ComponentType<{ className?: string }>; color: string; bg: string }> = {
-  interview_soon: { icon: Calendar, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+const TYPE_CONFIG: Record<Reminder['type'], { icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; color: string; bg: string }> = {
+  interview_soon: { icon: Calendar, color: 'text-sky-700 dark:text-sky-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
   deadline_soon: { icon: AlertCircle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20' },
   follow_up_date: { icon: Clock, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20' },
   stale_application: { icon: Bell, color: 'text-brand-600 dark:text-brand-400', bg: 'bg-brand-50 dark:bg-brand-900/20' },
@@ -26,80 +26,38 @@ export function RemindersWidget() {
       .finally(() => setLoading(false))
   }, [])
 
-  if (loading) {
-    return (
-      <div className="card p-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <Bell className="w-4 h-4 text-brand-500" />
-          <span className="text-sm font-semibold">Reminders</span>
-        </div>
-        <div className="space-y-2">
-          {[1, 2].map(i => <div key={i} className="h-10 bg-slate-100 dark:bg-slate-700 rounded-lg animate-pulse" />)}
-        </div>
-      </div>
-    )
-  }
-
-  if (reminders.length === 0) {
-    return (
-      <div className="card p-4 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <Bell className="w-4 h-4 text-brand-500" />
-          <span className="text-sm font-semibold">Reminders</span>
-        </div>
-        <p className="text-xs text-slate-400 text-center py-3">All caught up! 🎉</p>
-      </div>
-    )
-  }
-
   return (
-    <div className="card p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Bell className="w-4 h-4 text-brand-500" />
-          <span className="text-sm font-semibold">Reminders</span>
-        </div>
-        <span className={cn(
-          'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
-          reminders.some(r => r.urgency === 'high')
-            ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-        )}>
-          {reminders.length}
-        </span>
+    <section className="card" aria-labelledby="reminders-heading">
+      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-[#2A2B2E]">
+        <h2 id="reminders-heading" className="text-sm font-semibold text-slate-900 dark:text-white">
+          Needs attention
+          {reminders.length > 0 && <span className="ml-1.5 font-normal tabular-nums text-slate-500">{reminders.length}</span>}
+        </h2>
+        <Link href="/tasks" className="text-[13px] text-slate-500 hover:text-slate-900 dark:hover:text-white">Tasks</Link>
       </div>
-
-      <div className="space-y-2">
-        {reminders.map(reminder => {
-          const cfg = TYPE_CONFIG[reminder.type]
-          const Icon = cfg.icon
-          return (
-            <Link
-              key={reminder.id}
-              href={`/jobs?id=${reminder.jobId}`}
-              className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group"
-            >
-              <div className={cn('w-6 h-6 rounded-md flex items-center justify-center shrink-0 mt-0.5', cfg.bg)}>
-                <Icon className={cn('w-3 h-3', cfg.color)} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">
-                  {reminder.company}
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">{reminder.message}</p>
-              </div>
-              <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-slate-500 shrink-0 mt-1" />
-            </Link>
-          )
-        })}
-      </div>
-
-      <Link
-        href="/tasks"
-        className="flex items-center justify-center gap-1 mt-3 text-xs text-brand-600 dark:text-brand-400 hover:underline"
-      >
-        View all tasks <ChevronRight className="w-3 h-3" />
-      </Link>
-    </div>
+      {loading ? (
+        <div className="space-y-2 p-4">{[1, 2].map(i => <div key={i} className="h-9 animate-pulse rounded bg-slate-100 dark:bg-[#222326]" />)}</div>
+      ) : reminders.length === 0 ? (
+        <p className="px-5 py-5 text-[13px] text-slate-500">Nothing is waiting on you. Follow-ups and upcoming interviews will appear here.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100 dark:divide-[#26272A]">
+          {reminders.map(reminder => {
+            const cfg = TYPE_CONFIG[reminder.type]
+            const Icon = cfg.icon
+            return (
+              <li key={reminder.id}>
+                <Link href={`/jobs?id=${reminder.jobId}`} className="flex items-start gap-3 px-5 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03]">
+                  <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', cfg.color)} strokeWidth={1.75} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[13px] font-medium text-slate-900 dark:text-white">{reminder.company}</span>
+                    <span className="block text-[13px] leading-snug text-slate-500">{reminder.message}</span>
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </section>
   )
 }

@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
-  const tasks = await prisma.task.findMany({ where: { jobId: id }, orderBy: { createdAt: 'asc' } })
+  const tasks = await db.task.findMany({ where: { jobId: id }, orderBy: { createdAt: 'asc' } })
   return NextResponse.json(tasks)
-}
+})
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
   const body = await req.json()
-  const task = await prisma.task.create({
+  const task = await db.task.create({
     data: {
       jobId: id,
       title: body.title,
@@ -19,6 +19,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       priority: body.priority ?? 'medium',
     },
   })
-  await prisma.activity.create({ data: { jobId: id, type: 'task_added', message: `Task added: ${body.title}` } })
+  await db.activity.create({ data: { jobId: id, type: 'task_added', message: `Task added: ${body.title}` } })
   return NextResponse.json(task, { status: 201 })
-}
+})

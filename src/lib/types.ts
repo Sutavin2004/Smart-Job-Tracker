@@ -221,12 +221,12 @@ export const STATUS_CONFIG: Record<JobStatus, {
   label: string; color: string; bg: string; border: string; dot: string
 }> = {
   saved:        { label: 'Saved',        color: 'text-slate-600 dark:text-slate-300',     bg: 'bg-slate-100 dark:bg-slate-700/60',     border: 'border-slate-200 dark:border-slate-600', dot: 'bg-slate-400' },
-  applied:      { label: 'Applied',      color: 'text-blue-700 dark:text-blue-300',       bg: 'bg-blue-50 dark:bg-blue-900/30',        border: 'border-blue-200 dark:border-blue-700',   dot: 'bg-blue-500' },
+  applied:      { label: 'Applied',      color: 'text-sky-800 dark:text-sky-300',         bg: 'bg-sky-50 dark:bg-sky-900/30',          border: 'border-sky-200 dark:border-sky-800',     dot: 'bg-sky-600' },
   interviewing: { label: 'Interviewing', color: 'text-amber-700 dark:text-amber-300',     bg: 'bg-amber-50 dark:bg-amber-900/30',      border: 'border-amber-200 dark:border-amber-700', dot: 'bg-amber-500' },
-  offered:      { label: 'Offered',      color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/30',  border: 'border-emerald-200 dark:border-emerald-700', dot: 'bg-emerald-500' },
+  offered:      { label: 'Offered',      color: 'text-brand-700 dark:text-brand-300',     bg: 'bg-brand-50 dark:bg-brand-900/40',      border: 'border-brand-200 dark:border-brand-800', dot: 'bg-brand-500' },
   rejected:     { label: 'Rejected',     color: 'text-red-700 dark:text-red-300',         bg: 'bg-red-50 dark:bg-red-900/30',          border: 'border-red-200 dark:border-red-700',     dot: 'bg-red-500' },
-  ghosted:      { label: 'Ghosted',      color: 'text-purple-700 dark:text-purple-300',   bg: 'bg-purple-50 dark:bg-purple-900/30',    border: 'border-purple-200 dark:border-purple-700', dot: 'bg-purple-500' },
-  withdrawn:    { label: 'Withdrawn',    color: 'text-gray-600 dark:text-gray-300',       bg: 'bg-gray-100 dark:bg-gray-700/60',       border: 'border-gray-200 dark:border-gray-600',   dot: 'bg-gray-400' },
+  ghosted:      { label: 'Ghosted',      color: 'text-stone-600 dark:text-stone-300',     bg: 'bg-stone-100 dark:bg-stone-800/60',     border: 'border-stone-200 dark:border-stone-700', dot: 'bg-stone-400' },
+  withdrawn:    { label: 'Withdrawn',    color: 'text-slate-500 dark:text-slate-400',     bg: 'bg-slate-100 dark:bg-slate-800/60',     border: 'border-slate-200 dark:border-slate-700', dot: 'bg-slate-300 dark:bg-slate-600' },
 }
 
 export const PRIORITY_CONFIG: Record<JobPriority, { label: string; color: string; dot: string; bg: string }> = {

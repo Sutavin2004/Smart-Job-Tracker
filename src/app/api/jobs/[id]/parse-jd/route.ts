@@ -1,10 +1,12 @@
+import { consumeQuota } from '@/lib/quota'
+import { withAuth, type Auth } from '@/lib/api'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { user }: Auth) => {
   const body = await req.json()
   const { jobDescription } = body as { jobDescription: string }
   if (!jobDescription) return NextResponse.json({ error: 'jobDescription required' }, { status: 400 })
@@ -32,11 +34,12 @@ export async function POST(req: NextRequest) {
   "yearsRequired": number or null,
   "requirements": string or null,
   "parsedKeywords": string or null
-}
+})
 
 Job Description:
 ${jobDescription.slice(0, 4000)}`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 800,
@@ -50,4 +53,4 @@ ${jobDescription.slice(0, 4000)}`
   } catch { /* fall through */ }
 
   return NextResponse.json({})
-}
+})

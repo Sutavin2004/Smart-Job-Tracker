@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string; nid: string }> }) {
+export const PUT = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string; nid: string }> }, { db }: Auth) => {
   const { nid } = await params
   const body = await req.json()
-  const neg = await prisma.salaryNegotiation.update({
+  const neg = await db.salaryNegotiation.update({
     where: { id: nid },
     data: {
       theirOffer: body.theirOffer ?? null,
@@ -14,10 +14,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     },
   })
   return NextResponse.json(neg)
-}
+})
 
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string; nid: string }> }) {
+export const DELETE = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string; nid: string }> }, { db }: Auth) => {
   const { nid } = await params
-  await prisma.salaryNegotiation.delete({ where: { id: nid } })
+  await db.salaryNegotiation.delete({ where: { id: nid } })
   return NextResponse.json({ success: true })
-}
+})

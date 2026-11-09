@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
-  const job = await prisma.job.findUnique({ where: { id } })
+  const job = await db.job.findUnique({ where: { id } })
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const updated = await prisma.job.update({ where: { id }, data: { archived: !job.archived } })
+  const updated = await db.job.update({ where: { id }, data: { archived: !job.archived } })
   return NextResponse.json(updated)
-}
+})

@@ -24,6 +24,8 @@ jobs:
     env:
       DATABASE_URL: postgresql://app:app@localhost:5432/jobtracker
       DATABASE_URL_UNPOOLED: postgresql://app:app@localhost:5432/jobtracker
+      # Every test signs up from 127.0.0.1; lift the per-IP sign-up limit.
+      SIGNUP_LIMIT_PER_HOUR: '1000'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

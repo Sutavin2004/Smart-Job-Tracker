@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET() {
-  const jobs = await prisma.job.findMany()
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
+  const jobs = await db.job.findMany()
 
   const counts = {
     total: jobs.length,
@@ -37,4 +37,4 @@ export async function GET() {
     interviewRate,
     monthly,
   })
-}
+})

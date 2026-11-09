@@ -1,25 +1,34 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'JobTrack — AI job search assistant'
+export const alt = 'JobTrack: track every application and find jobs that fit'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
+
+const ROWS: [string, string, string][] = [
+  ['Fieldnote', 'Frontend Engineer', 'Interview'],
+  ['Copperline', 'Software Engineer II', 'Applied'],
+  ['Harbor & Pine', 'Full Stack Developer', 'Offer'],
+]
 
 /** Link preview image for Slack, LinkedIn, iMessage, etc. */
 export default function OpengraphImage() {
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 80, background: 'linear-gradient(135deg,#1a1236 0%,#0f0e1a 60%)', color: 'white', fontFamily: 'sans-serif' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ width: 96, height: 96, borderRadius: 26, background: 'linear-gradient(135deg,#8448ff,#4f8fff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <svg width="60" height="60" viewBox="0 0 64 64"><path d="M32 6l6.5 17.5L56 30l-17.5 6.5L32 54l-6.5-17.5L8 30l17.5-6.5z" fill="#fff" /></svg>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#175847', color: 'white', fontFamily: 'sans-serif' }}>
+        <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: -0.5 }}>JobTrack</div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontSize: 56, fontWeight: 700, lineHeight: 1.12, letterSpacing: -1, maxWidth: 980 }}>
+            Every application in one place, and new jobs worth your time each morning.
           </div>
-          <div style={{ fontSize: 64, fontWeight: 800 }}>JobTrack</div>
-        </div>
-        <div style={{ marginTop: 40, fontSize: 44, fontWeight: 700, lineHeight: 1.2, maxWidth: 950 }}>
-          An AI agent that finds jobs that fit you, and a board to track every application.
-        </div>
-        <div style={{ marginTop: 32, display: 'flex', gap: 16, fontSize: 26, color: '#b9b4ff' }}>
-          <span>Daily job discovery</span><span>·</span><span>Fit scoring</span><span>·</span><span>Cover letters & interview prep</span>
+          <div style={{ display: 'flex', flexDirection: 'column', marginTop: 44, fontSize: 26 }}>
+            {ROWS.map(([c, r, s]) => (
+              <div key={c} style={{ display: 'flex', padding: '12px 0', borderTop: '1px solid rgba(255,255,255,0.18)' }}>
+                <div style={{ width: 300, fontWeight: 600 }}>{c}</div>
+                <div style={{ width: 460, color: 'rgba(255,255,255,0.75)' }}>{r}</div>
+                <div style={{ color: s === 'Offer' ? '#ffffff' : 'rgba(255,255,255,0.75)' }}>{s}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     ),

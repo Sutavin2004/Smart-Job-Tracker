@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { runDiscovery } from '@/lib/agent/discover'
 import { safeEqual } from '@/lib/auth'
+import { scopedDb } from '@/lib/scoped-db'
+import { consumeQuota, QuotaError } from '@/lib/quota'
 
 export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
 /**
- * Daily Job Agent run, triggered by Vercel Cron (see vercel.json).
+ * Daily Job Agent run for every user who turned on "Run every morning",
+ * triggered by Vercel Cron (see vercel.json).
  *
  * Auth: if CRON_SECRET is set, Vercel sends it as a Bearer token and we require
  * it. Without it we accept Vercel's cron user agent, which can be spoofed, so
- * the run is also limited to once every 20 hours: the most a forged request can
- * do is trigger the same single daily run the schedule would.
+ * each user's run is also limited to once every 20 hours: the most a forged
+ * request can do is trigger the same daily runs the schedule would.
  */
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET
@@ -20,13 +23,29 @@ export async function GET(req: NextRequest) {
   const fromCron = secret ? safeEqual(auth, `Bearer ${secret}`) : (req.headers.get('user-agent') ?? '').includes('vercel-cron')
   if (!fromCron) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const profile = await prisma.userProfile.findFirst()
-  if (!profile?.autoDiscover) return NextResponse.json({ skipped: 'Daily discovery is turned off' })
+  const started = Date.now()
+  const since = new Date(started - 20 * 60 * 60 * 1000)
+  const profiles = await prisma.userProfile.findMany({
+    where: {
+      autoDiscover: true,
+      targetRoles: { not: '' },
+      user: { agentSessions: { none: { trigger: 'scheduled', startedAt: { gte: since } } } },
+    },
+    select: { userId: true },
+    orderBy: { updatedAt: 'asc' },
+  })
 
-  const since = new Date(Date.now() - 20 * 60 * 60 * 1000)
-  const recent = await prisma.agentSession.findFirst({ where: { trigger: 'scheduled', startedAt: { gte: since } } })
-  if (recent) return NextResponse.json({ skipped: 'Already ran in the last 20 hours' })
-
-  const result = await runDiscovery({ trigger: 'scheduled' })
-  return NextResponse.json(result, { status: result.error ? 500 : 200 })
+  const results: Record<string, unknown>[] = []
+  for (const { userId } of profiles) {
+    // Leave headroom under the 300s function limit; anyone skipped runs tomorrow.
+    if (Date.now() - started > 220_000) break
+    try {
+      await consumeQuota(userId, 'agent')
+      const r = await runDiscovery({ db: scopedDb(userId), userId, trigger: 'scheduled' })
+      results.push({ userId, added: r.added, error: r.error })
+    } catch (err) {
+      results.push({ userId, error: err instanceof QuotaError ? 'daily limit reached' : String(err) })
+    }
+  }
+  return NextResponse.json({ eligible: profiles.length, ran: results.length, results })
 }

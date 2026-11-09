@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET() {
-  const templates = await prisma.emailTemplate.findMany({ orderBy: { createdAt: 'asc' } })
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
+  const templates = await db.emailTemplate.findMany({ orderBy: { createdAt: 'asc' } })
   return NextResponse.json(templates)
-}
+})
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }: Auth) => {
   const body = await req.json()
-  const template = await prisma.emailTemplate.create({
+  const template = await db.emailTemplate.create({
     data: {
+      userId: user.id,
       name: body.name,
       subject: body.subject,
       body: body.body,
@@ -18,4 +19,4 @@ export async function POST(req: NextRequest) {
     },
   })
   return NextResponse.json(template, { status: 201 })
-}
+})

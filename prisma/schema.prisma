@@ -8,8 +8,59 @@ datasource db {
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String   @default("")
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  sessions       Session[]
+  profile        UserProfile?
+  jobs           Job[]
+  agentSessions  AgentSession[]
+  emailTemplates EmailTemplate[]
+  usage          UsageCounter[]
+}
+
+/// Login session. `id` is the SHA-256 of the cookie token, so a leaked DB row can't be replayed.
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+/// Failed/attempted sign-ins and sign-ups, for rate limiting.
+model AuthAttempt {
+  id        String   @id @default(cuid())
+  key       String
+  createdAt DateTime @default(now())
+
+  @@index([key, createdAt])
+}
+
+/// Per-user daily counters for AI calls and agent runs.
+model UsageCounter {
+  userId String
+  day    String // YYYY-MM-DD (UTC)
+  kind   String
+  count  Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, day, kind])
+}
+
 model Job {
   id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   company         String
   role            String
   status          String    @default("saved")
@@ -86,7 +137,7 @@ model Job {
   salaryNegotiations SalaryNegotiation[]
   applicationQAs     ApplicationQA[]
 
-  @@index([archived, status])
+  @@index([userId, archived, status])
   @@index([updatedAt])
 }
 
@@ -208,6 +259,8 @@ model ApplicationQA {
 
 model UserProfile {
   id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name            String   @default("")
   email           String   @default("")
   phone           String   @default("")
@@ -239,6 +292,8 @@ model UserProfile {
 
 model AgentSession {
   id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   status        String    @default("running")
   trigger       String    @default("manual")
   searchQueries String?
@@ -250,11 +305,13 @@ model AgentSession {
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
 
-  @@index([startedAt])
+  @@index([userId, startedAt])
 }
 
 model EmailTemplate {
   id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   subject   String
   body      String
@@ -263,4 +320,6 @@ model EmailTemplate {
   useCount  Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }

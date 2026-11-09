@@ -1,10 +1,12 @@
+import { consumeQuota } from '@/lib/quota'
+import { withAuth, type Auth } from '@/lib/api'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { user }: Auth) => {
   const body = await req.json()
   const { resumeText, jobDescription } = body as { resumeText: string; jobDescription?: string }
   if (!resumeText) return NextResponse.json({ error: 'resumeText required' }, { status: 400 })
@@ -35,6 +37,7 @@ Return ONLY a valid JSON object:
   "summary": "2-3 sentence overall assessment"
 }`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 1500,
@@ -48,4 +51,4 @@ Return ONLY a valid JSON object:
   } catch { /* fall through */ }
 
   return NextResponse.json({ overallScore: 0, atsScore: 0, readabilityScore: 0, keywordMatchScore: 0, missingKeywords: [], presentKeywords: [], strongPoints: [], improvements: [text], atsWarnings: [], rewrittenBullets: [], summary: '' })
-}
+})

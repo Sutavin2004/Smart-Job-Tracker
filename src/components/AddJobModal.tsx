@@ -145,7 +145,7 @@ export function AddJobModal({ onClose, onCreated }: Props) {
               <CheckCircle2 className="w-3.5 h-3.5" /> {imported}. Check the details below.
             </p>
           )}
-          <div className="mt-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-slate-400">
+          <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
             <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" /> or enter details <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
           </div>
         </div>

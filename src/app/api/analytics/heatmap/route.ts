@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse, NextRequest } from 'next/server'
+import { withAuth, type Auth } from '@/lib/api'
 import { subDays, format } from 'date-fns'
 
-export async function GET() {
+export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
   try {
     const since = subDays(new Date(), 365)
-    const jobs = await prisma.job.findMany({
+    const jobs = await db.job.findMany({
       where: { dateApplied: { gte: since } },
       select: { dateApplied: true },
     })
@@ -20,4 +20,4 @@ export async function GET() {
   } catch {
     return NextResponse.json({})
   }
-}
+})

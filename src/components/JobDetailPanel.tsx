@@ -289,11 +289,11 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-xs font-semibold text-white shrink-0">
                 {job.company[0]?.toUpperCase()}
               </div>
               <div className="min-w-0">
-                <h2 className="font-bold text-slate-900 dark:text-white text-base truncate">{job.company}</h2>
+                <h2 className="font-semibold text-slate-900 dark:text-white text-base truncate">{job.company}</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{job.role}</p>
               </div>
             </div>
@@ -303,7 +303,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               {job.remote && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">Remote</span>}
               {job.hybrid && !job.remote && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">Hybrid</span>}
               {aiData.score !== null && (
-                <span className={cn('text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700', scoreColor)}>
+                <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700', scoreColor)}>
                   AI {aiData.score}/100
                 </span>
               )}
@@ -333,7 +333,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
           >
             {t.icon} {t.label}
             {t.badge ? (
-              <span className="ml-0.5 w-4 h-4 rounded-full bg-brand-500 text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="ml-0.5 w-4 h-4 rounded-full bg-brand-500 text-white text-[9px] font-semibold flex items-center justify-center">
                 {t.badge}
               </span>
             ) : null}
@@ -411,7 +411,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 <div className="space-y-1.5">
                   {contacts.map(c => (
                     <div key={c.id} className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700/50 rounded-lg px-3 py-2">
-                      <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-[10px] font-bold text-brand-600 shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center text-[10px] font-semibold text-brand-600 shrink-0">
                         {c.name[0]?.toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -461,7 +461,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                     />
                   </svg>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className={cn('text-sm font-bold', scoreColor)}>{aiData.score}</span>
+                    <span className={cn('text-sm font-semibold', scoreColor)}>{aiData.score}</span>
                   </div>
                 </div>
               ) : (
@@ -487,7 +487,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               <div className="grid grid-cols-2 gap-3">
                 {aiData.strengths.length > 0 && (
                   <div className="bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800 rounded-xl p-3">
-                    <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase mb-2 flex items-center gap-1">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1">
                       <CheckCircle className="w-3 h-3" /> Strengths
                     </p>
                     <ul className="space-y-1">
@@ -497,7 +497,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 )}
                 {aiData.risks.length > 0 && (
                   <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-xl p-3">
-                    <p className="text-[10px] font-semibold text-red-700 dark:text-red-400 uppercase mb-2 flex items-center gap-1">
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" /> Risks
                     </p>
                     <ul className="space-y-1">
@@ -510,7 +510,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {aiData.nextSteps.length > 0 && (
               <div className="bg-brand-50 dark:bg-brand-900/10 border border-brand-100 dark:border-brand-800 rounded-xl p-3">
-                <p className="text-[10px] font-semibold text-brand-700 dark:text-brand-400 uppercase mb-2 flex items-center gap-1">
+                <p className="text-xs font-semibold text-brand-700 dark:text-brand-400 mb-2 flex items-center gap-1">
                   <Lightbulb className="w-3 h-3" /> Next Steps
                 </p>
                 <ol className="space-y-1">
@@ -521,7 +521,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {aiData.keySkills && (aiData.keySkills.have?.length || aiData.keySkills.missing?.length) ? (
               <div>
-                <p className="text-[10px] font-semibold uppercase text-slate-500 mb-2 flex items-center gap-1"><Target className="w-3 h-3" /> Key Skills</p>
+                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Target className="w-3 h-3" /> Key Skills</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(aiData.keySkills.have ?? []).map(s => (
                     <span key={s} className="text-[11px] bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">{s}</span>
@@ -536,14 +536,14 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {aiData.salaryInsight && (
               <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3">
-                <p className="text-[10px] font-semibold uppercase text-slate-500 mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Salary Insight</p>
+                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Salary Insight</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{aiData.salaryInsight}</p>
               </div>
             )}
 
             {aiData.cultureFit && (
               <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3">
-                <p className="text-[10px] font-semibold uppercase text-slate-500 mb-1 flex items-center gap-1"><Star className="w-3 h-3" /> Culture Fit</p>
+                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><Star className="w-3 h-3" /> Culture Fit</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{aiData.cultureFit}</p>
               </div>
             )}
@@ -596,7 +596,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               {coverLetter && (
                 <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <p className="text-[10px] font-semibold text-slate-500 uppercase">Cover Letter</p>
+                    <p className="text-xs font-semibold text-slate-500">Cover Letter</p>
                     <button onClick={() => { navigator.clipboard.writeText(coverLetter); toast.success('Copied!') }} className="text-xs text-brand-600 hover:underline">Copy</button>
                   </div>
                   <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{coverLetter}</p>
@@ -617,13 +617,13 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               {tailorResult && (
                 <div className="space-y-3">
                   <div className="flex items-center gap-4">
-                    <div className="text-center"><p className="text-xl font-bold text-slate-400">{String(tailorResult.atsScoreBefore ?? 0)}</p><p className="text-[10px] text-slate-400">Before</p></div>
+                    <div className="text-center"><p className="text-xl font-semibold text-slate-400">{String(tailorResult.atsScoreBefore ?? 0)}</p><p className="text-[10px] text-slate-400">Before</p></div>
                     <div className="flex-1 h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-emerald-500 transition-all" style={{ width: `${tailorResult.atsScoreAfter as number ?? 0}%` }} /></div>
-                    <div className="text-center"><p className="text-xl font-bold text-emerald-600">{String(tailorResult.atsScoreAfter ?? 0)}</p><p className="text-[10px] text-slate-400">After</p></div>
+                    <div className="text-center"><p className="text-xl font-semibold text-emerald-600">{String(tailorResult.atsScoreAfter ?? 0)}</p><p className="text-[10px] text-slate-400">After</p></div>
                   </div>
                   {(tailorResult.missingKeywords as string[] ?? []).length > 0 && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase text-red-600 mb-1">Missing Keywords</p>
+                      <p className="text-xs font-semibold text-red-600 mb-1">Missing Keywords</p>
                       <div className="flex flex-wrap gap-1">
                         {(tailorResult.missingKeywords as string[]).map(k => <span key={k} className="text-[10px] bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded-full">{k}</span>)}
                       </div>
@@ -631,7 +631,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                   )}
                   {tailorResult.tailoredSummary != null && (
                     <div>
-                      <p className="text-[10px] font-semibold uppercase text-slate-500 mb-1">Tailored Summary</p>
+                      <p className="text-xs font-semibold text-slate-500 mb-1">Tailored Summary</p>
                       <p className="text-xs text-slate-600 dark:text-slate-300 bg-brand-50 dark:bg-brand-900/10 p-2.5 rounded-lg">{String(tailorResult.tailoredSummary)}</p>
                     </div>
                   )}

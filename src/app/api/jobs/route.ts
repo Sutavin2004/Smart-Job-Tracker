@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request: NextRequest, _ctx: unknown, { db }: Auth) => {
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
   const priority = searchParams.get('priority')
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   const validSortFields = ['updatedAt', 'createdAt', 'dateApplied', 'company', 'role', 'aiScore', 'priority']
   const orderField = validSortFields.includes(sortBy) ? sortBy : 'updatedAt'
 
-  const jobs = await prisma.job.findMany({
+  const jobs = await db.job.findMany({
     where,
     include: {
       interviews: { orderBy: { scheduledAt: 'asc' } },
@@ -56,9 +56,9 @@ export async function GET(request: NextRequest) {
   })
 
   return NextResponse.json(jobs)
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request: NextRequest, _ctx: unknown, { db, user }: Auth) => {
   const body = await request.json()
   const { company, role } = body
 
@@ -66,8 +66,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Company and role are required' }, { status: 400 })
   }
 
-  const job = await prisma.job.create({
+  const job = await db.job.create({
     data: {
+      userId: user.id,
       company,
       role,
       status: body.status ?? 'saved',
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  await prisma.activity.create({
+  await db.activity.create({
     data: {
       jobId: job.id,
       type: 'created',
@@ -106,4 +107,4 @@ export async function POST(request: NextRequest) {
   })
 
   return NextResponse.json(job, { status: 201 })
-}
+})

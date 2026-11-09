@@ -85,7 +85,7 @@ export function CommandPalette() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.96, opacity: 0, y: -8 }}
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-lg bg-white dark:bg-[#1a1826] rounded-2xl shadow-modal border border-slate-200/60 dark:border-white/10 overflow-hidden"
+            className="relative w-full max-w-lg bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-modal border border-slate-200/60 dark:border-white/10 overflow-hidden"
           >
             <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/5">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
@@ -105,7 +105,7 @@ export function CommandPalette() {
             </div>
 
             <div className="max-h-80 overflow-y-auto py-2">
-              <p className="px-4 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Quick Actions</p>
+              <p className="px-4 py-1 text-xs font-semibold text-slate-400 dark:text-slate-400">Quick Actions</p>
               {QUICK_ACTIONS.map((action, i) => (
                 <button
                   key={action.action}
@@ -125,7 +125,7 @@ export function CommandPalette() {
 
               {filteredJobs.length > 0 && (
                 <>
-                  <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">
+                  <p className="px-4 pt-3 pb-1 text-xs font-semibold text-slate-400 dark:text-slate-400">
                     {query ? 'Results' : 'Recent Jobs'}
                   </p>
                   {filteredJobs.map((job, i) => {
@@ -139,7 +139,7 @@ export function CommandPalette() {
                           cursor === QUICK_ACTIONS.length + i && 'bg-brand-50 dark:bg-brand-900/20'
                         )}
                       >
-                        <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                        <div className="w-7 h-7 rounded-md bg-slate-100 text-slate-700 dark:bg-[#26272A] dark:text-slate-200 flex items-center justify-center text-[11px] font-semibold shrink-0">
                           {job.company[0]}
                         </div>
                         <div className="flex-1 min-w-0">

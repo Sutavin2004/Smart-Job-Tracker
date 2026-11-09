@@ -1,21 +1,22 @@
+import { consumeQuota } from '@/lib/quota'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db, user }: Auth) => {
   const { id } = await params
   const [job, profile] = await Promise.all([
-    prisma.job.findUnique({ where: { id } }),
-    prisma.userProfile.findFirst(),
+    db.job.findUnique({ where: { id } }),
+    db.userProfile.findFirst(),
   ])
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   if (!anthropic) {
     const fallback = 'Add your ANTHROPIC_API_KEY to .env to enable AI analysis.'
-    const updated = await prisma.job.update({
+    const updated = await db.job.update({
       where: { id },
       data: { aiSuggestion: fallback, aiScore: 0, aiLastAnalyzed: new Date() },
     })
@@ -59,6 +60,7 @@ Return ONLY a valid JSON object:
   "applicationTips": ["tip 1", "tip 2", "tip 3"]
 }`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 1000,
@@ -73,7 +75,7 @@ Return ONLY a valid JSON object:
     if (match) parsed = JSON.parse(match[0])
   } catch { /* fall through */ }
 
-  const updated = await prisma.job.update({
+  const updated = await db.job.update({
     where: { id },
     data: {
       aiScore: typeof parsed.score === 'number' ? parsed.score : null,
@@ -95,9 +97,9 @@ Return ONLY a valid JSON object:
     },
   })
 
-  await prisma.activity.create({
+  await db.activity.create({
     data: { jobId: id, type: 'ai_analyzed', message: `AI analysis completed — fit score: ${typeof parsed.score === 'number' ? parsed.score : 'N/A'}/100` },
   })
 
   return NextResponse.json(updated)
-}
+})

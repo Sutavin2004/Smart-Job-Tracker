@@ -1,3 +1,5 @@
+import { consumeQuota, QuotaError } from '@/lib/quota'
+import { withAuth, type Auth } from '@/lib/api'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { AI_MODELS } from '@/lib/ai-models'
@@ -11,8 +13,9 @@ export const maxDuration = 60
 const FIELDS = ['company', 'role', 'location', 'remote', 'salaryRaw', 'salaryMin', 'salaryMax', 'currency', 'jobDescription', 'deadline', 'employmentType'] as const
 
 /** Ask Claude to read the page text when the site has no structured job data. */
-async function aiExtract(text: string): Promise<Partial<ImportedJob> | null> {
+async function aiExtract(text: string, userId: string): Promise<Partial<ImportedJob> | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null
+  await consumeQuota(userId, 'ai')
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
   const res = await anthropic.messages.create({
     model: AI_MODELS.fast,
@@ -38,7 +41,7 @@ ${text.slice(0, 20000)}`,
   }
 }
 
-async function importFromUrl(req: NextRequest) {
+async function importFromUrl(req: NextRequest, userId: string) {
   const { url } = await req.json().catch(() => ({ url: '' }))
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
     return NextResponse.json({ error: 'Paste a full link starting with https://' }, { status: 400 })
@@ -71,7 +74,7 @@ async function importFromUrl(req: NextRequest) {
 
   // Structured data is reliable. Otherwise let Claude read the page, if a key is set.
   if (source !== 'json-ld') {
-    const ai = await aiExtract(htmlToText(html)).catch(() => null)
+    const ai = await aiExtract(htmlToText(html), userId).catch(() => null)
     if (ai && (ai.company || ai.role)) {
       job = { ...job, ...Object.fromEntries(Object.entries(ai).filter(([, v]) => v !== null && v !== '')) }
       source = 'ai'
@@ -88,11 +91,12 @@ async function importFromUrl(req: NextRequest) {
   return NextResponse.json({ job: { ...job, jobUrl: finalUrl }, source, usedAi })
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { user }: Auth) => {
   try {
-    return await importFromUrl(req)
+    return await importFromUrl(req, user.id)
   } catch (err) {
+    if (err instanceof QuotaError) throw err // withAuth turns this into a 429
     console.error('import-url failed', err)
     return NextResponse.json({ error: "Something went wrong reading that page. You can still fill in the details by hand." }, { status: 422 })
   }
-}
+})

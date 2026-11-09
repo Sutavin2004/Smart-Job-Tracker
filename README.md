@@ -2,12 +2,12 @@
 
 **An AI-powered job search assistant.** Tell it what roles you want and its **Job Agent** searches live job boards every morning, scores each posting against your skills, location and salary goals, and drops the best matches onto a drag-and-drop board. From there it helps you through the rest: importing postings from a link, tailored cover letters and resumes, interview prep, follow-ups and offer negotiation.
 
-**[Try the live demo →](https://smart-job-tracker-demo.vercel.app)** (sample data, resets daily, no sign-up)
+**[Try the live demo](https://smart-job-tracker-demo.vercel.app)**: open the sample account from the sign-in page. Data resets daily.
 
 [![CI](https://github.com/Sutavin2004/Smart-Job-Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Sutavin2004/Smart-Job-Tracker/actions/workflows/ci.yml)
 [![E2E](https://github.com/Sutavin2004/Smart-Job-Tracker/actions/workflows/e2e.yml/badge.svg)](https://github.com/Sutavin2004/Smart-Job-Tracker/actions/workflows/e2e.yml)
 
-![Dashboard](docs/screenshots/dashboard-dark.png)
+![Dashboard](docs/screenshots/dashboard-light.png)
 
 | Jobs board | Job Agent |
 |---|---|
@@ -32,9 +32,15 @@
 ### Apply with AI (Claude)
 - Job analysis (strengths, risks, key skills), cover letters, resume tailoring, answers to application questions, interview prep, follow-up emails and salary advice.
 
+### Accounts
+- **Anyone can sign up** with an email and password. Each account's board, profile, résumé and templates are private to it.
+- **Isolation is enforced in one place**: API routes get a database client that adds the signed-in user to every query (`src/lib/scoped-db.ts`). A unit test fails if a data route imports the unscoped client, and an end-to-end test checks that one account can't read or change another's jobs.
+- **Daily limits per account** on AI actions and agent runs (configurable), shown under Settings → Account.
+- Passwords are hashed with scrypt; sessions are random tokens stored only as SHA-256 hashes, in an HTTP-only cookie. Sign-in and sign-up are rate-limited. Changing the password signs out other devices, and deleting the account removes all of its data.
+
 ### Quality
-- **Tests**: 60 unit tests (Vitest) plus 42 end-to-end tests (Playwright) against a real Postgres, including **WCAG 2.1 AA accessibility checks (axe) on every page in light and dark mode**.
-- **Security**: optional password gate (HMAC session cookie), SSRF-safe URL fetching, security headers, partial-update APIs, `npm audit` clean for production dependencies.
+- **Tests**: 110+ unit tests (Vitest) plus end-to-end tests (Playwright) against a real Postgres, including sign-up, sign-in, cross-account isolation, and **WCAG 2.1 AA accessibility checks (axe) on every page in light and dark mode**.
+- **Security**: per-user data scoping, SSRF-safe URL fetching, security headers, partial-update APIs, `npm audit` clean for production dependencies.
 - **PWA**: installable on your phone; link previews when shared; dark mode; command palette (⌘K).
 
 ## Architecture
@@ -47,12 +53,14 @@ flowchart LR
   API -->|discovery| Boards["Job boards<br/>Adzuna · JSearch · RemoteOK<br/>Remotive · Jobicy"]
   API -->|import a link| ATS["Greenhouse · Lever · Ashby<br/>or any JobPosting page"]
   Cron["Vercel Cron (daily)"] --> API
-  MW["Middleware<br/>password gate · demo guard"] -.-> API
+  MW["Middleware<br/>sign-in redirect · demo guard"] -.-> API
 ```
 
 | Path | What lives there |
 |------|------------------|
-| `src/app/` | Pages (App Router) and API route handlers |
+| `src/app/(auth)/`, `src/app/(app)/` | Sign-in and sign-up pages; the signed-in app (its layout checks the session) |
+| `src/app/api/` | Route handlers, each wrapped in `withAuth` (`src/lib/api.ts`) |
+| `src/lib/auth.ts`, `src/lib/scoped-db.ts`, `src/lib/quota.ts` | Sessions, per-user database access, daily limits |
 | `src/lib/agent/discover.ts` | The Job Agent pipeline shared by the manual and scheduled runs |
 | `src/lib/scoring.ts` | Fit scoring, title relevance and remote-eligibility rules |
 | `src/lib/job-boards/` | One adapter per job board |
@@ -73,8 +81,8 @@ npm install
 
 cp .env.example .env      # fill in the values below
 npx prisma migrate deploy # create the tables
-npm run db:seed           # optional: sample data (replaces existing data)
-npm run dev               # http://localhost:3000
+npm run db:seed           # optional: wipes the database and creates the sample account
+npm run dev               # http://localhost:3000, then create an account
 ```
 
 ### Environment variables
@@ -86,7 +94,8 @@ npm run dev               # http://localhost:3000
 | `ANTHROPIC_API_KEY` | For AI features | Analysis, writing tools, and verified web search in the agent. Without it, AI endpoints return 503 and everything else works. |
 | `ADZUNA_APP_ID`, `ADZUNA_APP_KEY` | Recommended | Local (non-remote) job listings; free at developer.adzuna.com |
 | `RAPIDAPI_KEY` | Optional | JSearch (LinkedIn, Indeed, Glassdoor) |
-| `APP_PASSWORD` | Recommended in production | Puts the app and API behind a password screen |
+| `DAILY_AI_LIMIT`, `DAILY_AGENT_LIMIT` | Optional | Per-account daily limits (defaults 40 and 6) |
+| `SIGNUP_LIMIT_PER_HOUR` | Optional | New accounts allowed per IP address per hour (default 5) |
 | `CRON_SECRET` | Optional | If set, the daily cron routes require it |
 | `DEMO_MODE` | Demo only | `true` turns on the public demo behaviour (see below) |
 
@@ -102,10 +111,10 @@ On Vercel, the Neon integration sets both database variables automatically.
 | `npm run test:e2e` | End-to-end tests (needs a seeded database and a build) |
 | `npm run type-check` / `npm run lint` | TypeScript / ESLint |
 | `npm run db:migrate` | Create a migration during development |
-| `npm run db:seed` | Load sample data |
+| `npm run db:seed` | Reset the database to the sample account (`demo@smartjobtracker.app`) |
 
 ## Deployment
 
 - **App**: Vercel with a Neon Postgres database. `vercel.json` runs `prisma migrate deploy` before each build and registers the daily cron jobs.
-- **Public demo**: a second Vercel project from the same repo with its own database and `DEMO_MODE=true`. It shows a banner, re-seeds sample data on each deploy and every day, blocks link import, and rate-limits the agent. No API keys are set, so it costs nothing to run.
+- **Public demo**: a second Vercel project from the same repo with its own database and `DEMO_MODE=true`. Sign-up is off; visitors open the sample account from the sign-in page. It shows a banner, re-seeds sample data on each deploy and every day, blocks link import, and rate-limits the agent. No API keys are set, so it costs nothing to run.
 - **CI** (GitHub Actions): type-check, unit tests, lint and build on every push; Playwright E2E and accessibility tests against Postgres 16. The *Update README screenshots* workflow regenerates the images above.

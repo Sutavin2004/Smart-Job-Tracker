@@ -22,7 +22,7 @@ test('add a job, find it by search, drag it to Applied, then delete it', async (
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('Space')
   await expect(column('Applied').getByRole('button', { name: /E2E Test Co/ })).toBeVisible()
-  await expect(page.getByText('E2E Test Co → Applied')).toBeVisible()
+  await expect(page.getByText('Moved E2E Test Co to Applied')).toBeVisible()
 
   // Persisted: reload and it's still in Applied.
   await page.reload()

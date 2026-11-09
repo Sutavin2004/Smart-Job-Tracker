@@ -1,25 +1,26 @@
+import { consumeQuota } from '@/lib/quota'
 import { NextRequest, NextResponse } from 'next/server'
 import { AI_MODELS } from '@/lib/ai-models'
-import { prisma } from '@/lib/prisma'
+import { withAuth, type Auth } from '@/lib/api'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
-  const qas = await prisma.applicationQA.findMany({ where: { jobId: id }, orderBy: { createdAt: 'asc' } })
+  const qas = await db.applicationQA.findMany({ where: { jobId: id }, orderBy: { createdAt: 'asc' } })
   return NextResponse.json(qas)
-}
+})
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const POST = withAuth(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db, user }: Auth) => {
   const { id } = await params
   const body = await req.json()
   const questions: string[] = body.questions ?? []
   if (!questions.length) return NextResponse.json({ error: 'No questions provided' }, { status: 400 })
 
   const [job, profile] = await Promise.all([
-    prisma.job.findUnique({ where: { id } }),
-    prisma.userProfile.findFirst(),
+    db.job.findUnique({ where: { id } }),
+    db.userProfile.findFirst(),
   ])
   if (!job) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (!anthropic) {
     for (const q of questions) {
-      await prisma.applicationQA.create({ data: { jobId: id, question: q, answer: 'Add ANTHROPIC_API_KEY to generate AI answers.' } })
+      await db.applicationQA.create({ data: { jobId: id, question: q, answer: 'Add ANTHROPIC_API_KEY to generate AI answers.' } })
       results.push({ question: q, answer: 'Add ANTHROPIC_API_KEY to generate AI answers.' })
     }
     return NextResponse.json(results)
@@ -58,6 +59,7 @@ Answer each question in the candidate's voice. Be specific, genuine, and profess
 Return a JSON array: [{"question": "...", "answer": "..."}]
 Only return the JSON array, no other text.`
 
+  await consumeQuota(user.id, 'ai')
   const msg = await anthropic.messages.create({
     model: AI_MODELS.fast,
     max_tokens: 2000,
@@ -72,9 +74,9 @@ Only return the JSON array, no other text.`
   } catch { parsed = questions.map(q => ({ question: q, answer: text })) }
 
   for (const qa of parsed) {
-    await prisma.applicationQA.create({ data: { jobId: id, question: qa.question, answer: qa.answer } })
+    await db.applicationQA.create({ data: { jobId: id, question: qa.question, answer: qa.answer } })
     results.push(qa)
   }
 
   return NextResponse.json(results)
-}
+})
