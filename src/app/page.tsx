@@ -46,8 +46,11 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number; targetRoles?: string; skills?: string } | null>(null)
   const [weeklyCount, setWeeklyCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  // Depends on the viewer's clock and timezone, so compute it in the browser only;
+  // rendering it on the server caused a hydration mismatch (React #418).
+  const [greeting, setGreeting] = useState('Hello')
 
-  useEffect(() => { loadData() }, [])
+  useEffect(() => { setGreeting(getGreeting()); loadData() }, [])
 
   async function loadData() {
     setLoading(true)
@@ -95,7 +98,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-            {getGreeting()}{firstName ? `, ${firstName}` : ''}! 👋
+            {greeting}{firstName ? `, ${firstName}` : ''}! 👋
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             {analytics?.total === 0

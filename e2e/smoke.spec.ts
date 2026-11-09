@@ -18,6 +18,22 @@ for (const { path, heading } of PAGES) {
   })
 }
 
+// Server renders in UTC; render in a far-off timezone too so anything that
+// depends on the viewer's clock can't cause a hydration mismatch unnoticed.
+test.describe('far-off timezone', () => {
+  test.use({ timezoneId: 'Pacific/Kiritimati', locale: 'en-CA' })
+  for (const { path } of PAGES) {
+    test(`${path} hydrates cleanly at UTC+14`, async ({ page }) => {
+      const errors: string[] = []
+      page.on('pageerror', e => errors.push(e.message))
+      page.on('console', m => { if (m.type() === 'error' && /hydrat|#418|#423|#425/i.test(m.text())) errors.push(m.text()) })
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      expect(errors).toEqual([])
+    })
+  }
+})
+
 test('unknown pages show the 404 screen', async ({ page }) => {
   const res = await page.goto('/definitely-not-a-page')
   expect(res?.status()).toBe(404)

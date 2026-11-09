@@ -1,6 +1,6 @@
 /** Every top-level page, with the heading we expect to see on it. */
 export const PAGES = [
-  { path: '/', heading: /good (morning|afternoon|evening)/i },
+  { path: '/', heading: /(good (morning|afternoon|evening)|hello)/i },
   { path: '/jobs', heading: /jobs board/i },
   { path: '/agent', heading: /job discovery agent/i },
   { path: '/analytics', heading: /analytics/i },
