@@ -170,25 +170,25 @@ export default function DashboardPage() {
               {loading ? (
                 <div className="space-y-px p-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-11 animate-pulse rounded bg-slate-100 dark:bg-[#222326]" />)}</div>
               ) : (
-                <table className="w-full text-left text-sm">
+                <table className="w-full table-fixed text-left text-sm">
                   <thead className="sr-only sm:not-sr-only">
                     <tr className="text-[13px] text-slate-500">
-                      <th scope="col" className="px-5 pb-1.5 pt-3 font-normal">Company</th>
+                      <th scope="col" className="w-[38%] px-5 pb-1.5 pt-3 font-normal md:w-[28%]">Company</th>
                       <th scope="col" className="hidden px-3 pb-1.5 pt-3 font-normal md:table-cell">Role</th>
-                      <th scope="col" className="px-3 pb-1.5 pt-3 font-normal">Stage</th>
-                      <th scope="col" className="hidden px-5 pb-1.5 pt-3 text-right font-normal sm:table-cell">Updated</th>
+                      <th scope="col" className="w-[120px] px-3 pb-1.5 pt-3 font-normal">Stage</th>
+                      <th scope="col" className="hidden w-[130px] px-5 pb-1.5 pt-3 text-right font-normal sm:table-cell">Updated</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-[#26272A]">
                     {recentJobs.map(job => (
                       <tr key={job.id} className="group relative hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-                        <td className="max-w-0 px-5 py-3">
+                        <td className="px-5 py-3">
                           <Link href={`/jobs?id=${job.id}`} className="block truncate font-medium text-slate-900 after:absolute after:inset-0 dark:text-white">
                             {job.company}
                           </Link>
                           <span className="block truncate text-[13px] text-slate-500 md:hidden">{job.role}</span>
                         </td>
-                        <td className="hidden max-w-0 truncate px-3 py-3 text-slate-600 dark:text-slate-400 md:table-cell">
+                        <td className="hidden truncate px-3 py-3 text-slate-600 dark:text-slate-400 md:table-cell">
                           {job.role}
                           {job.discoveredBy === 'agent' && <span className="ml-2 text-[12px] text-brand-700 dark:text-brand-400">found by agent</span>}
                         </td>

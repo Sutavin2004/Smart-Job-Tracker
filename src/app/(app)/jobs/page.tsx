@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { DragDropContext, Droppable, Draggable, type DropResult, type DraggableProvidedDragHandleProps } from '@hello-pangea/dnd'
 import { toast } from 'sonner'
-import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Wifi, Briefcase, Sparkles } from 'lucide-react'
+import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Briefcase, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type Job, type JobStatus, JOB_STATUSES, STATUS_CONFIG } from '@/lib/types'
 import { apiClient } from '@/lib/api-client'
@@ -331,23 +331,23 @@ function JobCard({ job, onClick, selected, handleProps }: {
         {/* Tags row */}
         <div className="flex flex-wrap items-center gap-1.5 mt-2">
           {job.remote && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
-              <Wifi className="w-2.5 h-2.5" /> Remote
+            <span className="text-[11px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 dark:border-[#2A2B2E] dark:text-slate-400">
+              Remote
             </span>
           )}
           {job.hybrid && !job.remote && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400">
+            <span className="text-[11px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 dark:border-[#2A2B2E] dark:text-slate-400">
               Hybrid
             </span>
           )}
           {job.source && (
-            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400 truncate max-w-[80px]">
+            <span className="text-[11px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 dark:border-[#2A2B2E] dark:text-slate-400 truncate max-w-[90px]">
               {job.source}
             </span>
           )}
           {job.discoveredBy === 'agent' && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400">
-              <Bot className="w-2.5 h-2.5" /> AI
+            <span className="text-[11px] px-1.5 py-0.5 rounded border border-brand-200 text-brand-700 dark:border-brand-800 dark:text-brand-400">
+              Found by agent
             </span>
           )}
         </div>
@@ -419,8 +419,8 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
                 <td className="px-4 py-3"><ScoreBadge score={job.aiScore} /></td>
                 <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">
                   {job.location ?? '—'}
-                  {job.remote && <span className="ml-1 text-sky-500">· Remote</span>}
-                  {job.hybrid && !job.remote && <span className="ml-1 text-violet-500">· Hybrid</span>}
+                  {job.remote && <span className="ml-1 text-slate-500">, remote</span>}
+                  {job.hybrid && !job.remote && <span className="ml-1 text-slate-500">, hybrid</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400 text-xs">{job.source ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-400 text-xs">{job.status === 'saved' ? '—' : formatDate(job.dateApplied)}</td>

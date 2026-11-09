@@ -300,8 +300,8 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             <div className="flex items-center gap-2 mt-2.5 flex-wrap">
               <StatusBadge status={status} />
               <PriorityBadge priority={priority} />
-              {job.remote && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300">Remote</span>}
-              {job.hybrid && !job.remote && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">Hybrid</span>}
+              {job.remote && <span className="text-[11px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 dark:border-[#2A2B2E] dark:text-slate-400">Remote</span>}
+              {job.hybrid && !job.remote && <span className="text-[11px] px-1.5 py-0.5 rounded border border-slate-200 text-slate-600 dark:border-[#2A2B2E] dark:text-slate-400">Hybrid</span>}
               {aiData.score !== null && (
                 <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700', scoreColor)}>
                   AI {aiData.score}/100
@@ -817,7 +817,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             {job.activities && job.activities.length > 0 ? (
               job.activities.map(act => (
                 <div key={act.id} className="flex gap-3">
-                  <div className={cn('w-1.5 h-1.5 rounded-full mt-2 shrink-0', act.type === 'agent' ? 'bg-brand-400' : act.type === 'ai_analyzed' ? 'bg-purple-400' : 'bg-slate-300 dark:bg-slate-600')} />
+                  <div className={cn('w-1.5 h-1.5 rounded-full mt-2 shrink-0', act.type === 'agent' ? 'bg-brand-400' : act.type === 'ai_analyzed' ? 'bg-sky-500' : 'bg-slate-300 dark:bg-slate-600')} />
                   <div>
                     <p className="text-sm text-slate-700 dark:text-slate-300 leading-snug">{act.message}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{formatRelative(act.createdAt)}</p>
