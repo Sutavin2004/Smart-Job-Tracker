@@ -9,8 +9,7 @@ import { type Job, type Activity, STATUS_CONFIG } from '@/lib/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { AddJobModal } from '@/components/AddJobModal'
 import { RemindersWidget } from '@/components/RemindersWidget'
-import { useUIStore } from '@/lib/store'
-import { useRouter } from 'next/navigation'
+import { GettingStarted } from '@/components/dashboard/GettingStarted'
 
 interface Analytics {
   total: number
@@ -39,14 +38,12 @@ function getGreeting() {
 }
 
 export default function DashboardPage() {
-  const router = useRouter()
-  const { setAddJobModalOpen } = useUIStore()
   const [showAdd, setShowAdd] = useState(false)
   const [recentJobs, setRecentJobs] = useState<Job[]>([])
   const [activities, setActivities] = useState<Activity[]>([])
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [lastSession, setLastSession] = useState<AgentSession | null>(null)
-  const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number } | null>(null)
+  const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number; targetRoles?: string; skills?: string } | null>(null)
   const [weeklyCount, setWeeklyCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -112,6 +109,15 @@ export default function DashboardPage() {
           <Plus className="w-4 h-4" /> Add Job
         </button>
       </div>
+
+      {!loading && (
+        <GettingStarted
+          hasProfile={Boolean(profile?.targetRoles?.trim() && profile?.skills?.trim())}
+          hasRunAgent={Boolean(lastSession)}
+          hasApplied={(analytics?.applied ?? 0) > 0}
+          onAddJob={() => setShowAdd(true)}
+        />
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">

@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Wifi } from 'lucide-react'
+import Link from 'next/link'
+import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
+import { toast } from 'sonner'
+import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Wifi, Briefcase, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { type Job, JOB_STATUSES, STATUS_CONFIG } from '@/lib/types'
+import { type Job, type JobStatus, JOB_STATUSES, STATUS_CONFIG } from '@/lib/types'
 import { apiClient } from '@/lib/api-client'
 import { StatusBadge, PriorityBadge } from '@/components/StatusBadge'
 import { AddJobModal } from '@/components/AddJobModal'
@@ -18,7 +21,17 @@ function JobsPageInner() {
 
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<'kanban' | 'table'>('kanban')
+  const [view, setViewState] = useState<'kanban' | 'table'>('kanban')
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('jobs-view')
+      if (saved === 'kanban' || saved === 'table') setViewState(saved)
+    } catch { /* storage unavailable */ }
+  }, [])
+  function setView(v: 'kanban' | 'table') {
+    setViewState(v)
+    try { localStorage.setItem('jobs-view', v) } catch { /* ignore */ }
+  }
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [showAdd, setShowAdd] = useState(false)
@@ -44,6 +57,33 @@ function JobsPageInner() {
     const timer = setTimeout(() => loadJobs(), search ? 300 : 0)
     return () => clearTimeout(timer)
   }, [loadJobs, search])
+
+  async function moveJob(id: string, status: JobStatus) {
+    const before = jobs
+    const job = jobs.find(j => j.id === id)
+    if (!job || job.status === status) return
+    // Optimistic: move the card immediately, roll back if the save fails.
+    setJobs(prev => prev.map(j => (j.id === id ? { ...j, status, updatedAt: new Date().toISOString() } : j)))
+    try {
+      const updated = await apiClient.updateJob(id, { status }) as Job
+      setJobs(prev => prev.map(j => (j.id === id ? { ...j, ...updated } : j)))
+      toast.success(`${job.company} → ${STATUS_CONFIG[status].label}`)
+      if (status === 'offered') {
+        const confetti = (await import('canvas-confetti')).default
+        confetti({ particleCount: 140, spread: 80, origin: { y: 0.7 } })
+      }
+    } catch {
+      setJobs(before)
+      toast.error("Couldn't move that job. Try again.")
+    }
+  }
+
+  const hasFilters = Boolean(search) || statusFilter !== 'all' || Boolean(discoveredBy)
+  function clearFilters() {
+    setSearch('')
+    setStatusFilter('all')
+    if (discoveredBy) router.push('/jobs', { scroll: false })
+  }
 
   function selectJob(job: Job) {
     router.push(`/jobs?id=${job.id}`, { scroll: false })
@@ -118,8 +158,10 @@ function JobsPageInner() {
         <div className="p-6">
           {loading ? (
             <div className="text-center py-16 text-slate-400 text-sm animate-pulse">Loading…</div>
+          ) : jobs.length === 0 ? (
+            <EmptyState filtered={hasFilters} onAdd={() => setShowAdd(true)} onClear={clearFilters} />
           ) : view === 'kanban' ? (
-            <KanbanView jobs={jobs} onSelect={selectJob} selectedId={selectedId} />
+            <KanbanView jobs={jobs} onSelect={selectJob} selectedId={selectedId} onMove={moveJob} />
           ) : (
             <TableView jobs={jobs} onSelect={selectJob} selectedId={selectedId} />
           )}
@@ -143,40 +185,96 @@ function JobsPageInner() {
   )
 }
 
-function KanbanView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: Job) => void; selectedId: string | null }) {
-  if (jobs.length === 0) {
+function EmptyState({ filtered, onAdd, onClear }: { filtered: boolean; onAdd: () => void; onClear: () => void }) {
+  if (filtered) {
     return (
-      <div className="text-center py-16 text-slate-400">
-        <p className="text-sm">No applications found.</p>
+      <div className="text-center py-16">
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">No jobs match these filters</p>
+        <button onClick={onClear} className="mt-3 text-sm text-brand-600 hover:underline">Clear filters</button>
       </div>
     )
   }
+  return (
+    <div className="max-w-md mx-auto text-center py-16">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/30">
+        <Briefcase className="h-7 w-7 text-brand-600" />
+      </div>
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your board is empty</h2>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        Add a job you&apos;re interested in, or let the AI agent find matches for you.
+      </p>
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        <button onClick={onAdd} className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add a job</button>
+        <Link href="/agent" className="btn-secondary text-sm"><Sparkles className="w-4 h-4" /> Find jobs with AI</Link>
+      </div>
+    </div>
+  )
+}
+
+function KanbanView({ jobs, onSelect, selectedId, onMove }: {
+  jobs: Job[]
+  onSelect: (j: Job) => void
+  selectedId: string | null
+  onMove: (id: string, status: JobStatus) => void
+}) {
+  function onDragEnd(result: DropResult) {
+    const dest = result.destination?.droppableId as JobStatus | undefined
+    if (dest && dest !== result.source.droppableId) onMove(result.draggableId, dest)
+  }
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {JOB_STATUSES.map(status => {
-        const col = jobs.filter(j => j.status === status)
-        const cfg = STATUS_CONFIG[status]
-        return (
-          <div key={status} className="shrink-0 w-64">
-            <div className={cn('flex items-center gap-2 mb-3 px-1')}>
-              <span className={cn('text-xs font-semibold', cfg.color)}>{cfg.label}</span>
-              <span className="text-xs text-slate-400 ml-auto">{col.length}</span>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <p className="mb-3 text-xs text-slate-400 hidden md:block">Tip: drag cards between columns to update their status.</p>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {JOB_STATUSES.map(status => {
+          const col = jobs.filter(j => j.status === status)
+          const cfg = STATUS_CONFIG[status]
+          return (
+            <div key={status} className="shrink-0 w-64">
+              <div className="flex items-center gap-2 mb-3 px-1">
+                <span className={cn('w-2 h-2 rounded-full', cfg.dot)} />
+                <h3 className={cn('text-xs font-semibold', cfg.color)}>{cfg.label}</h3>
+                <span className="text-xs text-slate-400 ml-auto">{col.length}</span>
+              </div>
+              <Droppable droppableId={status}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={cn(
+                      'space-y-2 min-h-24 rounded-xl transition-colors',
+                      snapshot.isDraggingOver && 'bg-brand-50/70 dark:bg-brand-900/20 ring-2 ring-brand-300/60 dark:ring-brand-700/60'
+                    )}
+                  >
+                    {col.map((job, index) => (
+                      <Draggable key={job.id} draggableId={job.id} index={index}>
+                        {(drag, dragSnap) => (
+                          <div
+                            ref={drag.innerRef}
+                            {...drag.draggableProps}
+                            {...drag.dragHandleProps}
+                            aria-label={`${job.company}, ${job.role}. ${cfg.label}. Press space to move.`}
+                            className={cn(dragSnap.isDragging && 'rotate-1 shadow-xl')}
+                          >
+                            <JobCard job={job} onClick={() => onSelect(job)} selected={selectedId === job.id} />
+                          </div>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                    {col.length === 0 && !snapshot.isDraggingOver && (
+                      <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center">
+                        <p className="text-xs text-slate-400 dark:text-slate-500">Drop here</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Droppable>
             </div>
-            <div className="space-y-2">
-              {col.map(job => (
-                <JobCard key={job.id} job={job} onClick={() => onSelect(job)} selected={selectedId === job.id} />
-              ))}
-              {col.length === 0 && (
-                <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center">
-                  <p className="text-xs text-slate-300 dark:text-slate-600">Empty</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
+          )
+        })}
+      </div>
+    </DragDropContext>
   )
 }
 
@@ -238,7 +336,9 @@ function JobCard({ job, onClick, selected }: { job: Job; onClick: () => void; se
 
         <div className="flex items-center justify-between mt-2.5">
           <PriorityBadge priority={job.priority} />
-          <span className="text-xs text-slate-400">{formatDate(job.dateApplied)}</span>
+          <span className="text-xs text-slate-400">
+            {job.status === 'saved' ? `Saved ${formatRelative(job.createdAt)}` : formatDate(job.dateApplied)}
+          </span>
         </div>
         {job.location && (
           <p className="text-xs text-slate-400 mt-1 truncate">📍 {job.location}</p>
@@ -267,10 +367,6 @@ function JobCard({ job, onClick, selected }: { job: Job; onClick: () => void; se
 }
 
 function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: Job) => void; selectedId: string | null }) {
-  if (jobs.length === 0) {
-    return <p className="text-center py-16 text-slate-400 text-sm">No applications found.</p>
-  }
-
   return (
     <div className="card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -307,7 +403,7 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
                   {job.hybrid && !job.remote && <span className="ml-1 text-violet-500">· Hybrid</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400 text-xs">{job.source ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-400 text-xs">{formatDate(job.dateApplied)}</td>
+                <td className="px-4 py-3 text-slate-400 text-xs">{job.status === 'saved' ? '—' : formatDate(job.dateApplied)}</td>
                 <td className="px-4 py-3 text-slate-400 text-xs">{formatRelative(job.updatedAt)}</td>
                 <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                   {job.jobUrl && (
