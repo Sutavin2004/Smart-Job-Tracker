@@ -28,7 +28,7 @@ export function MobileNav() {
               'flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
               active
                 ? 'text-brand-600 dark:text-brand-400'
-                : 'text-slate-400 dark:text-slate-500'
+                : 'text-slate-400 dark:text-slate-400'
             )}
           >
             <Icon className={cn('w-5 h-5', active && 'drop-shadow-[0_0_6px_rgba(132,72,255,0.5)]')} />

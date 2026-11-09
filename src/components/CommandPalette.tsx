@@ -105,7 +105,7 @@ export function CommandPalette() {
             </div>
 
             <div className="max-h-80 overflow-y-auto py-2">
-              <p className="px-4 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Quick Actions</p>
+              <p className="px-4 py-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Quick Actions</p>
               {QUICK_ACTIONS.map((action, i) => (
                 <button
                   key={action.action}
@@ -125,7 +125,7 @@ export function CommandPalette() {
 
               {filteredJobs.length > 0 && (
                 <>
-                  <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
+                  <p className="px-4 pt-3 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">
                     {query ? 'Results' : 'Recent Jobs'}
                   </p>
                   {filteredJobs.map((job, i) => {

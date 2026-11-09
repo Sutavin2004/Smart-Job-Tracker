@@ -122,7 +122,7 @@ html { scroll-behavior: smooth; }
 :where(html:not(.dark)) .text-emerald-600 { color: rgb(4 120 87); }             /* emerald-700 */
 :where(html:not(.dark)) .text-amber-600 { color: rgb(180 83 9); }               /* amber-700 */
 :where(html:not(.dark)) .bg-red-100.text-red-600 { color: rgb(185 28 28); }     /* red-700 */
-:where(.dark) .text-slate-500, .dark .dark\:text-slate-500,
-:where(.dark) .text-slate-600, .dark .dark\:text-slate-600 { color: rgb(148 163 184); } /* slate-400 */
-.dark .dark\:bg-slate-700:is(.text-slate-400, .text-slate-500, .dark\:text-slate-400, .dark\:text-slate-500) { color: rgb(203 213 225); } /* slate-300 */
+:where(.dark) .text-slate-500,
+:where(.dark) .text-slate-600 { color: rgb(148 163 184); } /* slate-400 */
+.dark .dark\:bg-slate-700:is(.text-slate-400, .text-slate-500, .dark\:text-slate-400) { color: rgb(203 213 225); } /* slate-300 */
 :where(.dark) .text-brand-600 { color: #9a7aff; }                                /* brand-400 */

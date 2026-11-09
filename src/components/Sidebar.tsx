@@ -78,7 +78,7 @@ export function Sidebar() {
       {/* Nav */}
       <nav className={cn('flex-1 py-3 overflow-y-auto', sidebarCollapsed ? 'px-2 space-y-0.5' : 'px-3 space-y-0.5')}>
         {!sidebarCollapsed && (
-          <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Main</p>
+          <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Main</p>
         )}
         {NAV_MAIN.map(({ href, label, icon: Icon, badge, gradient }) => {
           const active = isActive(href)
@@ -114,7 +114,7 @@ export function Sidebar() {
 
         <div className="pt-3">
           {!sidebarCollapsed && (
-            <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">Tools</p>
+            <p className="px-2 pb-1 text-[10px] uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-400">Tools</p>
           )}
           {NAV_TOOLS.map(({ href, label, icon: Icon }) => {
             const active = isActive(href)

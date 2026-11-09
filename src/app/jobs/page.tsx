@@ -269,7 +269,7 @@ function KanbanView({ jobs, onSelect, selectedId, onMove }: {
                     {provided.placeholder}
                     {col.length === 0 && !snapshot.isDraggingOver && (
                       <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center">
-                        <p className="text-xs text-slate-400 dark:text-slate-500">Drop here</p>
+                        <p className="text-xs text-slate-400 dark:text-slate-400">Drop here</p>
                       </div>
                     )}
                   </div>

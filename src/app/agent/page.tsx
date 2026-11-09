@@ -83,7 +83,7 @@ function SessionJobRow({ job }: { job: SessionJob }) {
           )}
         </div>
         {job.aiSuggestion && (
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 line-clamp-1 italic">{job.aiSuggestion}</p>
+          <p className="text-[11px] text-slate-400 dark:text-slate-400 mt-1 line-clamp-1 italic">{job.aiSuggestion}</p>
         )}
       </div>
       <div className="flex items-center gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
@@ -105,7 +105,7 @@ function SessionJobRow({ job }: { job: SessionJob }) {
             Apply
           </a>
         ) : (
-          <span className="text-[11px] text-slate-300 dark:text-slate-600 italic">no link</span>
+          <span className="text-[11px] text-slate-300 dark:text-slate-400 italic">no link</span>
         )}
       </div>
     </div>
@@ -792,7 +792,7 @@ export default function AgentPage() {
 
       {sessions.length === 0 && !running && (
         <div className="card p-10 text-center">
-          <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-400 mx-auto mb-3" />
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No sessions yet</p>
           <p className="text-xs text-slate-400 mt-1">Run the agent to start discovering jobs automatically</p>
         </div>

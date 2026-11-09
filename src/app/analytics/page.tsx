@@ -171,7 +171,8 @@ export default function AnalyticsPage() {
           <div className="card p-5">
             <h2 className="text-sm font-semibold mb-4">By Status</h2>
             <div className="flex items-center gap-4">
-              <div aria-hidden="true">
+              {/* inert: decorative (the legend has the numbers) and keeps chart parts out of the tab order */}
+              <div aria-hidden="true" inert>
               <ResponsiveContainer width={130} height={130}>
                 <PieChart>
                   <Pie data={statusPie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">
@@ -199,7 +200,8 @@ export default function AnalyticsPage() {
           <div className="card p-5">
             <h2 className="text-sm font-semibold mb-4">By Source</h2>
             <div className="flex items-center gap-4">
-              <div aria-hidden="true">
+              {/* inert: decorative (the legend has the numbers) and keeps chart parts out of the tab order */}
+              <div aria-hidden="true" inert>
               <ResponsiveContainer width={130} height={130}>
                 <PieChart>
                   <Pie data={sourcePie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">

@@ -186,7 +186,7 @@ export default function SettingsPage() {
                     : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 )}
               >
-                <span className={cn('shrink-0', tab === t.id ? 'text-white' : 'text-slate-400 dark:text-slate-500')}>
+                <span className={cn('shrink-0', tab === t.id ? 'text-white' : 'text-slate-400 dark:text-slate-400')}>
                   {t.icon}
                 </span>
                 <span className="font-medium">{t.label}</span>
@@ -388,7 +388,7 @@ export default function SettingsPage() {
                       {exporting ? 'Exporting…' : 'Export as JSON'}
                     </button>
                   </div>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
+                  <p className="text-xs text-slate-400 dark:text-slate-400 mt-3">
                     CSV includes all job fields, interview dates, and AI scores. JSON includes all records including documents and tasks.
                   </p>
                 </SectionCard>
@@ -421,7 +421,7 @@ export default function SettingsPage() {
                       }}
                     />
                   </label>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
+                  <p className="text-xs text-slate-400 dark:text-slate-400 mt-3">
                     Only accepts JSON files exported from this app. Existing data is not overwritten.
                   </p>
                 </SectionCard>
