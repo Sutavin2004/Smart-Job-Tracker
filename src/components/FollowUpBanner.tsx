@@ -2,126 +2,84 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Bell, X, Calendar, AlertCircle, Clock, ChevronRight } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { X, Calendar, AlertCircle, Clock, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Reminder } from '@/app/api/reminders/route'
 
-const TYPE_CONFIG: Record<Reminder['type'], { icon: React.ComponentType<{ className?: string }>; label: string }> = {
-  interview_soon: { icon: Calendar, label: 'Interview soon' },
-  deadline_soon: { icon: AlertCircle, label: 'Deadline soon' },
-  follow_up_date: { icon: Clock, label: 'Follow-up overdue' },
-  stale_application: { icon: Bell, label: 'Follow up' },
-  follow_up_overdue: { icon: Bell, label: 'Follow-up needed' },
+const TYPE_ICON: Record<Reminder['type'], React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  interview_soon: Calendar,
+  deadline_soon: AlertCircle,
+  follow_up_date: Clock,
+  stale_application: Bell,
+  follow_up_overdue: Bell,
 }
 
+const SEEN_KEY = 'reminders-popup-closed'
+
+/**
+ * A small popup listing what needs attention, shown once per browser session.
+ * Not shown on the dashboard, which already has a "Needs attention" panel.
+ */
 export function FollowUpBanner() {
+  const pathname = usePathname()
   const [reminders, setReminders] = useState<Reminder[]>([])
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [open, setOpen] = useState(false)
 
   useEffect(() => {
+    try { if (sessionStorage.getItem(SEEN_KEY)) return } catch { /* storage unavailable */ }
     fetch('/api/reminders')
       .then(r => r.json())
       .then((data: Reminder[]) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setReminders(data)
-          setOpen(true)
-        }
+        if (Array.isArray(data) && data.length > 0) { setReminders(data); setOpen(true) }
       })
       .catch(() => null)
   }, [])
 
   const visible = reminders.filter(r => !dismissed.has(r.id))
-  const highUrgency = visible.filter(r => r.urgency === 'high')
+  if (!open || visible.length === 0 || pathname === '/') return null
 
-  if (!open || visible.length === 0) return null
-
-  function dismiss(id: string) {
-    setDismissed(prev => new Set([...prev, id]))
-  }
-
-  function dismissAll() {
+  function close() {
     setOpen(false)
+    try { sessionStorage.setItem(SEEN_KEY, '1') } catch { /* ignore */ }
   }
 
   return (
-    <div className={cn(
-      'fixed bottom-20 right-4 left-4 sm:left-auto md:bottom-4 z-50 sm:w-80 rounded-2xl shadow-2xl border overflow-hidden',
-      highUrgency.length > 0
-        ? 'bg-amber-50 dark:bg-amber-900/90 border-amber-200 dark:border-amber-700'
-        : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'
-    )}>
-      {/* Header */}
-      <div className={cn(
-        'flex items-center justify-between px-4 py-3 border-b',
-        highUrgency.length > 0
-          ? 'border-amber-200 dark:border-amber-700 bg-amber-100/60 dark:bg-amber-800/40'
-          : 'border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/50'
-      )}>
-        <div className="flex items-center gap-2">
-          <Bell className={cn('w-4 h-4', highUrgency.length > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-brand-500')} />
-          <span className="text-sm font-semibold text-slate-900 dark:text-white">
-            {visible.length} Reminder{visible.length !== 1 ? 's' : ''}
-          </span>
-          {highUrgency.length > 0 && (
-            <span className="text-[10px] font-semibold bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full">
-              {highUrgency.length} urgent
-            </span>
-          )}
-        </div>
-        <button onClick={dismissAll} aria-label="Dismiss all reminders" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-          <X className="w-4 h-4" />
+    <section
+      aria-label="Reminders"
+      className="fixed bottom-20 left-4 right-4 z-50 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-panel dark:border-[#2A2B2E] dark:bg-[#1A1B1D] sm:left-auto sm:w-80 md:bottom-4"
+    >
+      <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 dark:border-[#2A2B2E]">
+        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
+          Needs attention <span className="font-normal tabular-nums text-slate-500">{visible.length}</span>
+        </h2>
+        <button onClick={close} aria-label="Dismiss all reminders" className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-white/5 dark:hover:text-white">
+          <X className="h-4 w-4" />
         </button>
       </div>
-
-      {/* Reminder list */}
-      <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/50">
-        {visible.slice(0, 6).map(reminder => {
-          const cfg = TYPE_CONFIG[reminder.type]
-          const Icon = cfg.icon
+      <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto dark:divide-[#26272A]">
+        {visible.slice(0, 6).map(r => {
+          const Icon = TYPE_ICON[r.type]
           return (
-            <div key={reminder.id} className="flex items-start gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
-              <div className={cn(
-                'w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5',
-                reminder.urgency === 'high' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-brand-50 dark:bg-brand-900/20'
-              )}>
-                <Icon className={cn('w-3.5 h-3.5', reminder.urgency === 'high' ? 'text-red-600 dark:text-red-400' : 'text-brand-500')} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <Link
-                  href={`/jobs?id=${reminder.jobId}`}
-                  className="text-xs font-semibold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 truncate block"
-                  onClick={dismissAll}
-                >
-                  {reminder.company} — {reminder.role}
+            <li key={r.id} className="flex items-start gap-3 px-4 py-2.5">
+              <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', r.urgency === 'high' ? 'text-red-600 dark:text-red-400' : 'text-slate-500')} strokeWidth={1.75} />
+              <div className="min-w-0 flex-1">
+                <Link href={`/jobs?id=${r.jobId}`} onClick={close} className="block truncate text-[13px] font-medium text-slate-900 hover:underline dark:text-white">
+                  {r.company}, {r.role}
                 </Link>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-snug">
-                  {reminder.message}
-                </p>
+                <p className="text-[12px] leading-snug text-slate-500">{r.message}</p>
               </div>
-              <button
-                onClick={() => dismiss(reminder.id)}
-                aria-label="Dismiss reminder"
-                className="text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 shrink-0 mt-0.5"
-              >
-                <X className="w-3 h-3" />
+              <button onClick={() => setDismissed(p => new Set([...p, r.id]))} aria-label={`Dismiss reminder for ${r.company}`} className="mt-0.5 shrink-0 rounded p-0.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                <X className="h-3.5 w-3.5" />
               </button>
-            </div>
+            </li>
           )
         })}
-      </div>
-
-      {/* Footer */}
-      <Link
-        href="/tasks"
-        onClick={dismissAll}
-        className={cn(
-          'flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium border-t transition-colors',
-          'border-slate-100 dark:border-slate-700 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20'
-        )}
-      >
-        View all tasks <ChevronRight className="w-3.5 h-3.5" />
+      </ul>
+      <Link href="/tasks" onClick={close} className="block border-t border-slate-200 px-4 py-2 text-center text-[13px] text-slate-600 hover:bg-slate-50 dark:border-[#2A2B2E] dark:text-slate-300 dark:hover:bg-white/[0.03]">
+        Open tasks
       </Link>
-    </div>
+    </section>
   )
 }

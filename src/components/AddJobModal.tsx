@@ -108,8 +108,8 @@ export function AddJobModal({ onClose, onCreated }: Props) {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+      <div role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
           <h2 id={`${id}-title`} className="text-base font-semibold">New Application</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
             <X className="w-5 h-5" />
@@ -146,7 +146,7 @@ export function AddJobModal({ onClose, onCreated }: Props) {
             </p>
           )}
           <div className="mt-4 flex items-center gap-3 text-xs text-slate-400">
-            <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" /> or enter details <span className="h-px flex-1 bg-slate-200 dark:bg-slate-700" />
+            <span className="h-px flex-1 bg-slate-200 dark:bg-[#26272A]" /> or enter details <span className="h-px flex-1 bg-slate-200 dark:bg-[#26272A]" />
           </div>
         </div>
 

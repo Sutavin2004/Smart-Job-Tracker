@@ -103,13 +103,13 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
               <div className="flex gap-1">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Previous month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Previous month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/[0.05] rounded-lg">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <button onClick={() => setCurrentMonth(new Date())} className="px-2 py-1 text-xs hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <button onClick={() => setCurrentMonth(new Date())} className="px-2 py-1 text-xs hover:bg-slate-100 dark:hover:bg-white/[0.05] rounded-lg">
                   Today
                 </button>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/[0.05] rounded-lg">
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -137,7 +137,7 @@ export default function CalendarPage() {
                       !isSameMonth(day, currentMonth) && 'opacity-30',
                       today && !selected && 'bg-brand-50 dark:bg-brand-900/20 font-semibold text-brand-600 dark:text-brand-400',
                       selected && 'bg-brand-600 text-white',
-                      !selected && !today && 'hover:bg-slate-50 dark:hover:bg-slate-700/50',
+                      !selected && !today && 'hover:bg-slate-50 dark:hover:bg-white/[0.05]',
                     )}
                   >
                     <span>{format(day, 'd')}</span>
@@ -158,7 +158,7 @@ export default function CalendarPage() {
             </div>
 
             {selectedDate && selectedEvents && (
-              <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-[#2A2B2E]">
                 <h3 className="text-sm font-semibold mb-2">{format(selectedDate, 'MMMM d, yyyy')}</h3>
                 {selectedEvents.interviews.length === 0 && selectedEvents.deadlines.length === 0 && (
                   <p className="text-xs text-slate-400">No events this day.</p>
@@ -184,7 +184,7 @@ export default function CalendarPage() {
           <div className="space-y-4">
             <div className="card p-4">
               <div className="flex items-center gap-2 mb-3">
-                <Clock className="w-4 h-4 text-brand-500" />
+                <Clock className="w-4 h-4 text-slate-500" />
                 <h2 className="text-sm font-semibold">Upcoming Interviews</h2>
               </div>
               {upcomingInterviews.length === 0 ? (

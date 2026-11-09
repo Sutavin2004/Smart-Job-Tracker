@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
   ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
-  Sparkles, Briefcase, ArrowUpRight, Save, Settings2, Loader2,
+  Sparkles, Briefcase, ArrowUpRight, Save, Loader2,
   Target, Brain, DollarSign, Wifi, ChevronUp, CalendarClock,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -43,9 +43,9 @@ function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return null
   const color = score >= 75 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
     : score >= 55 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+    : 'bg-slate-100 text-slate-500 dark:bg-[#26272A] dark:text-slate-400'
   return (
-    <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full tabular-nums', color)}>
+    <span className={cn('text-[11px] font-semibold px-2 py-0.5 rounded-full tabular-nums', color)}>
       {score}/100
     </span>
   )
@@ -56,15 +56,12 @@ function SessionJobRow({ job }: { job: SessionJob }) {
   const hasLink = !!job.jobUrl
 
   return (
-    <div className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group">
-      <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-xs font-semibold text-white shrink-0 mt-0.5">
-        {job.company[0]?.toUpperCase()}
-      </div>
+    <div className="flex items-start gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors group">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-semibold text-slate-900 dark:text-white truncate">{job.company}</span>
           <ScoreBadge score={job.aiScore} />
-          <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-medium">
+          <span className="text-[11px] bg-slate-100 dark:bg-[#26272A] text-slate-500 dark:text-slate-400 px-1.5 py-0.5 rounded font-medium">
             {sourceLabel}
           </span>
         </div>
@@ -74,7 +71,7 @@ function SessionJobRow({ job }: { job: SessionJob }) {
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
               {job.location}
-              {job.remote && ' · Remote'}
+              {job.remote && ', remote'}
               {job.hybrid && ' · Hybrid'}
             </span>
           )}
@@ -99,7 +96,7 @@ function SessionJobRow({ job }: { job: SessionJob }) {
             href={job.jobUrl!}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-1 rounded-lg transition-colors"
+            className="flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-[#26272A] hover:bg-slate-200 dark:hover:bg-slate-600 px-2 py-1 rounded-lg transition-colors"
           >
             <ArrowUpRight className="w-3.5 h-3.5" />
             Apply
@@ -135,13 +132,13 @@ function SessionRow({ session }: { session: AgentSession }) {
   const isClickable = session.status === 'completed' && session.jobsAdded > 0
 
   return (
-    <div className="border-b border-slate-100 dark:border-slate-700/60 last:border-0">
+    <div className="border-b border-slate-200 dark:border-[#2A2B2E] last:border-0">
       <button
         onClick={isClickable ? toggleExpand : undefined}
         className={cn(
           'w-full px-5 py-4 flex items-center gap-4 text-left transition-colors',
           isClickable
-            ? 'hover:bg-slate-50 dark:hover:bg-slate-700/30 cursor-pointer'
+            ? 'hover:bg-slate-50 dark:hover:bg-white/[0.05] cursor-pointer'
             : 'cursor-default'
         )}
       >
@@ -163,7 +160,7 @@ function SessionRow({ session }: { session: AgentSession }) {
             <Clock className="w-3 h-3" />
             {formatRelative(session.startedAt)}
             {session.trigger === 'scheduled' && (
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 text-[10px] font-medium text-brand-700 dark:text-brand-300">
+              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 text-[11px] font-medium text-brand-700 dark:text-brand-300">
                 <CalendarClock className="w-3 h-3" /> Daily run
               </span>
             )}
@@ -171,7 +168,7 @@ function SessionRow({ session }: { session: AgentSession }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className={cn(
-            'text-[10px] font-semibold px-2 py-0.5 rounded-full',
+            'text-[11px] font-semibold px-2 py-0.5 rounded-full',
             session.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
               : session.status === 'failed' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
               : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
@@ -195,7 +192,7 @@ function SessionRow({ session }: { session: AgentSession }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-slate-100 dark:border-slate-700/60 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="border-t border-slate-200 dark:border-[#2A2B2E] bg-slate-50/50 dark:bg-white/[0.03]">
               {loadingJobs ? (
                 <div className="px-5 py-6 text-center text-xs text-slate-400 animate-pulse">Loading jobs…</div>
               ) : jobs.length === 0 ? (
@@ -213,7 +210,7 @@ function SessionRow({ session }: { session: AgentSession }) {
                       View all on board <ExternalLink className="w-3 h-3" />
                     </Link>
                   </div>
-                  <div className="divide-y divide-slate-100 dark:divide-slate-700/40">
+                  <div className="divide-y divide-slate-100 dark:divide-[#26272A]">
                     {jobs.map(job => (
                       <SessionJobRow key={job.id} job={job} />
                     ))}
@@ -276,21 +273,18 @@ function SearchPreferencesPanel({
       {/* Header — always visible */}
       <button
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors text-left"
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors text-left"
       >
-        <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
-          <Settings2 className="w-4.5 h-4.5 text-brand-600 dark:text-brand-400" />
-        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">Search Preferences</p>
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">Search preferences</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
             {isComplete
-              ? `${draft.targetRoles.split(',').filter(Boolean).slice(0, 2).map(r => r.trim()).join(', ')}${draft.preferRemote ? ' · Remote' : ''}${draft.preferHybrid ? ' · Hybrid' : ''}`
-              : 'Set your target roles and skills to enable the agent'}
+              ? [draft.targetRoles.split(',').filter(Boolean).slice(0, 2).map(r => r.trim()).join(', '), draft.preferRemote && 'remote', draft.preferHybrid && 'hybrid'].filter(Boolean).join(', ')
+              : 'Add target roles and skills to run the agent'}
           </p>
         </div>
         {!isComplete && (
-          <span className="text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
+          <span className="text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
             Required
           </span>
         )}
@@ -307,13 +301,13 @@ function SearchPreferencesPanel({
             transition={{ duration: 0.22 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-slate-100 dark:border-slate-700/60 p-5 space-y-5">
+            <div className="border-t border-slate-200 dark:border-[#2A2B2E] p-5 space-y-5">
 
               {/* Target roles + skills */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Target className="w-3.5 h-3.5 text-brand-500" /> Target Roles *
+                    <Target className="w-3.5 h-3.5 text-slate-500" /> Target Roles *
                   </label>
                   <input
                     value={draft.targetRoles}
@@ -321,11 +315,11 @@ function SearchPreferencesPanel({
                     placeholder="Software Engineer, Frontend Developer"
                     className="input text-sm"
                   />
-                  <p className="text-[10px] text-slate-400">Comma-separated · up to 3 used per search</p>
+                  <p className="text-[11px] text-slate-400">Comma-separated · up to 3 used per search</p>
                 </div>
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Brain className="w-3.5 h-3.5 text-brand-500" /> Skills *
+                    <Brain className="w-3.5 h-3.5 text-slate-500" /> Skills *
                   </label>
                   <input
                     value={draft.skills}
@@ -333,14 +327,14 @@ function SearchPreferencesPanel({
                     placeholder="TypeScript, React, Next.js, Python"
                     className="input text-sm"
                   />
-                  <p className="text-[10px] text-slate-400">Used to score how well each job fits you</p>
+                  <p className="text-[11px] text-slate-400">Used to score how well each job fits you</p>
                 </div>
               </div>
 
               {/* Locations */}
               <div className="space-y-1.5">
                 <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-brand-500" /> Target Locations
+                  <MapPin className="w-3.5 h-3.5 text-slate-500" /> Target Locations
                 </label>
                 <input
                   value={draft.targetLocations}
@@ -354,7 +348,7 @@ function SearchPreferencesPanel({
               <div className="flex flex-wrap gap-4 items-end">
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <DollarSign className="w-3.5 h-3.5 text-brand-500" /> Salary Range
+                    <DollarSign className="w-3.5 h-3.5 text-slate-500" /> Salary Range
                   </label>
                   <div className="flex items-center gap-2">
                     <select
@@ -391,7 +385,7 @@ function SearchPreferencesPanel({
 
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Wifi className="w-3.5 h-3.5 text-brand-500" /> Work Style
+                    <Wifi className="w-3.5 h-3.5 text-slate-500" /> Work Style
                   </label>
                   <div className="flex gap-2">
                     {([['preferRemote', 'Remote'] , ['preferHybrid', 'Hybrid']] as [keyof UserProfile, string][]).map(([key, label]) => (
@@ -399,7 +393,7 @@ function SearchPreferencesPanel({
                         'flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all select-none',
                         draft[key]
                           ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
+                          : 'border-slate-200 dark:border-[#2A2B2E] text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
                       )}>
                         <input
                           type="checkbox"
@@ -425,10 +419,10 @@ function SearchPreferencesPanel({
                   placeholder="senior, lead, manager, 10+ years (comma-separated)"
                   className="input text-sm"
                 />
-                <p className="text-[10px] text-slate-400">Jobs containing these words will be filtered out</p>
+                <p className="text-[11px] text-slate-400">Jobs containing these words will be filtered out</p>
               </div>
 
-              <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60">
+              <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-[#2A2B2E]">
                 <p className="text-xs text-slate-400">Changes apply on the next agent run</p>
                 <button onClick={save} disabled={saving} className="btn-primary text-sm py-2 px-5">
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -470,9 +464,6 @@ function DailyRunToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (
 
   return (
     <div className="card flex items-center gap-4 px-5 py-4">
-      <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
-        <CalendarClock className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-      </div>
       <div className="flex-1 min-w-0">
         <p id="daily-run-label" className="text-sm font-semibold text-slate-900 dark:text-white">Run every morning</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -683,7 +674,7 @@ export default function AgentPage() {
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                   done ? 'bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300'
                     : active ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
-                    : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+                    : 'bg-slate-100 text-slate-400 dark:bg-[#1A1B1D]'
                 )}>
                   {done ? <CheckCircle className="w-3 h-3" />
                     : active ? <Zap className="w-3 h-3 animate-pulse" />
@@ -691,7 +682,7 @@ export default function AgentPage() {
                   {s}
                 </div>
                 {i < STEPS.length - 1 && (
-                  <div className={cn('flex-1 h-px', done ? 'bg-green-300 dark:bg-green-700' : 'bg-slate-200 dark:bg-slate-700')} />
+                  <div className={cn('flex-1 h-px', done ? 'bg-green-300 dark:bg-green-700' : 'bg-slate-200 dark:bg-[#26272A]')} />
                 )}
               </div>
             )
@@ -729,22 +720,19 @@ export default function AgentPage() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="card p-6 border-brand-200 dark:border-brand-800"
+            className="card p-5"
           >
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-brand flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
               <div>
-                <h3 className="font-semibold text-slate-900 dark:text-white">Agent completed!</h3>
+                <h3 className="font-semibold text-slate-900 dark:text-white">Run finished</h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Added <strong className="text-brand-600 dark:text-brand-400">{result.added} new jobs</strong>
-                  {result.skipped > 0 && `, skipped ${result.skipped} duplicates`}
+                  Added {result.added} new {result.added === 1 ? 'job' : 'jobs'} to your board
+                  {result.skipped > 0 && `, skipped ${result.skipped} already there`}.
                 </p>
               </div>
               <div className="ml-auto flex gap-2">
                 <button onClick={runAgent} className="btn-secondary text-xs py-1.5 px-3">
-                  <RotateCcw className="w-3.5 h-3.5" /> Run Again
+                  <RotateCcw className="w-3.5 h-3.5" /> Run again
                 </button>
                 <Link href="/jobs?discoveredBy=agent" className="btn-primary text-xs py-1.5 px-3">
                   <Briefcase className="w-3.5 h-3.5" /> View on Board
@@ -758,7 +746,7 @@ export default function AgentPage() {
       {/* Past sessions */}
       {sessions.length > 0 && (
         <div className="card overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+          <div className="px-5 py-4 border-b border-slate-200 dark:border-[#2A2B2E] flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past Sessions</h2>
               <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs it found</p>

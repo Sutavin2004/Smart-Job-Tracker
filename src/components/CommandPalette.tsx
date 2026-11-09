@@ -87,7 +87,7 @@ export function CommandPalette() {
             transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full max-w-lg bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-modal border border-slate-200/60 dark:border-white/10 overflow-hidden"
           >
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-white/5">
+            <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-white/5">
               <Search className="w-4 h-4 text-slate-400 shrink-0" />
               <input
                 ref={inputRef}
@@ -101,7 +101,7 @@ export function CommandPalette() {
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
-              <kbd className="text-[10px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-slate-400">Esc</kbd>
+              <kbd className="text-[11px] bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded font-mono text-slate-400">Esc</kbd>
             </div>
 
             <div className="max-h-80 overflow-y-auto py-2">
@@ -119,7 +119,7 @@ export function CommandPalette() {
                     <action.icon className="w-3.5 h-3.5" />
                   </div>
                   {action.label}
-                  {action.shortcut && <span className="ml-auto text-[10px] text-slate-400 font-mono">{action.shortcut}</span>}
+                  {action.shortcut && <span className="ml-auto text-[11px] text-slate-400 font-mono">{action.shortcut}</span>}
                 </button>
               ))}
 
@@ -146,7 +146,7 @@ export function CommandPalette() {
                           <p className="font-medium text-slate-900 dark:text-white truncate">{job.company}</p>
                           <p className="text-xs text-slate-500 truncate">{job.role}</p>
                         </div>
-                        <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-medium', cfg?.bg, cfg?.color)}>
+                        <span className={cn('text-[11px] px-2 py-0.5 rounded-full font-medium', cfg?.bg, cfg?.color)}>
                           {cfg?.label}
                         </span>
                       </button>

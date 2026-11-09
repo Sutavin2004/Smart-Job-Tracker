@@ -92,8 +92,8 @@ export default function TemplatesPage() {
 
       {showNew && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
               <h2 className="text-base font-semibold">New Template</h2>
               <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
@@ -134,7 +134,7 @@ function TemplateCard({
             <Mail className="w-4 h-4 text-brand-500 shrink-0" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{template.name}</h3>
           </div>
-          <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+          <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#26272A] text-slate-600 dark:text-slate-400">
             {typeLabel}
           </span>
         </div>

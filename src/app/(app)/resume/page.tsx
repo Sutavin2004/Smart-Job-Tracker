@@ -70,7 +70,7 @@ function ScoreBar({ score, label }: { score: number; label: string }) {
         <span className="text-slate-600 dark:text-slate-300">{label}</span>
         <span className="font-semibold text-slate-900 dark:text-white">{score}/100</span>
       </div>
-      <div className="h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+      <div className="h-2 bg-slate-100 dark:bg-[#26272A] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${score}%`, backgroundColor: color }}
@@ -213,7 +213,7 @@ export default function ResumePage() {
             </p>
           </div>
           {profile?.masterResume && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 dark:bg-slate-700 px-3 py-2 rounded-xl">
+            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 dark:bg-[#26272A] px-3 py-2 rounded-xl">
               <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
               Master resume saved · {wordCount(profile.masterResume)} words
             </div>
@@ -233,7 +233,7 @@ export default function ResumePage() {
                   'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all text-sm',
                   tab === t.id
                     ? 'bg-brand-600 text-white'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
                 )}
               >
                 <span className={cn('shrink-0', tab === t.id ? 'text-white' : 'text-slate-400')}>
@@ -241,7 +241,7 @@ export default function ResumePage() {
                 </span>
                 <div className="min-w-0">
                   <p className="font-medium leading-tight">{t.label}</p>
-                  <p className={cn('text-[10px] leading-tight mt-0.5', tab === t.id ? 'text-white/90' : 'text-slate-400')}>{t.desc}</p>
+                  <p className={cn('text-[11px] leading-tight mt-0.5', tab === t.id ? 'text-white/90' : 'text-slate-400')}>{t.desc}</p>
                 </div>
                 {tab === t.id && <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" />}
               </button>
@@ -249,7 +249,7 @@ export default function ResumePage() {
 
             {/* Quick stats */}
             {profile?.masterResume && (
-              <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-slate-800 space-y-2">
+              <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-[#1A1B1D] space-y-2">
                 <p className="text-xs font-semibold text-slate-400">Master Resume</p>
                 <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
                   <p>{wordCount(profile.masterResume)} words</p>
@@ -266,7 +266,7 @@ export default function ResumePage() {
             {tab === 'master' && (
               <div className="space-y-4">
                 <div className="card overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-700">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
                     <div>
                       <h2 className="font-semibold text-slate-900 dark:text-white">Master Resume</h2>
                       <p className="text-xs text-slate-500 mt-0.5">
@@ -292,7 +292,7 @@ export default function ResumePage() {
                           'flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all',
                           masterDirty
                             ? 'bg-brand-600 text-white hover:bg-brand-700'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-slate-100 dark:bg-[#26272A] text-slate-400 cursor-not-allowed'
                         )}
                       >
                         {savingMaster ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -329,7 +329,7 @@ export default function ResumePage() {
                       'Keep education, certifications, and courses — they are keyword gold',
                     ].map((tip, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                        <span className="w-4 h-4 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center text-[10px] font-semibold shrink-0 mt-0.5">
+                        <span className="w-4 h-4 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5">
                           {i + 1}
                         </span>
                         {tip}
@@ -346,7 +346,7 @@ export default function ResumePage() {
                 {/* Inputs */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <div className="card overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-[#2A2B2E]">
                       <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Resume Text</h2>
                       <div className="flex items-center gap-3">
                         {profile?.masterResume && analyzeResume !== profile.masterResume && (
@@ -372,10 +372,10 @@ export default function ResumePage() {
                   </div>
 
                   <div className="card overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 dark:border-slate-700">
+                    <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-[#2A2B2E]">
                       <div>
                         <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Job Description</h2>
-                        <p className="text-[10px] text-slate-400">Optional — enables keyword matching score</p>
+                        <p className="text-[11px] text-slate-400">Optional — enables keyword matching score</p>
                       </div>
                     </div>
                     <div className="p-5">
@@ -406,10 +406,10 @@ export default function ResumePage() {
                 {analyzing && (
                   <div className="card p-6 space-y-4 animate-pulse">
                     <div className="flex justify-around">
-                      {[1, 2, 3].map(i => <div key={i} className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-700" />)}
+                      {[1, 2, 3].map(i => <div key={i} className="w-20 h-20 rounded-full bg-slate-100 dark:bg-[#26272A]" />)}
                     </div>
                     {[70, 55, 40, 80].map(w => (
-                      <div key={w} className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full" style={{ width: `${w}%` }} />
+                      <div key={w} className="h-3 bg-slate-100 dark:bg-[#26272A] rounded-full" style={{ width: `${w}%` }} />
                     ))}
                   </div>
                 )}
@@ -501,7 +501,7 @@ export default function ResumePage() {
                           <h3 className="text-xs font-semibold text-slate-500 mb-3">Keywords</h3>
                           {analysis.presentKeywords.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-[10px] font-semibold text-emerald-600 mb-1.5">Present ✓</p>
+                              <p className="text-[11px] font-semibold text-emerald-600 mb-1.5">Present ✓</p>
                               <div className="flex flex-wrap gap-1.5">
                                 {analysis.presentKeywords.map(k => (
                                   <span key={k} className="text-[11px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">{k}</span>
@@ -511,7 +511,7 @@ export default function ResumePage() {
                           )}
                           {analysis.missingKeywords.length > 0 && (
                             <div>
-                              <p className="text-[10px] font-semibold text-red-600 mb-1.5">Missing ✗</p>
+                              <p className="text-[11px] font-semibold text-red-600 mb-1.5">Missing ✗</p>
                               <div className="flex flex-wrap gap-1.5">
                                 {analysis.missingKeywords.map(k => (
                                   <span key={k} className="text-[11px] bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">{k}</span>
@@ -527,11 +527,11 @@ export default function ResumePage() {
                     {analysis.rewrittenBullets?.length > 0 && (
                       <div className="card p-5">
                         <h3 className="text-xs font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-brand-500" /> AI-Improved Bullet Points
+                          <Sparkles className="w-3.5 h-3.5 text-slate-500" /> AI-Improved Bullet Points
                         </h3>
                         <div className="space-y-4">
                           {analysis.rewrittenBullets.slice(0, 5).map((b, i) => (
-                            <div key={i} className="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800">
+                            <div key={i} className="space-y-1.5 p-3 rounded-xl bg-slate-50 dark:bg-[#1A1B1D]">
                               <p className="text-xs text-slate-400 line-through leading-relaxed">{b.original}</p>
                               <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed font-medium">→ {b.improved}</p>
                             </div>
@@ -575,9 +575,6 @@ export default function ResumePage() {
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800'
                         : 'bg-amber-50 dark:bg-amber-900/10 border-amber-200 dark:border-amber-800'
                     )}>
-                      <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-xs font-semibold text-white shrink-0">
-                        {selectedJob.company[0]}
-                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-slate-900 dark:text-white">{selectedJob.company}</p>
                         <p className="text-xs text-slate-500">{selectedJob.role}</p>
@@ -631,13 +628,13 @@ export default function ResumePage() {
                         </div>
                         <div className="flex-1 flex flex-col items-center gap-1">
                           <div className="flex items-center gap-2 w-full">
-                            <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-slate-100 dark:bg-[#26272A] rounded-full overflow-hidden">
                               <div className="h-full bg-slate-300 rounded-full transition-all" style={{ width: `${tailorResult.atsScoreBefore}%` }} />
                             </div>
                           </div>
                           <ArrowUpRight className="w-5 h-5 text-emerald-500" />
                           <div className="flex items-center gap-2 w-full">
-                            <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div className="flex-1 h-2 bg-slate-100 dark:bg-[#26272A] rounded-full overflow-hidden">
                               <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${tailorResult.atsScoreAfter}%` }} />
                             </div>
                           </div>
@@ -648,7 +645,7 @@ export default function ResumePage() {
                         </div>
                         <div className="text-center px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
                           <p className="text-lg font-semibold text-emerald-600">+{tailorResult.atsScoreAfter - tailorResult.atsScoreBefore}</p>
-                          <p className="text-[10px] text-emerald-600">points</p>
+                          <p className="text-[11px] text-emerald-600">points</p>
                         </div>
                       </div>
                     </div>
@@ -709,11 +706,11 @@ export default function ResumePage() {
                     {tailorResult.rewrittenBullets?.length > 0 && (
                       <div className="card p-5">
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-brand-500" /> Improved Bullet Points
+                          <Sparkles className="w-4 h-4 text-slate-500" /> Improved Bullet Points
                         </h3>
                         <div className="space-y-3">
                           {tailorResult.rewrittenBullets.slice(0, 6).map((b, i) => (
-                            <div key={i} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-1.5">
+                            <div key={i} className="p-3 rounded-xl bg-slate-50 dark:bg-[#1A1B1D] space-y-1.5">
                               <p className="text-xs text-slate-400 line-through leading-relaxed">{b.original}</p>
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed font-medium flex-1">→ {b.improved}</p>
@@ -728,7 +725,7 @@ export default function ResumePage() {
                     {/* Full tailored resume */}
                     {tailorResult.tailoredResume && (
                       <div className="card overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
                           <div>
                             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Full Tailored Resume</h3>
                             <p className="text-xs text-slate-500 mt-0.5">Complete resume optimized for {selectedJob?.company} · {selectedJob?.role}</p>

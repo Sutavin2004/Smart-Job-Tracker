@@ -110,8 +110,8 @@ export default function AnalyticsPage() {
         {KPI.map(({ label, value, sub }) => (
           <div key={label} className="card p-3 text-center">
             <p className="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">{value}</p>
-            <p className="text-[10px] font-semibold text-slate-500 mt-0.5">{label}</p>
-            <p className="text-[9px] text-slate-400">{sub}</p>
+            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{label}</p>
+            <p className="text-[11px] text-slate-400">{sub}</p>
           </div>
         ))}
       </div>
@@ -228,7 +228,7 @@ export default function AnalyticsPage() {
       {/* Agent stats */}
       {(data.agentDiscoveredCount > 0 || data.manuallyAddedCount > 0) && (
         <div className="card p-5">
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Bot className="w-4 h-4 text-brand-500" /> Agent vs Manual</h2>
+          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Bot className="w-4 h-4 text-slate-500" /> Agent vs Manual</h2>
           <div className="flex gap-6">
             <div>
               <p className="text-2xl font-semibold text-brand-600">{data.agentDiscoveredCount}</p>
@@ -248,7 +248,7 @@ export default function AnalyticsPage() {
 
       {/* Activity heatmap */}
       <div className="card p-5 overflow-x-auto">
-        <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-brand-500" /> Activity Heatmap (last year)</h2>
+        <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-slate-500" /> Activity Heatmap (last year)</h2>
         <div className="flex gap-1">
           {Array.from({ length: 52 }).map((_, w) => (
             <div key={w} className="flex flex-col gap-1">
@@ -271,7 +271,7 @@ export default function AnalyticsPage() {
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-2 mt-3 text-[10px] text-slate-400">
+        <div className="flex items-center gap-2 mt-3 text-[11px] text-slate-400">
           <span>Less</span>
           {[0.1, 0.3, 0.5, 0.7, 1].map(i => (
             <div key={i} className="w-3 h-3 rounded-sm" style={{ background: `rgba(132,72,255,${i})` }} />

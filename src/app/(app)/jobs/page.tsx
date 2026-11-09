@@ -98,7 +98,7 @@ function JobsPageInner() {
       <div className={cn('flex flex-col flex-1 min-w-0 overflow-y-auto', selectedJob ? 'w-0 md:w-auto' : '')}>
         {/* Toolbar */}
         <h1 className="sr-only">Jobs board</h1>
-        <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-3.5">
+        <div className="sticky top-0 z-10 bg-slate-50 dark:bg-[#121314] border-b border-slate-200 dark:border-[#2A2B2E] px-6 py-3.5">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
@@ -130,12 +130,12 @@ function JobsPageInner() {
               ))}
             </select>
 
-            <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+            <div className="flex rounded-lg border border-slate-200 dark:border-[#2A2B2E] overflow-hidden">
               <button
                 onClick={() => setView('kanban')}
                 aria-label="Board view"
                 aria-pressed={view === 'kanban'}
-                className={cn('px-3 py-1.5 text-xs', view === 'kanban' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700')}
+                className={cn('px-3 py-1.5 text-xs', view === 'kanban' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.05]')}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
               </button>
@@ -143,7 +143,7 @@ function JobsPageInner() {
                 onClick={() => setView('table')}
                 aria-label="Table view"
                 aria-pressed={view === 'table'}
-                className={cn('px-3 py-1.5 text-xs', view === 'table' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700')}
+                className={cn('px-3 py-1.5 text-xs', view === 'table' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.05]')}
               >
                 <List className="w-3.5 h-3.5" />
               </button>
@@ -268,7 +268,7 @@ function KanbanView({ jobs, onSelect, selectedId, onMove }: {
                     ))}
                     {provided.placeholder}
                     {col.length === 0 && !snapshot.isDraggingOver && (
-                      <div className="h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center">
+                      <div className="h-24 border-2 border-dashed border-slate-200 dark:border-[#2A2B2E] rounded-xl flex items-center justify-center">
                         <p className="text-xs text-slate-400 dark:text-slate-400">Drop here</p>
                       </div>
                     )}
@@ -287,9 +287,9 @@ function ScoreBadge({ score }: { score: number | null }) {
   if (score == null) return null
   const color = score >= 70 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
     : score >= 45 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+    : 'bg-slate-100 text-slate-500 dark:bg-[#26272A] dark:text-slate-400'
   return (
-    <span className={cn('text-[10px] font-semibold px-1.5 py-0.5 rounded-md', color)}>
+    <span className={cn('text-[11px] font-semibold px-1.5 py-0.5 rounded-md', color)}>
       {score}/100
     </span>
   )
@@ -307,7 +307,7 @@ function JobCard({ job, onClick, selected, handleProps }: {
         'w-full text-left rounded-xl border transition-all hover:shadow-md',
         selected
           ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-700'
-          : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+          : 'bg-white dark:bg-[#1A1B1D] border-slate-200 dark:border-[#2A2B2E] hover:border-slate-300 dark:hover:border-slate-600'
       )}
     >
       {/* The card body is the drag handle and opens the job (click or Enter); Space lifts it for keyboard dragging. */}
@@ -374,7 +374,7 @@ function JobCard({ job, onClick, selected, handleProps }: {
             target="_blank"
             rel="noopener noreferrer"
             onClick={e => e.stopPropagation()}
-            className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+            className="flex items-center justify-center gap-1.5 w-full py-1.5 rounded-lg text-[11px] font-medium border border-slate-200 dark:border-[#2A2B2E] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
           >
             <ExternalLink className="w-3 h-3" /> Apply / View Posting
           </a>
@@ -390,7 +390,7 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700">
+            <tr className="bg-slate-50 dark:bg-white/[0.06] border-b border-slate-200 dark:border-[#2A2B2E]">
               {['Company', 'Role', 'Status', 'Priority', 'Fit', 'Location', 'Source', 'Applied', 'Updated', ''].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500">
                   {h}
@@ -398,7 +398,7 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50 dark:divide-slate-700/50">
+          <tbody className="divide-y divide-slate-100 dark:divide-[#26272A]">
             {jobs.map(job => (
               <tr
                 key={job.id}
@@ -409,7 +409,7 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
                   'cursor-pointer transition-colors focus:outline-none focus-visible:bg-brand-50 dark:focus-visible:bg-brand-900/20',
                   selectedId === job.id
                     ? 'bg-brand-50 dark:bg-brand-900/20'
-                    : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                    : 'hover:bg-slate-50 dark:hover:bg-white/[0.05]'
                 )}
               >
                 <td className="px-4 py-3 font-semibold text-slate-900 dark:text-white">{job.company}</td>

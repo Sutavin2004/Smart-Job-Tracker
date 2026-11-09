@@ -54,14 +54,14 @@ function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }
     <div className="card overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center justify-between w-full px-5 py-4 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors"
+        className="flex items-center justify-between w-full px-5 py-4 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
       >
-        <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-brand-500" /> New Task</span>
+        <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-slate-500" /> New Task</span>
         {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
       </button>
 
       {open && (
-        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3 border-t border-slate-100 dark:border-slate-700 pt-4">
+        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3 border-t border-slate-200 dark:border-[#2A2B2E] pt-4">
           {/* Job selector */}
           <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Job Application *</label>
@@ -126,7 +126,7 @@ function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              className="px-3 py-2 rounded-lg border border-slate-200 dark:border-[#2A2B2E] text-xs text-slate-500 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -239,13 +239,13 @@ export default function TasksPage() {
             )}
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700/50">
+          <div className="divide-y divide-slate-100 dark:divide-[#26272A]">
             {filtered.map(task => {
               const isOverdue = !task.completed && task.dueDate && new Date(task.dueDate) < new Date()
               return (
                 <div
                   key={task.id}
-                  className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-700/20 transition-colors group"
+                  className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors group"
                 >
                   <button
                     onClick={() => toggleTask(task)}

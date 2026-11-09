@@ -27,13 +27,15 @@ for (const scheme of ['light', 'dark'] as const) {
 
 test('mobile dashboard', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.goto('/')
+  // The reminders popup (shown on pages other than the dashboard) must sit above the bottom nav on phones.
+  await page.goto('/jobs')
   await page.waitForLoadState('networkidle')
-  // The reminders popup must sit above the bottom nav on phones, not over it.
   const nav = await page.getByRole('navigation').last().boundingBox()
   const popup = await page.getByRole('button', { name: 'Dismiss all reminders' }).boundingBox()
   if (nav && popup) expect(popup.y + popup.height).toBeLessThanOrEqual(nav.y)
-  await page.getByRole('button', { name: 'Dismiss all reminders' }).click()
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await expect(page.getByRole('button', { name: 'Dismiss all reminders' })).toHaveCount(0)
   await page.screenshot({ path: 'e2e-screenshots/mobile-dashboard.png' })
 })
 

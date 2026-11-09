@@ -49,7 +49,7 @@ export function GettingStarted({ hasProfile, hasRunAgent, hasApplied, onAddJob }
             <>
               <span className={cn(
                 'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums',
-                step.done ? 'bg-brand-600 text-white' : 'border border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400'
+                step.done ? 'bg-brand-600 text-white' : 'border border-slate-300 text-slate-500 dark:border-[#34353A] dark:text-slate-400'
               )}>
                 {step.done ? <Check className="h-3 w-3" strokeWidth={2.5} /> : i + 1}
               </span>
