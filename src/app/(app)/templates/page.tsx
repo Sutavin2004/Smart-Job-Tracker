@@ -48,7 +48,7 @@ export default function TemplatesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Email templates</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{templates.length} templates</p>
+          <p className="mt-1 text-sm text-slate-500">Reusable emails. Placeholders like {'{{Company}}'} are filled in when you use one from a job.</p>
         </div>
         <button onClick={() => setShowNew(true)} className="btn-primary">
           <Plus className="w-4 h-4" /> New template
@@ -131,10 +131,9 @@ function TemplateCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Mail className="w-4 h-4 text-brand-500 shrink-0" />
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white truncate">{template.name}</h3>
           </div>
-          <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#26272A] text-slate-600 dark:text-slate-400">
+          <span className="mt-0.5 block text-[13px] text-slate-500">
             {typeLabel}
           </span>
         </div>
@@ -207,7 +206,7 @@ function TemplateEditor({
           <input
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            placeholder="e.g. Follow Up"
+            placeholder="e.g. Follow-up after a referral"
             className="input"
           />
         </div>

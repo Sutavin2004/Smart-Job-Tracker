@@ -28,7 +28,7 @@ for (const scheme of ['light', 'dark'] as const) {
 test('mobile dashboard', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   // The reminders popup (shown on pages other than the dashboard) must sit above the bottom nav on phones.
-  await page.goto('/jobs')
+  await page.goto('/tasks')
   await page.waitForLoadState('networkidle')
   const nav = await page.getByRole('navigation').last().boundingBox()
   const popup = await page.getByRole('button', { name: 'Dismiss all reminders' }).boundingBox()

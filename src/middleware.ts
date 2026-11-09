@@ -21,13 +21,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
   }
   if (PUBLIC_PAGES.includes(pathname)) return NextResponse.next()
+  // Lets the app layout send an expired session back to the same page after sign-in.
+  const headers = new Headers(req.headers)
+  headers.set('x-pathname', pathname + search)
   if (!hasSession) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     url.search = pathname === '/' ? '' : `?next=${encodeURIComponent(pathname + search)}`
     return NextResponse.redirect(url)
   }
-  return NextResponse.next()
+  return NextResponse.next({ request: { headers } })
 }
 
 export const config = {

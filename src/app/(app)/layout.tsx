@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { Sidebar } from '@/components/Sidebar'
 import { CommandPalette } from '@/components/CommandPalette'
@@ -16,7 +16,10 @@ export const dynamic = 'force-dynamic'
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const token = (await cookies()).get(SESSION_COOKIE)?.value
   const user = await getUserByToken(token)
-  if (!user) redirect('/login')
+  if (!user) {
+    const path = (await headers()).get('x-pathname') ?? '/'
+    redirect(path === '/' || !path.startsWith('/') || path.startsWith('//') ? '/login' : `/login?next=${encodeURIComponent(path)}`)
+  }
 
   return (
     <>

@@ -121,9 +121,9 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-px">
+            <div className="grid grid-cols-7 overflow-hidden rounded-md border-l border-t border-slate-200 dark:border-[#2A2B2E]">
               {paddedDays.map((day, i) => {
-                if (!day) return <div key={`empty-${i}`} />
+                if (!day) return <div key={`empty-${i}`} className="border-b border-r border-slate-200 dark:border-[#2A2B2E]" />
                 const events = getEventsForDay(day)
                 const hasEvents = events.interviews.length > 0 || events.deadlines.length > 0
                 const selected = selectedDate && isSameDay(day, selectedDate)
@@ -132,30 +132,32 @@ export default function CalendarPage() {
                   <button
                     key={day.toISOString()}
                     onClick={() => setSelectedDate(selected ? null : day)}
+                    aria-pressed={Boolean(selected)}
+                    aria-label={`${format(day, 'MMMM d')}${hasEvents ? `, ${events.interviews.length + events.deadlines.length} events` : ''}`}
                     className={cn(
-                      'aspect-square flex flex-col items-center justify-start p-1 rounded-lg text-xs transition-all',
-                      !isSameMonth(day, currentMonth) && 'opacity-30',
-                      today && !selected && 'bg-brand-50 dark:bg-brand-900/20 font-semibold text-brand-600 dark:text-brand-400',
-                      selected && 'bg-brand-600 text-white',
-                      !selected && !today && 'hover:bg-slate-50 dark:hover:bg-white/[0.05]',
+                      'flex min-h-[76px] flex-col items-stretch gap-0.5 border-b border-r border-slate-200 p-1.5 text-left text-xs transition-colors dark:border-[#2A2B2E]',
+                      !isSameMonth(day, currentMonth) && 'opacity-40',
+                      selected ? 'bg-brand-50 dark:bg-brand-900/30' : 'hover:bg-slate-50 dark:hover:bg-white/[0.04]',
                     )}
                   >
-                    <span>{format(day, 'd')}</span>
-                    {hasEvents && (
-                      <div className="flex gap-0.5 mt-0.5">
-                        {events.interviews.length > 0 && <div className={cn('w-1 h-1 rounded-full', selected ? 'bg-white' : 'bg-brand-500')} />}
-                        {events.deadlines.length > 0 && <div className={cn('w-1 h-1 rounded-full', selected ? 'bg-white' : 'bg-red-500')} />}
-                      </div>
+                    <span className={cn(
+                      'inline-flex h-5 w-5 items-center justify-center self-start rounded-full tabular-nums',
+                      today ? 'bg-brand-600 font-semibold text-white' : 'text-slate-600 dark:text-slate-400',
+                    )}>{format(day, 'd')}</span>
+                    {events.interviews.slice(0, 2).map(iv => (
+                      <span key={iv.id} className="truncate rounded-sm bg-brand-100 px-1 text-[11px] leading-[18px] text-brand-800 dark:bg-brand-900/60 dark:text-brand-200">{iv.job.company}</span>
+                    ))}
+                    {events.deadlines.slice(0, 1).map(j => (
+                      <span key={j.id} className="truncate rounded-sm bg-red-50 px-1 text-[11px] leading-[18px] text-red-800 dark:bg-red-950/50 dark:text-red-300">{j.company} due</span>
+                    ))}
+                    {events.interviews.length + events.deadlines.length > 3 && (
+                      <span className="px-1 text-[11px] text-slate-500">+{events.interviews.length + events.deadlines.length - 3} more</span>
                     )}
                   </button>
                 )
               })}
             </div>
 
-            <div className="flex gap-4 mt-3 text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-brand-500" /> Interview</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /> Deadline</span>
-            </div>
 
             {selectedDate && selectedEvents && (
               <div className="mt-4 pt-4 border-t border-slate-200 dark:border-[#2A2B2E]">
@@ -165,8 +167,8 @@ export default function CalendarPage() {
                 )}
                 {selectedEvents.interviews.map(iv => (
                   <div key={iv.id} className="bg-brand-50 dark:bg-brand-900/20 rounded-lg p-3 mb-2">
-                    <p className="text-xs font-semibold text-brand-700 dark:text-brand-300 capitalize">{iv.type} Interview</p>
-                    <p className="text-xs text-slate-700 dark:text-slate-300">{iv.job.company} — {iv.job.role}</p>
+                    <p className="text-xs font-semibold text-brand-700 dark:text-brand-300 capitalize">{iv.type} interview</p>
+                    <p className="text-xs text-slate-700 dark:text-slate-300">{iv.job.company}, {iv.job.role}</p>
                     <p className="text-xs text-slate-500">{format(new Date(iv.scheduledAt), 'h:mm a')}</p>
                   </div>
                 ))}

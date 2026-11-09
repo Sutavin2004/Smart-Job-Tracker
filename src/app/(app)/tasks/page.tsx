@@ -1,18 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CheckSquare, Square, Plus, Trash2, Calendar, Flag, Loader2, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckSquare, Square, Plus, Trash2, Calendar, Loader2, X, ChevronDown, ChevronUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
 import type { Task, Job } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
-const PRIORITY_BG: Record<string, string> = {
-  high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-  medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  low: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-}
 
 function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }) {
   const [open, setOpen] = useState(false)
@@ -196,27 +191,32 @@ export default function TasksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Tasks</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {pendingCount} pending{overdueCount > 0 && ` · `}
-            {overdueCount > 0 && <span className="text-red-500">{overdueCount} overdue</span>}
+          <p className="mt-1 text-sm text-slate-500">
+            {pendingCount} to do{overdueCount > 0 && ', '}
+            {overdueCount > 0 && <span className="text-red-700 dark:text-red-400">{overdueCount} overdue</span>}
           </p>
         </div>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
+      <div role="tablist" aria-label="Filter tasks" className="flex gap-1 border-b border-slate-200 dark:border-[#2A2B2E]">
         {([
-          { label: 'All tasks', value: tasks.length, filter: 'all', valueClass: 'text-slate-900 dark:text-white' },
-          { label: 'Pending', value: pendingCount, filter: 'pending', valueClass: 'text-amber-600' },
-          { label: 'Completed', value: tasks.length - pendingCount, filter: 'completed', valueClass: 'text-emerald-600' },
+          { label: 'To do', value: pendingCount, filter: 'pending' },
+          { label: 'Done', value: tasks.length - pendingCount, filter: 'completed' },
+          { label: 'All', value: tasks.length, filter: 'all' },
         ] as const).map(item => (
           <button
             key={item.filter}
+            role="tab"
+            aria-selected={filter === item.filter}
             onClick={() => setFilter(item.filter)}
-            className={cn('card p-4 text-center transition-all hover:shadow-md', filter === item.filter && 'ring-2 ring-brand-500')}
+            className={cn(
+              '-mb-px border-b-2 px-3 py-2.5 text-sm transition-colors',
+              filter === item.filter
+                ? 'border-brand-600 font-medium text-slate-900 dark:border-brand-400 dark:text-white'
+                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+            )}
           >
-            <p className={cn('text-2xl font-semibold', item.valueClass)}>{item.value}</p>
-            <p className="text-xs text-slate-500 mt-1">{item.label}</p>
+            {item.label} <span className="ml-1 tabular-nums text-slate-500">{item.value}</span>
           </button>
         ))}
       </div>
@@ -232,10 +232,9 @@ export default function TasksPage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
-            <CheckSquare className="w-8 h-8 mx-auto mb-3 opacity-40" />
-            <p className="text-sm">No tasks here.</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300">{filter === 'completed' ? 'Nothing finished yet.' : 'Nothing to do.'}</p>
             {filter === 'pending' && (
-              <p className="text-xs mt-1">Use the form above to add a task, or add from within a job application.</p>
+              <p className="mt-1 text-[13px] text-slate-500">Add a task above, or from inside a job.</p>
             )}
           </div>
         ) : (
@@ -255,7 +254,7 @@ export default function TasksPage() {
                     className="mt-0.5 shrink-0 text-slate-400 hover:text-brand-500 transition-colors"
                   >
                     {task.completed
-                      ? <CheckSquare className="w-5 h-5 text-emerald-500" />
+                      ? <CheckSquare className="w-5 h-5 text-brand-600 dark:text-brand-400" />
                       : <Square className="w-5 h-5" />
                     }
                   </button>
@@ -272,27 +271,25 @@ export default function TasksPage() {
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-1.5">
                       {task.job && (
-                        <span className="text-xs text-slate-400 truncate max-w-[180px]">
+                        <span className="text-xs text-slate-500 truncate max-w-[220px]">
                           {task.job.company}, {task.job.role}
                         </span>
                       )}
                       {task.dueDate && (
                         <span className={cn(
                           'inline-flex items-center gap-1 text-xs',
-                          isOverdue ? 'text-red-500 font-medium' : 'text-slate-400'
+                          isOverdue ? 'text-red-700 dark:text-red-400 font-medium' : 'text-slate-500'
                         )}>
                           <Calendar className="w-3 h-3" />
                           {formatDate(task.dueDate)}
-                          {isOverdue && ' · Overdue'}
+                          {isOverdue && ', overdue'}
                         </span>
                       )}
-                      <span className={cn(
-                        'inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-md font-medium',
-                        PRIORITY_BG[task.priority] ?? 'bg-slate-100 text-slate-500'
-                      )}>
-                        <Flag className="w-2.5 h-2.5" />
-                        {task.priority}
-                      </span>
+                      {task.priority !== 'medium' && (
+                        <span className={cn('text-xs', task.priority === 'high' ? 'text-red-700 dark:text-red-400' : 'text-slate-500')}>
+                          {task.priority === 'high' ? 'High priority' : 'Low priority'}
+                        </span>
+                      )}
                     </div>
                   </div>
 

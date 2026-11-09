@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import {
   X, Sparkles, FileText, Calendar, Clock, Trash2, Save,
   BookOpen, ChevronDown, ChevronUp, Plus, CheckCircle, XCircle,
-  MinusCircle, Loader2, MapPin, DollarSign, AlertCircle, Target,
-  CheckSquare, Square, Mail, Flag, ArrowUpRight, Briefcase, User,
+  MinusCircle, Loader2, DollarSign, AlertCircle, Target,
+  CheckSquare, Square, Mail, Flag, ArrowUpRight, Briefcase,
   TrendingUp, Shield, Lightbulb, Star,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -270,7 +270,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   const pendingTasks = tasks.filter(t => !t.completed).length
   const TABS: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: <BookOpen className="w-3.5 h-3.5" /> },
-    { id: 'ai', label: 'AI Coach', icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { id: 'ai', label: 'AI help', icon: <Sparkles className="w-3.5 h-3.5" /> },
     { id: 'materials', label: 'Materials', icon: <FileText className="w-3.5 h-3.5" /> },
     { id: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-3.5 h-3.5" />, badge: pendingTasks || undefined },
     { id: 'interviews', label: 'Interviews', icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -361,22 +361,22 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label"><MapPin className="w-3 h-3 inline mr-1" />Location</label>
+                <label className="label">Location</label>
                 <input value={location} onChange={e => setLocation(e.target.value)} placeholder="Remote / City" className="input" />
               </div>
               <div>
-                <label className="label"><DollarSign className="w-3 h-3 inline mr-1" />Salary</label>
+                <label className="label">Salary</label>
                 <input value={salary} onChange={e => setSalary(e.target.value)} placeholder="$80k–$100k" className="input" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="label"><Calendar className="w-3 h-3 inline mr-1" />Follow-up Date</label>
+                <label className="label">Follow-up date</label>
                 <input type="date" value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} className="input" />
               </div>
               <div>
-                <label className="label"><AlertCircle className="w-3 h-3 inline mr-1" />Deadline</label>
+                <label className="label">Deadline</label>
                 <input type="date" value={deadline} onChange={e => setDeadline(e.target.value)} className="input" />
               </div>
             </div>
@@ -404,7 +404,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             {/* Contacts */}
             {contacts.length > 0 && (
               <div>
-                <label className="label"><User className="w-3 h-3 inline mr-1" />Contacts</label>
+                <label className="label">Contacts</label>
                 <div className="space-y-1.5">
                   {contacts.map(c => (
                     <div key={c.id} className="flex items-center gap-2 bg-slate-50 dark:bg-white/[0.06] rounded-lg px-3 py-2">
@@ -641,7 +641,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Mail className="w-4 h-4 text-slate-500" /> Email Generator</p>
               <div className="flex gap-2">
                 <select value={emailType} onChange={e => setEmailType(e.target.value)} className="input flex-1 text-xs">
-                  {[['follow_up','Follow-up'],['thank_you','Thank You'],['withdraw','Withdraw'],['counter_offer','Counter Offer'],['networking','Networking'],['cold_outreach','Cold Outreach']].map(([v,l]) => (
+                  {[['follow_up','Follow-up'],['thank_you','Thank-you'],['withdraw','Withdraw'],['counter_offer','Counter-offer'],['networking','Networking'],['cold_outreach','Cold outreach']].map(([v,l]) => (
                     <option key={v} value={v}>{l}</option>
                   ))}
                 </select>
@@ -772,7 +772,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                     </select>
                   </div>
                   <div>
-                    <label className="label">Date & Time</label>
+                    <label className="label">Date and time</label>
                     <input type="datetime-local" value={intDate} onChange={e => setIntDate(e.target.value)} className="input" />
                   </div>
                 </div>

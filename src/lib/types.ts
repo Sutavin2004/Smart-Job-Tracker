@@ -245,10 +245,10 @@ export const COMPANY_SIZE_OPTIONS = ['Startup (<50)', 'Small (50-200)', 'Medium 
 export const CURRENCY_OPTIONS = ['CAD', 'USD', 'GBP', 'EUR', 'AUD']
 export const RELATIONSHIP_OPTIONS: ContactRelationship[] = ['recruiter', 'hiring-manager', 'interviewer', 'employee', 'referral', 'other']
 export const EMAIL_TEMPLATE_TYPES: { value: EmailTemplateType; label: string }[] = [
-  { value: 'follow_up', label: 'Follow Up' },
-  { value: 'thank_you', label: 'Thank You' },
+  { value: 'follow_up', label: 'Follow-up' },
+  { value: 'thank_you', label: 'Thank-you' },
   { value: 'withdraw', label: 'Withdraw' },
-  { value: 'counter_offer', label: 'Counter Offer' },
+  { value: 'counter_offer', label: 'Counter-offer' },
   { value: 'networking', label: 'Networking' },
-  { value: 'cold_outreach', label: 'Cold Outreach' },
+  { value: 'cold_outreach', label: 'Cold outreach' },
 ]

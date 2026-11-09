@@ -19,7 +19,7 @@ const SEEN_KEY = 'reminders-popup-closed'
 
 /**
  * A small popup listing what needs attention, shown once per browser session.
- * Not shown on the dashboard, which already has a "Needs attention" panel.
+ * Not shown on the dashboard or the board.
  */
 export function FollowUpBanner() {
   const pathname = usePathname()
@@ -38,7 +38,8 @@ export function FollowUpBanner() {
   }, [])
 
   const visible = reminders.filter(r => !dismissed.has(r.id))
-  if (!open || visible.length === 0 || pathname === '/') return null
+  // Hidden on the dashboard (it has its own panel) and the board (it would cover the job panel).
+  if (!open || visible.length === 0 || pathname === '/' || pathname.startsWith('/jobs')) return null
 
   function close() {
     setOpen(false)
