@@ -51,9 +51,12 @@ export async function runDiscovery(
 
     const boardLabels: string[] = []
     if (hasRapidApi) boardLabels.push('LinkedIn · Indeed · Glassdoor (JSearch)')
-    if (profile.preferRemote) boardLabels.push('RemoteOK')
+    if (process.env.ADZUNA_APP_ID && process.env.ADZUNA_APP_KEY) boardLabels.push('Adzuna')
+    if (profile.preferRemote || locations.some(l => /remote/i.test(l))) boardLabels.push('RemoteOK · Remotive · Jobicy')
     if (hasAnthropic) boardLabels.push('AI-augmented search')
-    log(`🌐 Sources: ${boardLabels.join(', ')}`, { step: 2 })
+    log(boardLabels.length
+      ? `🌐 Sources: ${boardLabels.join(', ')}`
+      : '⚠️ No job sources match these settings. Add "Remote" as a location, or set Adzuna / JSearch keys for local searches.', { step: 2 })
 
     await prisma.agentSession.update({
       where: { id: session.id },
@@ -223,8 +226,8 @@ ${rawJobsText}`,
       excludeKeywords: profile.excludeKeywords,
     })
 
-    // Lower threshold — keep anything with a meaningful score
-    const qualified = scored.filter(j => j.fitScore >= 15)
+    // Keep reasonable matches; irrelevant titles were already scored 0.
+    const qualified = scored.filter(j => j.fitScore >= 30)
     log(`✅ ${qualified.length} jobs matched your profile`, { step: 3 })
     emit({ type: 'found', count: qualified.length })
 

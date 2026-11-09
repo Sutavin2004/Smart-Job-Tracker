@@ -74,10 +74,44 @@ describe('scoreJob', () => {
 describe('scoreAndRankJobs', () => {
   it('drops excluded jobs and sorts best first', () => {
     const ranked = scoreAndRankJobs([
-      job({ company: 'Weak', jobDescription: 'Excel', location: 'Calgary, AB', role: 'Analyst' }),
+      job({ company: 'Weak', jobDescription: 'Excel', location: 'Calgary, AB', role: 'Software Developer' }),
+      job({ company: 'Irrelevant', role: 'Data Analyst' }),
       job({ company: 'Strong' }),
       job({ company: 'Excluded', role: 'Senior Engineer' }),
     ], profile)
     expect(ranked.map(j => j.company)).toEqual(['Strong', 'Weak'])
+  })
+})
+
+import { titleRelevant, homeCountry, remoteEligible } from './scoring'
+
+describe('agent relevance filters', () => {
+  const roles = 'Software Engineer, Frontend Developer'
+  it('drops postings whose title shares nothing with the target roles', () => {
+    expect(titleRelevant('Content Reviewer - United States', roles)).toBe(false)
+    expect(titleRelevant('US Remote Patient Care Advocate', roles)).toBe(false)
+    expect(titleRelevant('Software Engineer, AI Coding Tasks', roles)).toBe(true)
+    expect(titleRelevant('Front-End Developer (React)', roles)).toBe(true)
+    expect(titleRelevant('Senior Engineering Manager', roles)).toBe(true) // 'engineering' ~ 'engineer'; exclusions handle seniority
+  })
+  it('works out the home country from non-remote locations', () => {
+    expect(homeCountry('Remote, Toronto')).toBe('ca')
+    expect(homeCountry('Seattle, WA')).toBe('us')
+    expect(homeCountry('Remote')).toBeNull()
+  })
+  it('checks remote eligibility labels', () => {
+    expect(remoteEligible('Remote · USA', 'ca')).toBe(false)
+    expect(remoteEligible('Remote · USA, Canada', 'ca')).toBe(true)
+    expect(remoteEligible('Remote · Americas', 'ca')).toBe(true)
+    expect(remoteEligible('Remote · Worldwide', 'ca')).toBe(true)
+    expect(remoteEligible('Remote', 'ca')).toBe(true)
+    expect(remoteEligible('Remote · USA', null)).toBe(true)
+  })
+  it('scores US-only remote jobs low for a Toronto candidate', () => {
+    const p = { ...profile, targetLocations: 'Remote, Toronto', preferRemote: true }
+    const usOnly = scoreJob(job({ remote: true, location: 'Remote · USA' }), p)
+    const open = scoreJob(job({ remote: true, location: 'Remote · Canada' }), p)
+    expect(open.fitScore - usOnly.fitScore).toBeGreaterThanOrEqual(15)
+    expect(usOnly.fitReason).toMatch(/another country/)
   })
 })

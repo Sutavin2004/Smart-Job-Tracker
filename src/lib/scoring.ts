@@ -1,4 +1,5 @@
 import type { RawJob } from './job-boards'
+import { adzunaCountry } from './job-boards/adzuna'
 
 interface UserProfile {
   targetRoles: string
@@ -50,7 +51,43 @@ export function skillsMatch(skills: string, jobText: string): number {
   return Math.min(1, hits / Math.min(list.length, 6))
 }
 
+// Words that say nothing about what the job is.
+const TITLE_STOPWORDS = new Set([
+  'a', 'an', 'and', 'the', 'of', 'for', 'to', 'in', 'at', 'with', 'on', 'or', 'remote', 'hybrid', 'onsite',
+  'us', 'usa', 'uk', 'canada', 'united', 'states', 'kingdom', 'global', 'worldwide', 'contract', 'contractor',
+  'full', 'part', 'time', 'temporary', 'i', 'ii', 'iii', 'iv', '1', '2', '3', 'new', 'grad', 'job', 'role', 'position',
+])
+
+const titleWords = (s: string) => tokenize(s).filter(w => w.length > 1 && !TITLE_STOPWORDS.has(w))
+
+/** Does the posting title share at least one meaningful word with a target role? */
+export function titleRelevant(role: string, targetRoles: string): boolean {
+  const targets = new Set(titleWords(targetRoles))
+  if (targets.size === 0) return true
+  return titleWords(role).some(w => targets.has(w) || (w.length > 4 && [...targets].some(t => t.length > 4 && (t.startsWith(w) || w.startsWith(t)))))
+}
+
+/** Country the candidate lives in, guessed from their non-remote target locations. */
+export function homeCountry(targetLocations: string): string | null {
+  const places = targetLocations.split(',').map(l => l.trim()).filter(l => l && !/remote/i.test(l))
+  return places.length ? adzunaCountry(places.join(', ')) : null
+}
+
+/** For 'Remote · USA'-style labels: can someone in `home` apply? */
+export function remoteEligible(location: string, home: string | null): boolean {
+  const req = location.match(/remote\s*[·:\-–(]\s*(.+?)\)?$/i)?.[1]
+  if (!req || !home || /worldwide|anywhere|global/i.test(req)) return true
+  const ok: Record<string, RegExp> = {
+    ca: /canada|north america|americas|\bca\b/i,
+    us: /\busa?\b|united states|north america|americas/i,
+    gb: /\buk\b|united kingdom|europe|emea|\bgb\b/i,
+    au: /australia|apac|asia.?pacific|\bau\b/i,
+  }
+  return ok[home] ? ok[home].test(req) : true
+}
+
 function locationScore(jobLocation: string, targetLocations: string, preferRemote: boolean, isRemote: boolean, isHybrid: boolean): number {
+  if (isRemote && !remoteEligible(jobLocation, homeCountry(targetLocations))) return 0.05
   if (isRemote && preferRemote) return 1
   if (isRemote) return 0.7
 
@@ -101,6 +138,9 @@ export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
   if (!excludeCheck(job.jobDescription, job.role, profile.excludeKeywords)) {
     return { ...job, fitScore: 0, fitReason: 'Contains excluded keywords', excitement: 1 }
   }
+  if (!titleRelevant(job.role, profile.targetRoles)) {
+    return { ...job, fitScore: 0, fitReason: "Title doesn't match your target roles", excitement: 1 }
+  }
 
   const weights = {
     skills: 0.30,
@@ -128,6 +168,7 @@ export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
   const reasons: string[] = []
   if (skillsRaw > 0.6) reasons.push('strong skills match')
   if (locationRaw === 1) reasons.push(job.remote ? 'remote (preferred)' : 'location match')
+  if (locationRaw < 0.1) reasons.push('remote, but may be limited to another country')
   if (salaryRaw >= 0.7) reasons.push('salary in range')
   if (experienceRaw >= 0.7) reasons.push('experience level fits')
   if (roleMatchRaw > 0.5) reasons.push('role title aligns')
