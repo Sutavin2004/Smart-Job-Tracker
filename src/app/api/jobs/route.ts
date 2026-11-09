@@ -29,14 +29,14 @@ export async function GET(request: NextRequest) {
   if (pinned === 'true') where.pinned = true
   if (archived === 'true') where.archived = true
   else if (archived !== 'true') where.archived = false
-  if (tags) where.tags = { contains: tags }
+  if (tags) where.tags = { contains: tags, mode: 'insensitive' }
   if (search) {
     where.OR = [
-      { company: { contains: search } },
-      { role: { contains: search } },
-      { location: { contains: search } },
-      { notes: { contains: search } },
-      { tags: { contains: search } },
+      { company: { contains: search, mode: 'insensitive' } },
+      { role: { contains: search, mode: 'insensitive' } },
+      { location: { contains: search, mode: 'insensitive' } },
+      { notes: { contains: search, mode: 'insensitive' } },
+      { tags: { contains: search, mode: 'insensitive' } },
     ]
   }
 

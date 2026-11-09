@@ -85,6 +85,9 @@ model Job {
   tasks              Task[]
   salaryNegotiations SalaryNegotiation[]
   applicationQAs     ApplicationQA[]
+
+  @@index([archived, status])
+  @@index([updatedAt])
 }
 
 model Interview {
@@ -107,6 +110,9 @@ model Interview {
   updatedAt        DateTime @updatedAt
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([scheduledAt])
 }
 
 model Activity {
@@ -118,6 +124,8 @@ model Activity {
   createdAt DateTime @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 model Document {
@@ -131,6 +139,8 @@ model Document {
   createdAt DateTime @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 model Contact {
@@ -147,6 +157,8 @@ model Contact {
   createdAt    DateTime  @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 model Task {
@@ -161,6 +173,9 @@ model Task {
   createdAt   DateTime  @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([completed, dueDate])
 }
 
 model SalaryNegotiation {
@@ -174,6 +189,8 @@ model SalaryNegotiation {
   date       DateTime @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 model ApplicationQA {
@@ -185,6 +202,8 @@ model ApplicationQA {
   createdAt DateTime @default(now())
 
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
 }
 
 model UserProfile {

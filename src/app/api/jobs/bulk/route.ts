@@ -12,6 +12,10 @@ export async function POST(req: NextRequest) {
   } else if (action === 'archive') {
     await prisma.job.updateMany({ where: { id: { in: ids } }, data: { archived: true } })
   } else if (action === 'status' && value) {
+    if (value !== 'saved') {
+      // Jobs leaving "saved" get their real application date.
+      await prisma.job.updateMany({ where: { id: { in: ids }, status: 'saved' }, data: { dateApplied: new Date() } })
+    }
     await prisma.job.updateMany({ where: { id: { in: ids } }, data: { status: value } })
   } else if (action === 'priority' && value) {
     await prisma.job.updateMany({ where: { id: { in: ids } }, data: { priority: value } })

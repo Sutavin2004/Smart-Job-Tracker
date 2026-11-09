@@ -127,7 +127,7 @@ export async function GET() {
       where: {
         jobId: reminder.jobId,
         completed: false,
-        title: { contains: 'Follow up' },
+        title: { contains: 'Follow up', mode: 'insensitive' },
       },
     })
 

@@ -58,6 +58,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   for (const f of dateFields) {
     if (f in body) data[f] = body[f] ? new Date(body[f]) : null
   }
+  // dateApplied defaults to when the job was saved; stamp the real date
+  // the first time it leaves "saved", unless the client sent one.
+  if (existing.status === 'saved' && body.status && body.status !== 'saved' && !('dateApplied' in body)) {
+    data.dateApplied = new Date()
+  }
 
   const job = await prisma.job.update({
     where: { id },

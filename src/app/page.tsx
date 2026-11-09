@@ -72,7 +72,7 @@ export default function DashboardPage() {
       // Count this week's applications
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
-      const thisWeek = (Array.isArray(jobsData) ? jobsData : []).filter((j: Job) => new Date(j.dateApplied) >= weekAgo)
+      const thisWeek = (Array.isArray(jobsData) ? jobsData : []).filter((j: Job) => j.status !== 'saved' && new Date(j.dateApplied) >= weekAgo)
       setWeeklyCount(thisWeek.length)
     } finally {
       setLoading(false)
