@@ -2,6 +2,7 @@ import type { RawJob } from './jsearch'
 import { searchJSearch } from './jsearch'
 import { searchAdzuna } from './adzuna'
 import { searchRemoteOK } from './remoteok'
+import { searchRemotive, searchJobicy } from './remote-boards'
 
 export type { RawJob }
 
@@ -23,8 +24,9 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
       searchPromises.push(searchJSearch(role, loc, preferRemote))
       searchPromises.push(searchAdzuna(role, loc))
     }
-    if (preferRemote) {
-      searchPromises.push(searchRemoteOK(role))
+    // Remote boards: always when remote is preferred or a target location is 'Remote'.
+    if (preferRemote || locations.some(l => /remote/i.test(l))) {
+      searchPromises.push(searchRemoteOK(role), searchRemotive(role), searchJobicy(role))
     }
   }
 
@@ -43,7 +45,8 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
   // Deduplicate by company+role combination
   const seen = new Set<string>()
   const deduped = allJobs.filter(j => {
-    const key = `${j.company.toLowerCase()}|${j.role.toLowerCase()}`
+    if (!j.role.trim() || !j.jobUrl) return false // a posting we can't link to isn't useful
+    const key = `${j.company.toLowerCase().trim()}|${j.role.toLowerCase().trim()}`
     if (seen.has(key)) return false
     seen.add(key)
     return true

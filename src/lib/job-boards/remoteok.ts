@@ -1,3 +1,4 @@
+import { htmlToText } from '../html'
 import type { RawJob } from './jsearch'
 
 export async function searchRemoteOK(role: string): Promise<RawJob[]> {
@@ -5,11 +6,13 @@ export async function searchRemoteOK(role: string): Promise<RawJob[]> {
 
   const res = await fetch(`https://remoteok.com/api?tag=${encodeURIComponent(tag)}`, {
     headers: { 'User-Agent': 'JobTracker/1.0' },
+    signal: AbortSignal.timeout(12000),
   }).catch(() => null)
 
   if (!res?.ok) return []
 
-  const data = await res.json() as Record<string, unknown>[]
+  const data = await res.json().catch(() => []) as Record<string, unknown>[]
+  if (!Array.isArray(data)) return []
   const items = data.filter(j => j && typeof j === 'object' && 'position' in j)
 
   return items.slice(0, 10).map(j => {
@@ -28,7 +31,7 @@ export async function searchRemoteOK(role: string): Promise<RawJob[]> {
       salaryMin,
       salaryMax,
       jobUrl: j.url ? String(j.url) : null,
-      jobDescription: String(j.description ?? '').replace(/<[^>]*>/g, '').slice(0, 800),
+      jobDescription: htmlToText(String(j.description ?? '')).slice(0, 1500),
       source: 'RemoteOK',
       industry: null,
       techStack: tags,

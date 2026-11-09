@@ -3,7 +3,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import { AI_MODELS } from '@/lib/ai-models'
 import { htmlToText } from '@/lib/html'
 import { extractJob, type ImportedJob } from '@/lib/job-import'
-import { fetchPublicHtml, UnsafeUrlError } from '@/lib/safe-fetch'
+import { fetchPublicHtml, fetchPublicJson, UnsafeUrlError } from '@/lib/safe-fetch'
+import { detectAts, apiUrl, mapAts } from '@/lib/ats'
 
 export const maxDuration = 60
 
@@ -41,6 +42,17 @@ export async function POST(req: NextRequest) {
   const { url } = await req.json().catch(() => ({ url: '' }))
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
     return NextResponse.json({ error: 'Paste a full link starting with https://' }, { status: 400 })
+  }
+
+  // Greenhouse, Lever and Ashby pages are rendered client-side; use their public JSON APIs.
+  const ats = detectAts(url.trim())
+  if (ats) {
+    try {
+      const job = mapAts(ats, await fetchPublicJson(apiUrl(ats)))
+      if (job?.role) {
+        return NextResponse.json({ job: { ...job, jobUrl: job.jobUrl || url.trim() }, source: ats.kind, usedAi: false })
+      }
+    } catch { /* fall through to reading the page */ }
   }
 
   let html: string

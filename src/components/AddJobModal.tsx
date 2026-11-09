@@ -60,7 +60,12 @@ export function AddJobModal({ onClose, onCreated }: Props) {
       }))
       setExtra({ remote: job.remote, salaryMin: job.salaryMin, salaryMax: job.salaryMax, currency: job.currency })
       if (job.jobDescription) setShowDesc(true)
-      setImported(source === 'json-ld' ? 'Filled in from the posting' : source === 'ai' ? 'Filled in by AI from the page' : 'Filled in what we could find')
+      const ATS: Record<string, string> = { greenhouse: 'Greenhouse', lever: 'Lever', ashby: 'Ashby' }
+      setImported(
+        ATS[source] ? `Filled in from ${ATS[source]}`
+          : source === 'json-ld' ? 'Filled in from the posting'
+          : source === 'ai' ? 'Filled in by AI from the page'
+          : 'Filled in what we could find')
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't import that link")
       setForm(f => ({ ...f, jobUrl: f.jobUrl || importUrl.trim() }))
