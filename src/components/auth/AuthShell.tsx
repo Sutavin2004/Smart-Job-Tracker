@@ -12,9 +12,9 @@ const SAMPLE = [
 const STAGE_STYLE: Record<string, string> = {
   Offer: 'bg-white text-brand-800',
   Interview: 'bg-white/15 text-white',
-  Applied: 'text-white/80 ring-1 ring-inset ring-white/25',
-  Saved: 'text-white/60 ring-1 ring-inset ring-white/15',
-  Rejected: 'text-white/45 line-through decoration-white/30',
+  Applied: 'text-white/90 ring-1 ring-inset ring-white/30',
+  Saved: 'text-white/80 ring-1 ring-inset ring-white/20',
+  Rejected: 'text-white/75 line-through decoration-white/40',
 }
 
 /** Two-column frame for the sign-in and sign-up pages. */
@@ -31,7 +31,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
           <table className="mt-10 w-full text-left text-[13px]" aria-label="Example applications">
             <thead>
-              <tr className="border-b border-white/20 text-white/60">
+              <tr className="border-b border-white/20 text-white/80">
                 <th scope="col" className="pb-2.5 font-normal">Company</th>
                 <th scope="col" className="hidden pb-2.5 font-normal xl:table-cell">Role</th>
                 <th scope="col" className="pb-2.5 font-normal">Stage</th>
@@ -42,18 +42,18 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
               {SAMPLE.map(r => (
                 <tr key={r.company} className="border-b border-white/10 last:border-0">
                   <td className="py-2.5 pr-3 font-medium">{r.company}</td>
-                  <td className="hidden py-2.5 pr-3 text-white/75 xl:table-cell">{r.role}</td>
+                  <td className="hidden py-2.5 pr-3 text-white/85 xl:table-cell">{r.role}</td>
                   <td className="py-2.5 pr-3">
                     <span className={`inline-block rounded px-1.5 py-0.5 text-[12px] font-medium ${STAGE_STYLE[r.stage]}`}>{r.stage}</span>
                   </td>
-                  <td className="py-2.5 text-right tabular-nums text-white/60">{r.day}</td>
+                  <td className="py-2.5 text-right tabular-nums text-white/80">{r.day}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <p className="max-w-sm text-[13px] leading-relaxed text-white/65">
+        <p className="max-w-sm text-[13px] leading-relaxed text-white/80">
           The job agent searches public boards, scores each listing against your profile, and adds the good ones to your board.
         </p>
       </aside>

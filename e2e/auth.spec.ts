@@ -53,7 +53,7 @@ test('wrong password and duplicate email are rejected with clear messages', asyn
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill('not-the-password')
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('alert')).toHaveText('Email or password is incorrect.')
+  await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toHaveText('Email or password is incorrect.')
 })
 
 test("one account cannot see or change another account's jobs", async ({ playwright, baseURL }) => {

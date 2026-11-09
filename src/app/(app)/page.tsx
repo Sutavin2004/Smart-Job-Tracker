@@ -240,24 +240,24 @@ export default function DashboardPage() {
             {!loading && (analytics?.total ?? 0) > 0 && (
               <section className="card p-5" aria-labelledby="pipeline-heading">
                 <h2 id="pipeline-heading" className="text-sm font-semibold text-slate-900 dark:text-white">By stage</h2>
-                <dl className="mt-3 space-y-2.5">
+                <ul className="mt-3 space-y-2.5">
                   {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
                     const count = analytics?.statusCounts?.[status] ?? 0
                     if (count === 0) return null
                     const pct = analytics?.total ? Math.round((count / analytics.total) * 100) : 0
                     return (
-                      <div key={status}>
+                      <li key={status}>
                         <div className="flex justify-between text-[13px]">
-                          <dt className="text-slate-700 dark:text-slate-300">{cfg.label}</dt>
-                          <dd className="tabular-nums text-slate-500">{count}</dd>
+                          <span className="text-slate-700 dark:text-slate-300">{cfg.label}</span>
+                          <span className="tabular-nums text-slate-500">{count}</span>
                         </div>
                         <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-100 dark:bg-[#26272A]">
                           <div className={cn('h-full rounded-full', cfg.dot)} style={{ width: `${pct}%` }} />
                         </div>
-                      </div>
+                      </li>
                     )
                   })}
-                </dl>
+                </ul>
               </section>
             )}
           </div>
