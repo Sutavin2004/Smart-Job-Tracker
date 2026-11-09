@@ -4,20 +4,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { prisma } from '@/lib/prisma'
 import { fetchRealJobs } from '@/lib/job-boards'
 import { scoreAndRankJobs } from '@/lib/scoring'
-
-/** Compare URLs without protocol, www, trailing slash, hash or tracking params. */
-function normalizeUrl(raw: string): string {
-  try {
-    const u = new URL(raw.trim())
-    for (const k of [...u.searchParams.keys()]) {
-      if (/^(utm_|ref$|refid$|trk|src$|from$)/i.test(k)) u.searchParams.delete(k)
-    }
-    u.hash = ''
-    return (u.host.replace(/^www\./, '') + u.pathname.replace(/\/+$/, '') + (u.search || '')).toLowerCase()
-  } catch {
-    return raw.trim().toLowerCase()
-  }
-}
+import { normalizeUrl } from '@/lib/url'
 
 // Board fetches + web search + parsing can take a while; don't let Vercel cut the stream off.
 export const maxDuration = 300

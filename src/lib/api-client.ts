@@ -58,6 +58,12 @@ export const apiClient = {
     return remoteRequest<Job>('/api/jobs', { method: 'POST', body: JSON.stringify(data) })
   },
 
+  importJobFromUrl(url: string) {
+    if (isLocalMode()) return Promise.reject(new Error('Importing from a link is not available in demo mode'))
+    return remoteRequest<{ job: Partial<Job> & { deadline?: string | null; employmentType?: string | null }; source: string; usedAi: boolean }>(
+      '/api/jobs/import-url', { method: 'POST', body: JSON.stringify({ url }) })
+  },
+
   updateJob(id: string, data: Partial<Job>) {
     if (isLocalMode()) return Promise.resolve(localStore.updateJob(id, data))
     return remoteRequest<Job>(`/api/jobs/${id}`, { method: 'PUT', body: JSON.stringify(data) })

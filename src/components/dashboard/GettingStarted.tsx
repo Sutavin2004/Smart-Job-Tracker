@@ -20,7 +20,7 @@ export function GettingStarted({ hasProfile, hasRunAgent, hasApplied, onAddJob }
   }, [])
 
   const steps = [
-    { done: hasProfile, title: 'Tell the agent what you want', body: 'Add your target roles, skills and locations.', href: '/settings' },
+    { done: hasProfile, title: 'Tell the agent what you want', body: 'Add your target roles, skills and locations.', href: '/agent' },
     { done: hasRunAgent, title: 'Run the AI Job Agent', body: 'It searches live job boards and saves your best matches.', href: '/agent' },
     { done: hasApplied, title: 'Track your first application', body: 'Move a job to Applied, or add one you already sent.', action: onAddJob },
   ]

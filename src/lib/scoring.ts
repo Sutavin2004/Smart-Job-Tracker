@@ -31,6 +31,25 @@ function keywordOverlap(source: string, target: string): number {
   return Math.min(1, matches / Math.max(1, Math.min(targetTokens.length, 20)))
 }
 
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+/** True if `phrase` appears in `text` as whole word(s): "java" does not match "javascript". */
+export function containsPhrase(text: string, phrase: string): boolean {
+  const p = phrase.trim().toLowerCase()
+  if (!p) return false
+  return new RegExp(`(^|[^a-z0-9+#])${escapeRe(p)}($|[^a-z0-9+#])`, 'i').test(text)
+}
+
+/** Share of the candidate's listed skills that the posting mentions (0–1). */
+export function skillsMatch(skills: string, jobText: string): number {
+  const list = [...new Set(skills.split(/[,;\n]/).map(s => s.trim().toLowerCase()).filter(Boolean))]
+  if (list.length === 0) return 0.5
+  const text = jobText.toLowerCase()
+  const hits = list.filter(skill => containsPhrase(text, skill)).length
+  // Postings rarely list everything; 6 matching skills counts as a full match.
+  return Math.min(1, hits / Math.min(list.length, 6))
+}
+
 function locationScore(jobLocation: string, targetLocations: string, preferRemote: boolean, isRemote: boolean, isHybrid: boolean): number {
   if (isRemote && preferRemote) return 1
   if (isRemote) return 0.7
@@ -38,9 +57,11 @@ function locationScore(jobLocation: string, targetLocations: string, preferRemot
   const targets = targetLocations.toLowerCase().split(',').map(l => l.trim()).filter(Boolean)
   if (targets.length === 0) return 0.8
 
-  const jobLoc = jobLocation.toLowerCase()
+  const jobLoc = jobLocation.toLowerCase().trim()
+  if (!jobLoc) return 0.5
+  const jobCity = jobLoc.split(',')[0].trim()
   for (const target of targets) {
-    if (jobLoc.includes(target) || target.includes(jobLoc.split(',')[0]?.trim() ?? '')) return 1
+    if (jobLoc.includes(target) || (jobCity.length > 2 && target.includes(jobCity))) return 1
   }
   if (isHybrid && preferRemote) return 0.6
   return 0.3
@@ -48,6 +69,8 @@ function locationScore(jobLocation: string, targetLocations: string, preferRemot
 
 function salaryScore(jobMin: number | null, jobMax: number | null, profileMin: number, profileMax: number): number {
   if (!jobMin && !jobMax) return 0.5
+  if (!profileMin && !profileMax) return 0.7 // no target set: don't penalize postings that list pay
+  if (!profileMax) profileMax = Infinity
   const mid = ((jobMin ?? jobMax ?? 0) + (jobMax ?? jobMin ?? 0)) / 2
   if (mid >= profileMin && mid <= profileMax) return 1
   if (mid >= profileMin * 0.85 && mid <= profileMax * 1.15) return 0.7
@@ -57,7 +80,8 @@ function salaryScore(jobMin: number | null, jobMax: number | null, profileMin: n
 
 function experienceScore(jobDescription: string, yearsExperience: number): number {
   const desc = jobDescription.toLowerCase()
-  const match = desc.match(/(\d+)\+?\s*years?\s*(of\s+)?(experience|exp)/i)
+  // "3+ years", "2-4 years of experience", "3 to 5 yrs exp" → use the lower bound.
+  const match = desc.match(/(\d{1,2})\s*\+?\s*(?:(?:-|–|to)\s*\d{1,2}\s*)?\+?\s*(?:years?|yrs?)\s*(?:of\s+)?(?:\w+\s+){0,3}?(?:experience|exp)/i)
   if (!match) return 0.7
   const required = Number(match[1])
   if (yearsExperience >= required) return 1
@@ -70,7 +94,7 @@ function excludeCheck(jobDescription: string, role: string, excludeKeywords: str
   if (!excludeKeywords) return true
   const excludes = excludeKeywords.toLowerCase().split(',').map(k => k.trim()).filter(Boolean)
   const text = `${jobDescription} ${role}`.toLowerCase()
-  return !excludes.some(kw => text.includes(kw))
+  return !excludes.some(kw => containsPhrase(text, kw))
 }
 
 export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
@@ -86,7 +110,7 @@ export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
     roleMatch: 0.20,
   }
 
-  const skillsRaw = keywordOverlap(profile.skills, job.jobDescription)
+  const skillsRaw = skillsMatch(profile.skills, `${job.role} ${job.jobDescription} ${job.techStack ?? ''}`)
   const locationRaw = locationScore(job.location, profile.targetLocations, profile.preferRemote, job.remote, job.hybrid)
   const salaryRaw = salaryScore(job.salaryMin, job.salaryMax, profile.targetSalaryMin, profile.targetSalaryMax)
   const experienceRaw = experienceScore(job.jobDescription, profile.yearsExperience)
