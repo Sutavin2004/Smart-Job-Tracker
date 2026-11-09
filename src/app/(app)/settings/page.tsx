@@ -83,12 +83,13 @@ export default function SettingsPage() {
   const [me, setMe] = useState<Me | null>(null)
   const [saving, setSaving] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [verifyExpired, setVerifyExpired] = useState(false)
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('verify') === 'expired') {
       setTab('account')
-      toast.error('That confirmation link has expired. Send a new one below.')
+      setVerifyExpired(true)
     } else if (params.get('tab') === 'account') setTab('account')
     setMounted(true)
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
@@ -154,6 +155,11 @@ export default function SettingsPage() {
       </div>
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="pt-8">
+        {verifyExpired && tab === 'account' && (
+          <p role="status" className="mb-6 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            That confirmation link has expired or was already used. Send a new one from the Email section below.
+          </p>
+        )}
         {tab === 'profile' && (profile ? <ProfileTab profile={profile} update={update} /> : <Loading />)}
         {tab === 'account' && (me ? <AccountTab me={me} profile={profile} onProfile={setProfile} /> : <Loading />)}
         {tab === 'appearance' && mounted && (

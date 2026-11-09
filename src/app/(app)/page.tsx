@@ -57,7 +57,7 @@ export default function DashboardPage() {
     loadData()
     const params = new URLSearchParams(window.location.search)
     if (params.get('verified') === '1') {
-      toast.success('Email confirmed')
+      setTimeout(() => toast.success('Email confirmed'), 300)
       window.history.replaceState(null, '', '/')
     }
   }, [])
