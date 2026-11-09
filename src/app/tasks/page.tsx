@@ -8,12 +8,6 @@ import { toast } from 'sonner'
 import type { Task, Job } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 
-const PRIORITY_COLORS: Record<string, string> = {
-  high: 'text-red-600',
-  medium: 'text-amber-600',
-  low: 'text-emerald-600',
-}
-
 const PRIORITY_BG: Record<string, string> = {
   high: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
   medium: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',

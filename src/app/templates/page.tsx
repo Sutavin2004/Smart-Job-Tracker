@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { Mail, Plus, Trash2, Edit2, Copy, X, Check, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { apiClient } from '@/lib/api-client'
 import { toast } from 'sonner'
 import type { EmailTemplate } from '@/lib/types'

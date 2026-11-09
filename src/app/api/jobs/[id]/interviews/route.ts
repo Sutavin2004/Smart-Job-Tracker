@@ -47,6 +47,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const body = await request.json()
   const { interviewId, outcome, notes } = body
 
+  // Make sure the interview belongs to this job before updating it.
+  const existing = await prisma.interview.findFirst({ where: { id: interviewId, jobId: id } })
+  if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
   const interview = await prisma.interview.update({
     where: { id: interviewId },
     data: {

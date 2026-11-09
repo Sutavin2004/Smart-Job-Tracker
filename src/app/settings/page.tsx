@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import {
   Save, User, Brain, Download, Trash2, Sun, Moon, AlertTriangle,
   Upload, Link2, Github, Linkedin, Globe, Briefcase,
-  Keyboard, Sparkles, Database, Shield, Bell, Palette, CheckCircle2,
+  Keyboard, Sparkles, Database, Shield, Bell, Palette,
   ChevronRight, Loader2, Info,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'

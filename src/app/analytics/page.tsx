@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { BarChart2, Bot, TrendingUp } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { STATUS_CONFIG } from '@/lib/types'
 
 interface Analytics {

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { subDays, subMonths, subWeeks, startOfDay, format } from 'date-fns'
+import { subDays, subMonths, subWeeks, format } from 'date-fns'
 
 export async function GET() {
   const [jobs, interviews, tasks] = await Promise.all([

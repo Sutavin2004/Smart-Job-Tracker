@@ -168,14 +168,16 @@ export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
   const reasons: string[] = []
   if (skillsRaw > 0.6) reasons.push('strong skills match')
   if (locationRaw === 1) reasons.push(job.remote ? 'remote (preferred)' : 'location match')
-  if (locationRaw < 0.1) reasons.push('remote, but may be limited to another country')
+  const caveats: string[] = []
+  if (locationRaw < 0.1) caveats.push('remote, but may be limited to another country')
   if (salaryRaw >= 0.7) reasons.push('salary in range')
   if (experienceRaw >= 0.7) reasons.push('experience level fits')
   if (roleMatchRaw > 0.5) reasons.push('role title aligns')
 
-  const fitReason = reasons.length > 0
+  const fitReason = (reasons.length > 0
     ? `Good fit: ${reasons.join(', ')}.`
-    : `Partial match — check ${fitScore < 40 ? 'skills and location' : 'salary and experience'}.`
+    : `Partial match — check ${fitScore < 40 ? 'skills and location' : 'salary and experience'}.`)
+    + (caveats.length ? ` Note: ${caveats.join('; ')}.` : '')
 
   const excitement = fitScore >= 80 ? 5 : fitScore >= 65 ? 4 : fitScore >= 50 ? 3 : fitScore >= 35 ? 2 : 1
 

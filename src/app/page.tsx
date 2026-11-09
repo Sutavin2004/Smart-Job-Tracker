@@ -224,7 +224,7 @@ export default function DashboardPage() {
                     <Link href="/jobs" className="text-xs text-brand-600 hover:underline">View all →</Link>
                   </div>
                   <div className="divide-y divide-slate-50 dark:divide-slate-700/50">
-                    {recentJobs.map((job, i) => (
+                    {recentJobs.map(job => (
                       <Link key={job.id} href={`/jobs?id=${job.id}`}
                         className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                         <div className="w-8 h-8 rounded-lg bg-gradient-brand flex items-center justify-center text-xs font-bold text-white shrink-0">

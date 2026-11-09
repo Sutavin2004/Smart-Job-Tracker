@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { Search, Plus, Bot, BarChart2, Settings, Briefcase, X, FileText } from 'lucide-react'
+import { Search, Plus, Bot, BarChart2, Settings, X, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUIStore } from '@/lib/store'
 import { cn } from '@/lib/utils'

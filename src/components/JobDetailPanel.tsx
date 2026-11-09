@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  X, ExternalLink, Sparkles, FileText, Calendar, Clock, Trash2, Save,
+  X, Sparkles, FileText, Calendar, Clock, Trash2, Save,
   BookOpen, ChevronDown, ChevronUp, Plus, CheckCircle, XCircle,
   MinusCircle, Loader2, MapPin, DollarSign, AlertCircle, Target,
   CheckSquare, Square, Mail, Flag, ArrowUpRight, Briefcase, User,
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDate, formatRelative, formatDateTime } from '@/lib/utils'
-import { type Job, type Task, type Contact, type Document, JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, INTERVIEW_TYPES, RELATIONSHIP_OPTIONS } from '@/lib/types'
+import { type Job, type Task, type Contact, type Document, JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, INTERVIEW_TYPES } from '@/lib/types'
 import { StatusBadge, PriorityBadge } from './StatusBadge'
 import { toast } from 'sonner'
 

@@ -1,4 +1,5 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import { ThemeProvider } from 'next-themes'
 import { Toaster } from 'sonner'
@@ -10,8 +11,21 @@ import { KeyboardShortcuts } from '@/components/KeyboardShortcuts'
 import { FollowUpBanner } from '@/components/FollowUpBanner'
 
 export const metadata: Metadata = {
-  title: 'JobTrack — AI Job Search',
-  description: 'AI-powered job application tracker with automated job discovery',
+  metadataBase: new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000'),
+  title: { default: 'JobTrack — AI Job Search', template: '%s · JobTrack' },
+  description: 'Track every application on a drag-and-drop board while an AI agent finds and scores jobs that fit you.',
+  applicationName: 'JobTrack',
+  appleWebApp: { capable: true, title: 'JobTrack', statusBarStyle: 'black-translucent' },
+  openGraph: { type: 'website', siteName: 'JobTrack', title: 'JobTrack — AI Job Search', description: 'An AI agent that finds jobs that fit you, and a board to track every application.' },
+  twitter: { card: 'summary_large_image' },
+  robots: { index: false, follow: false }, // personal app: keep it out of search engines
+}
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f0e1a' },
+  ],
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,6 +55,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             />
           </QueryProvider>
         </ThemeProvider>
+        {/* Vercel Web Analytics + Speed Insights (served by Vercel; no-ops locally) */}
+        {process.env.VERCEL && <Script src="/_vercel/insights/script.js" strategy="afterInteractive" />}
+        {process.env.VERCEL && <Script src="/_vercel/speed-insights/script.js" strategy="afterInteractive" />}
       </body>
     </html>
   )
