@@ -97,6 +97,7 @@ function JobsPageInner() {
     <div className={cn('flex h-full', selectedJob ? 'overflow-hidden' : '')}>
       <div className={cn('flex flex-col flex-1 min-w-0 overflow-y-auto', selectedJob ? 'w-0 md:w-auto' : '')}>
         {/* Toolbar */}
+        <h1 className="sr-only">Jobs board</h1>
         <div className="sticky top-0 z-10 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-6 py-3.5">
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex-1 min-w-[200px]">

@@ -40,3 +40,8 @@ prisma/*.db
 # Vercel
 .vercel
 *.tsbuildinfo
+
+# Playwright
+/playwright-report/
+/test-results/
+/e2e-screenshots/
