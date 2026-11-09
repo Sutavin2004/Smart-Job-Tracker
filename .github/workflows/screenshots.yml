@@ -1,0 +1,46 @@
+name: Update README screenshots
+
+# Run manually (Actions tab → "Update README screenshots" → Run workflow).
+# Builds the app with seed data, captures screenshots, and commits them to docs/screenshots/.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+          POSTGRES_DB: jobtracker
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U app" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://app:app@localhost:5432/jobtracker
+      DATABASE_URL_UNPOOLED: postgresql://app:app@localhost:5432/jobtracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma migrate deploy && npm run db:seed
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test e2e/screenshots.spec.ts
+      - name: Commit screenshots
+        run: |
+          mkdir -p docs/screenshots
+          cp e2e-screenshots/*.png docs/screenshots/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots
+          git diff --cached --quiet && echo "No changes" || (git commit -m "docs: update screenshots" && git push)
