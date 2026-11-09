@@ -42,9 +42,16 @@ ${text.slice(0, 20000)}`,
 }
 
 async function importFromUrl(req: NextRequest, userId: string) {
-  const { url } = await req.json().catch(() => ({ url: '' }))
+  const { url, html: pageHtml } = await req.json().catch(() => ({ url: '' }))
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
     return NextResponse.json({ error: 'Paste a full link starting with https://' }, { status: 400 })
+  }
+
+  // The Chrome extension sends the HTML of the page the user has open, which also
+  // covers sites that need a login. It is only parsed, never fetched or rendered.
+  const fromExtension = typeof pageHtml === 'string' && pageHtml.length > 0
+  if (fromExtension && pageHtml.length > 3_000_000) {
+    return NextResponse.json({ error: 'That page is too large to read.' }, { status: 413 })
   }
 
   // Greenhouse, Lever and Ashby pages are rendered client-side; use their public JSON APIs.
@@ -61,7 +68,7 @@ async function importFromUrl(req: NextRequest, userId: string) {
   let html: string
   let finalUrl: string
   try {
-    ({ html, finalUrl } = await fetchPublicHtml(url.trim()))
+    ({ html, finalUrl } = fromExtension ? { html: pageHtml as string, finalUrl: url.trim() } : await fetchPublicHtml(url.trim()))
   } catch (err) {
     const msg = err instanceof UnsafeUrlError ? err.message
       : err instanceof Error && err.name === 'TimeoutError' ? 'The site took too long to respond'

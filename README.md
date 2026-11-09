@@ -27,6 +27,7 @@
 - **Drag-and-drop board** (Saved → Applied → Interviewing → Offer …), keyboard accessible, with optimistic updates.
 - **Add from a link**: paste a Greenhouse, Lever or Ashby URL (read through their public APIs) or any page with schema.org `JobPosting` data. Claude reads the page as a fallback.
 - **Upload your résumé** as a PDF or Word file; the text is extracted for the AI tools.
+- **Chrome extension** (`extension/`): save the posting you are looking at in one click, including on sites that need a login. Install it from Settings → Chrome extension; `npm run build:extension` rebuilds the zip.
 - Interviews, contacts, tasks, salary negotiation rounds, notes, follow-up reminders, CSV export.
 - **Dashboard and analytics**: weekly goal, response and offer rates, pipeline, activity heatmap, calendar.
 

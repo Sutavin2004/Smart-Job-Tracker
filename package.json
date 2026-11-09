@@ -16,7 +16,8 @@
     "db:deploy": "prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:extension": "rm -f public/jobtrack-extension.zip && cd extension && zip -qrX ../public/jobtrack-extension.zip . -x '.*'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

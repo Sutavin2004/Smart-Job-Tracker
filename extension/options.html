@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>JobTrack extension settings</title>
+  <link rel="stylesheet" href="shared.css">
+  <style> body { padding: 18px; max-width: 460px; } button { width: auto; margin-top: 14px; } </style>
+</head>
+<body>
+  <h1>JobTrack extension</h1>
+  <p class="muted" style="margin-top:4px">Only change this if you run JobTrack at a different address.</p>
+  <form id="form">
+    <label for="site">JobTrack address</label>
+    <input id="site" type="url" placeholder="https://smart-job-tracker-peach.vercel.app" required>
+    <button class="primary" type="submit">Save</button>
+    <p class="muted" id="status" role="status" style="margin-top:10px"></p>
+  </form>
+  <script src="config.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

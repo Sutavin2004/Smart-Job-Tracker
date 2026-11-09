@@ -8,13 +8,14 @@ import { cn } from '@/lib/utils'
 import { signOut } from '@/components/Sidebar'
 import type { UserProfile } from '@/lib/types'
 
-type Tab = 'profile' | 'account' | 'appearance' | 'data' | 'shortcuts'
+type Tab = 'profile' | 'account' | 'appearance' | 'data' | 'extension' | 'shortcuts'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'account', label: 'Account' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'data', label: 'Data' },
+  { id: 'extension', label: 'Chrome extension' },
   { id: 'shortcuts', label: 'Shortcuts' },
 ]
 
@@ -183,6 +184,17 @@ export default function SettingsPage() {
           </Section>
         )}
         {tab === 'data' && <DataTab />}
+        {tab === 'extension' && (
+          <Section title="Save jobs from any site" description="Click the extension on a job posting and it is added to your board. It works on LinkedIn and other sites that need you to be signed in.">
+            <ol className="max-w-lg list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700 marker:text-slate-400 dark:text-slate-300">
+              <li><a href="/jobtrack-extension.zip" download className="font-medium text-brand-700 underline underline-offset-4 dark:text-brand-400">Download the extension</a> and unzip it.</li>
+              <li>In Chrome, go to <span className="font-medium">chrome://extensions</span> and turn on <span className="font-medium">Developer mode</span> (top right).</li>
+              <li>Click <span className="font-medium">Load unpacked</span> and choose the unzipped folder.</li>
+              <li>Pin it from the puzzle-piece menu. Stay signed in to JobTrack in Chrome, open a job posting, and click the JobTrack icon.</li>
+            </ol>
+            <p className="mt-4 text-[13px] text-slate-500">It reads only the tab you click it on, and only when you click it.</p>
+          </Section>
+        )}
         {tab === 'shortcuts' && (
           <Section title="Keyboard shortcuts" description="Single-key shortcuts work when you are not typing in a field.">
             <dl className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-[#2A2B2E] dark:border-[#2A2B2E]">

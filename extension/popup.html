@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Save to JobTrack</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    body { width: 340px; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+    header a { color: var(--muted); font-size: 13px; text-decoration: none; }
+    header a:hover { color: var(--ink); }
+    main { padding: 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .actions { display: grid; gap: 8px; margin-top: 16px; }
+    [hidden] { display: none !important; }
+    .spinner { width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Save to JobTrack</h1>
+    <a href="options.html" id="settings-link">Settings</a>
+  </header>
+  <main>
+    <section id="loading"><p class="muted" role="status"><span class="spinner" style="display:inline-block;vertical-align:-2px;margin-right:6px"></span>Reading this page…</p></section>
+
+    <section id="signed-out" hidden>
+      <p>Sign in to JobTrack in this browser, then open this again.</p>
+      <div class="actions"><a class="button primary" id="signin" target="_blank" rel="noreferrer">Sign in to JobTrack</a></div>
+    </section>
+
+    <section id="unsupported" hidden>
+      <p class="muted">Open a job posting in this tab, then click the extension again.</p>
+    </section>
+
+    <form id="form" hidden>
+      <p class="muted" id="found"></p>
+      <label for="company">Company</label>
+      <input id="company" required autocomplete="off">
+      <label for="role">Role</label>
+      <input id="role" required autocomplete="off">
+      <div class="row">
+        <div>
+          <label for="location">Location</label>
+          <input id="location" autocomplete="off">
+        </div>
+        <div>
+          <label for="status">Stage</label>
+          <select id="status">
+            <option value="saved">Saved</option>
+            <option value="applied">Applied</option>
+          </select>
+        </div>
+      </div>
+      <p class="error" id="error" role="alert" hidden></p>
+      <div class="actions"><button class="primary" id="save" type="submit">Save to board</button></div>
+    </form>
+
+    <section id="done" hidden>
+      <p class="note" role="status" id="done-text"></p>
+      <div class="actions">
+        <a class="button primary" id="open" target="_blank" rel="noreferrer">Open in JobTrack</a>
+      </div>
+    </section>
+  </main>
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

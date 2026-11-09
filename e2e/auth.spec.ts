@@ -133,3 +133,20 @@ test('a bad email confirmation link sends you to settings with a clear message',
   await expect(page).toHaveURL(/\/settings\?verify=expired/)
   await expect(page.getByText(/confirmation link has expired/)).toBeVisible()
 })
+
+test('the extension can send page HTML for sites the server cannot fetch', async ({ request }) => {
+  await signUp(request, unique())
+  const html = `<html><head><script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'JobPosting', title: 'Platform Engineer',
+    hiringOrganization: { '@type': 'Organization', name: 'Login Only Co' },
+    jobLocation: { '@type': 'Place', address: { addressLocality: 'Toronto', addressRegion: 'ON' } },
+    description: '<p>Build things.</p>',
+  })}</script></head><body></body></html>`
+  // This host does not exist, so a successful import proves the sent HTML was used.
+  const res = await request.post('/api/jobs/import-url', { data: { url: 'https://intranet.example.test/jobs/1', html } })
+  expect(res.status()).toBe(200)
+  const { job, source } = await res.json()
+  expect(source).toBe('json-ld')
+  expect(job.company).toBe('Login Only Co')
+  expect(job.role).toBe('Platform Engineer')
+})
