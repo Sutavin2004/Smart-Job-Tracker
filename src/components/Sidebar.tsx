@@ -55,7 +55,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'hidden md:flex h-screen flex-col bg-white dark:bg-[#1a1826] border-r border-slate-200 dark:border-slate-700/60 shrink-0 transition-all duration-300',
+        'hidden md:flex h-full flex-col bg-white dark:bg-[#1a1826] border-r border-slate-200 dark:border-slate-700/60 shrink-0 transition-all duration-300',
         sidebarCollapsed ? 'w-16' : 'w-56'
       )}
     >

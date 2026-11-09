@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AUTH_COOKIE, authEnabled, safeEqual, sessionToken } from '@/lib/auth'
+import { IS_DEMO, DEMO_BLOCKED_API } from '@/lib/demo'
 
 // The cron route authenticates itself (see api/cron/discover).
-const PUBLIC_PATHS = ['/login', '/api/login', '/api/health', '/api/cron/discover']
+const PUBLIC_PATHS = ['/login', '/api/login', '/api/health', '/api/cron/discover', '/api/cron/reset-demo']
 
 export async function middleware(req: NextRequest) {
+  if (IS_DEMO && DEMO_BLOCKED_API.some(re => re.test(req.nextUrl.pathname))) {
+    return NextResponse.json({ error: "That feature is turned off in the public demo." }, { status: 403 })
+  }
+
   // No APP_PASSWORD configured (e.g. local dev) → app stays open.
   if (!authEnabled()) return NextResponse.next()
 
