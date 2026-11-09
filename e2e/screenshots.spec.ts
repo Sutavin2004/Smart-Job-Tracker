@@ -15,6 +15,9 @@ for (const scheme of ['light', 'dark'] as const) {
       test(`${name} (${scheme})`, async ({ page }) => {
         await page.goto(path)
         await page.waitForLoadState('networkidle')
+        // Hide the floating reminders popup so it doesn't cover the page.
+        const dismiss = page.getByRole('button', { name: 'Dismiss all reminders' })
+        if (await dismiss.isVisible()) await dismiss.click()
         await page.waitForTimeout(800) // let charts animate in
         await page.screenshot({ path: `e2e-screenshots/${name}-${scheme}.png` })
       })

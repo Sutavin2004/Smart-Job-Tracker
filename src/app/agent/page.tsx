@@ -775,7 +775,7 @@ export default function AgentPage() {
           <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past Sessions</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs were found · hover a job to apply or view</p>
+              <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs it found</p>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
               <Sparkles className="w-3.5 h-3.5 text-brand-400" />
