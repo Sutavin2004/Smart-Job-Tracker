@@ -52,12 +52,12 @@ export function findJobPosting(html: string): Json | null {
 }
 
 function formatLocation(jobLocation: unknown): string | null {
-  const places = Array.isArray(jobLocation) ? jobLocation : jobLocation ? [jobLocation] : []
+  const places = (Array.isArray(jobLocation) ? jobLocation : jobLocation ? [jobLocation] : []).filter(Boolean)
   const parts = places.map(p => {
     const addr = (p as Json)?.address as Json | string | undefined
     if (typeof addr === 'string') return addr
     if (!addr) return asString((p as Json)?.name)
-    const country = typeof addr.addressCountry === 'object'
+    const country = addr.addressCountry && typeof addr.addressCountry === 'object'
       ? asString((addr.addressCountry as Json).name)
       : asString(addr.addressCountry)
     return [asString(addr.addressLocality), asString(addr.addressRegion), country].filter(Boolean).join(', ') || null
@@ -95,7 +95,7 @@ function toIsoDate(v: unknown): string | null {
 /** Build prefill data from a JobPosting object. */
 export function fromJobPosting(o: Json): ImportedJob {
   const org = o.hiringOrganization
-  const company = typeof org === 'string' ? decodeEntities(org) : asString((org as Json | undefined)?.name)
+  const company = typeof org === 'string' ? decodeEntities(org) : asString((org as Json | null | undefined)?.name)
   const locType = String(o.jobLocationType ?? '').toUpperCase()
   const location = formatLocation(o.jobLocation)
   const remote = locType.includes('TELECOMMUTE') || /\bremote\b/i.test(location ?? '')
@@ -120,8 +120,10 @@ function meta(html: string, key: string): string | null {
   return content ? decodeEntities(content.trim()) || null : null
 }
 
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+
 /** Best-effort fallback from OpenGraph / <title> when there is no JobPosting data. */
-export function fromMetaTags(html: string): ImportedJob {
+export function fromMetaTags(html: string, pageUrl?: string): ImportedJob {
   const title = meta(html, 'og:title') ?? decodeEntities(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '') ?? null
   const site = meta(html, 'og:site_name')
   // Common shapes: "Role at Company", "Role - Company", "Company | Role"
@@ -131,7 +133,13 @@ export function fromMetaTags(html: string): ImportedJob {
   if (at) { role = at[1]; company = at[2] }
   else if (title && /\s[-–|]\s/.test(title)) {
     const [a, b] = title.split(/\s[-–|]\s/)
-    role = a; company = site && b?.toLowerCase().includes(site.toLowerCase()) ? site : b ?? null
+    // Usually "Role - Company", but some sites (e.g. Lever) use "Company - Role".
+    // If the first part matches the site name or a URL segment, it's the company.
+    const hints = [site ?? '', ...(pageUrl ? (() => { try { const u = new URL(pageUrl); return [u.hostname, ...u.pathname.split('/')] } catch { return [] } })() : [])]
+      .map(slug).filter(h => h.length > 2)
+    const looksLikeCompany = (x: string | undefined) => !!x && hints.some(h => h.includes(slug(x)) || slug(x).includes(h))
+    if (looksLikeCompany(a) && !looksLikeCompany(b)) { company = a; role = b ?? null }
+    else { role = a; company = site && b?.toLowerCase().includes(site.toLowerCase()) ? site : b ?? null }
   }
   return {
     company: company ?? site,
@@ -146,8 +154,13 @@ export function fromMetaTags(html: string): ImportedJob {
 }
 
 /** Main entry: structured data first, then meta tags. `source` tells the caller which won. */
-export function extractJob(html: string): { job: ImportedJob; source: 'json-ld' | 'meta' } {
+export function extractJob(html: string, pageUrl?: string): { job: ImportedJob; source: 'json-ld' | 'meta' } {
   const posting = findJobPosting(html)
-  if (posting) return { job: fromJobPosting(posting), source: 'json-ld' }
-  return { job: fromMetaTags(html), source: 'meta' }
+  if (posting) {
+    try {
+      const job = fromJobPosting(posting)
+      if (job.role || job.company) return { job, source: 'json-ld' }
+    } catch { /* unusual structured data: fall back to meta tags */ }
+  }
+  return { job: fromMetaTags(html, pageUrl), source: 'meta' }
 }

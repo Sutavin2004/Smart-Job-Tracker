@@ -71,3 +71,18 @@ describe('extractJob — meta-tag fallback', () => {
     expect(job.company).toBe('Telus')
   })
 })
+
+describe('extractJob — robustness', () => {
+  it('survives null fields in JobPosting data', () => {
+    const html = ld({ '@type': 'JobPosting', title: 'Dev', hiringOrganization: null, jobLocation: [null, { address: { addressLocality: 'Toronto', addressCountry: null } }], baseSalary: null })
+    const { job } = extractJob(html)
+    expect(job.role).toBe('Dev')
+    expect(job.location).toBe('Toronto')
+  })
+
+  it('detects "Company - Role" titles from the URL (Lever style)', () => {
+    const { job } = extractJob('<title>Emburse - Senior Software Engineer</title>', 'https://jobs.lever.co/emburse/abc')
+    expect(job.company).toBe('Emburse')
+    expect(job.role).toBe('Senior Software Engineer')
+  })
+})

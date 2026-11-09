@@ -38,7 +38,7 @@ ${text.slice(0, 20000)}`,
   }
 }
 
-export async function POST(req: NextRequest) {
+async function importFromUrl(req: NextRequest) {
   const { url } = await req.json().catch(() => ({ url: '' }))
   if (typeof url !== 'string' || !/^https?:\/\//i.test(url.trim())) {
     return NextResponse.json({ error: 'Paste a full link starting with https://' }, { status: 400 })
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: `${msg}. You can still fill in the details by hand.` }, { status: 422 })
   }
 
-  let { job, source } = extractJob(html) as { job: ImportedJob; source: string }
+  let { job, source } = extractJob(html, finalUrl) as { job: ImportedJob; source: string }
   let usedAi = false
 
   // Structured data is reliable. Otherwise let Claude read the page, if a key is set.
@@ -86,4 +86,13 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ job: { ...job, jobUrl: finalUrl }, source, usedAi })
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    return await importFromUrl(req)
+  } catch (err) {
+    console.error('import-url failed', err)
+    return NextResponse.json({ error: "Something went wrong reading that page. You can still fill in the details by hand." }, { status: 422 })
+  }
 }
