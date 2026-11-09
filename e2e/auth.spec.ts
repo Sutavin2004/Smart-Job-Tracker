@@ -131,5 +131,5 @@ test('a bad email confirmation link sends you to settings with a clear message',
   await page.request.post('/api/auth/signup', { data: { name: 'Verify Test', email: unique(), password: 'correct-horse-9' } })
   await page.goto('/api/auth/verify?token=' + 'y'.repeat(43))
   await expect(page).toHaveURL(/\/settings\?verify=expired/)
-  await expect(page.getByText('That confirmation link has expired.', { exact: false })).toBeVisible()
+  await expect(page.getByText(/confirmation link has expired/)).toBeVisible()
 })
