@@ -249,6 +249,9 @@ export default function TasksPage() {
                 >
                   <button
                     onClick={() => toggleTask(task)}
+                    role="checkbox"
+                    aria-checked={task.completed}
+                    aria-label={`Mark "${task.title}" as ${task.completed ? 'not done' : 'done'}`}
                     className="mt-0.5 shrink-0 text-slate-400 hover:text-brand-500 transition-colors"
                   >
                     {task.completed
@@ -295,7 +298,8 @@ export default function TasksPage() {
 
                   <button
                     onClick={() => deleteTask(task)}
-                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all shrink-0 mt-0.5"
+                    aria-label={`Delete task "${task.title}"`}
+                    className="md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 text-slate-400 hover:text-red-500 transition-all shrink-0 mt-0.5"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>

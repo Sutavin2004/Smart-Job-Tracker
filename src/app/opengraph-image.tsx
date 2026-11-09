@@ -10,7 +10,9 @@ export default function OpengraphImage() {
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: 80, background: 'linear-gradient(135deg,#1a1236 0%,#0f0e1a 60%)', color: 'white', fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <div style={{ width: 96, height: 96, borderRadius: 26, background: 'linear-gradient(135deg,#8448ff,#4f8fff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 56 }}>✦</div>
+          <div style={{ width: 96, height: 96, borderRadius: 26, background: 'linear-gradient(135deg,#8448ff,#4f8fff)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="60" height="60" viewBox="0 0 64 64"><path d="M32 6l6.5 17.5L56 30l-17.5 6.5L32 54l-6.5-17.5L8 30l17.5-6.5z" fill="#fff" /></svg>
+          </div>
           <div style={{ fontSize: 64, fontWeight: 800 }}>JobTrack</div>
         </div>
         <div style={{ marginTop: 40, fontSize: 44, fontWeight: 700, lineHeight: 1.2, maxWidth: 950 }}>

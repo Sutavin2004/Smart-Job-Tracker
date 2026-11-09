@@ -103,13 +103,13 @@ export default function CalendarPage() {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold">{format(currentMonth, 'MMMM yyyy')}</h2>
               <div className="flex gap-1">
-                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} aria-label="Previous month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   <ChevronLeft className="w-4 h-4" />
                 </button>
                 <button onClick={() => setCurrentMonth(new Date())} className="px-2 py-1 text-xs hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   Today
                 </button>
-                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
+                <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} aria-label="Next month" className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg">
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>

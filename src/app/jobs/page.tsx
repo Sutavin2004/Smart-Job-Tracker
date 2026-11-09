@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { DragDropContext, Droppable, Draggable, type DropResult } from '@hello-pangea/dnd'
+import { DragDropContext, Droppable, Draggable, type DropResult, type DraggableProvidedDragHandleProps } from '@hello-pangea/dnd'
 import { toast } from 'sonner'
 import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Wifi, Briefcase, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -106,11 +106,12 @@ function JobsPageInner() {
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
+                  aria-label="Search jobs"
                   placeholder="Search jobs..."
                   className="input pl-8 py-1.5 text-xs"
                 />
                 {search && (
-                  <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                  <button onClick={() => setSearch('')} aria-label="Clear search" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -118,6 +119,7 @@ function JobsPageInner() {
             </div>
 
             <select
+              aria-label="Filter by status"
               value={statusFilter}
               onChange={e => setStatusFilter(e.target.value)}
               className="input w-auto py-1.5 text-xs"
@@ -131,12 +133,16 @@ function JobsPageInner() {
             <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
               <button
                 onClick={() => setView('kanban')}
+                aria-label="Board view"
+                aria-pressed={view === 'kanban'}
                 className={cn('px-3 py-1.5 text-xs', view === 'kanban' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700')}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={() => setView('table')}
+                aria-label="Table view"
+                aria-pressed={view === 'table'}
                 className={cn('px-3 py-1.5 text-xs', view === 'table' ? 'bg-brand-600 text-white' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700')}
               >
                 <List className="w-3.5 h-3.5" />
@@ -231,11 +237,11 @@ function KanbanView({ jobs, onSelect, selectedId, onMove }: {
           const col = jobs.filter(j => j.status === status)
           const cfg = STATUS_CONFIG[status]
           return (
-            <div key={status} className="shrink-0 w-64">
+            <section key={status} aria-labelledby={`col-${status}`} className="shrink-0 w-64">
               <div className="flex items-center gap-2 mb-3 px-1">
-                <span className={cn('w-2 h-2 rounded-full', cfg.dot)} />
-                <h3 className={cn('text-xs font-semibold', cfg.color)}>{cfg.label}</h3>
-                <span className="text-xs text-slate-400 ml-auto">{col.length}</span>
+                <span className={cn('w-2 h-2 rounded-full', cfg.dot)} aria-hidden="true" />
+                <h2 id={`col-${status}`} className={cn('text-xs font-semibold', cfg.color)}>{cfg.label}</h2>
+                <span className="text-xs text-slate-400 ml-auto" aria-label={`${col.length} jobs`}>{col.length}</span>
               </div>
               <Droppable droppableId={status}>
                 {(provided, snapshot) => (
@@ -253,11 +259,9 @@ function KanbanView({ jobs, onSelect, selectedId, onMove }: {
                           <div
                             ref={drag.innerRef}
                             {...drag.draggableProps}
-                            {...drag.dragHandleProps}
-                            aria-label={`${job.company}, ${job.role}. ${cfg.label}. Press space to move.`}
                             className={cn(dragSnap.isDragging && 'rotate-1 shadow-xl')}
                           >
-                            <JobCard job={job} onClick={() => onSelect(job)} selected={selectedId === job.id} />
+                            <JobCard job={job} onClick={() => onSelect(job)} selected={selectedId === job.id} handleProps={drag.dragHandleProps} />
                           </div>
                         )}
                       </Draggable>
@@ -271,7 +275,7 @@ function KanbanView({ jobs, onSelect, selectedId, onMove }: {
                   </div>
                 )}
               </Droppable>
-            </div>
+            </section>
           )
         })}
       </div>
@@ -291,7 +295,12 @@ function ScoreBadge({ score }: { score: number | null }) {
   )
 }
 
-function JobCard({ job, onClick, selected }: { job: Job; onClick: () => void; selected: boolean }) {
+function JobCard({ job, onClick, selected, handleProps }: {
+  job: Job
+  onClick: () => void
+  selected: boolean
+  handleProps?: DraggableProvidedDragHandleProps | null
+}) {
   return (
     <div
       className={cn(
@@ -301,7 +310,15 @@ function JobCard({ job, onClick, selected }: { job: Job; onClick: () => void; se
           : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
       )}
     >
-      <button onClick={onClick} className="w-full text-left p-3.5">
+      {/* The card body is the drag handle and opens the job (click or Enter); Space lifts it for keyboard dragging. */}
+      <div
+        {...handleProps}
+        role="button"
+        tabIndex={0}
+        onClick={onClick}
+        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onClick() } }}
+        className="w-full text-left p-3.5 rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      >
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -347,7 +364,7 @@ function JobCard({ job, onClick, selected }: { job: Job; onClick: () => void; se
         {job.salary && (
           <p className="text-xs text-slate-400 mt-0.5 truncate">💰 {job.salary}</p>
         )}
-      </button>
+      </div>
 
       {/* Apply button — outside the main button to avoid nested buttons */}
       {job.jobUrl && (
@@ -386,8 +403,10 @@ function TableView({ jobs, onSelect, selectedId }: { jobs: Job[]; onSelect: (j: 
               <tr
                 key={job.id}
                 onClick={() => onSelect(job)}
+                onKeyDown={e => { if (e.key === 'Enter') onSelect(job) }}
+                tabIndex={0}
                 className={cn(
-                  'cursor-pointer transition-colors',
+                  'cursor-pointer transition-colors focus:outline-none focus-visible:bg-brand-50 dark:focus-visible:bg-brand-900/20',
                   selectedId === job.id
                     ? 'bg-brand-50 dark:bg-brand-900/20'
                     : 'hover:bg-slate-50 dark:hover:bg-slate-700/30'

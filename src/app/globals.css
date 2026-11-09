@@ -111,3 +111,18 @@ html { scroll-behavior: smooth; }
     @apply text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/5;
   }
 }
+
+/* ── WCAG AA contrast adjustments ──────────────────────────────────────────
+   The lightest greys and a few accent colours fall below 4.5:1 for small
+   text. Lift them one step per theme, centrally, instead of editing every
+   component. :where() keeps specificity low so hover/variant classes win. */
+:where(html:not(.dark)) .text-slate-400,
+:where(html:not(.dark)) .text-slate-300 { color: rgb(100 116 139); }            /* slate-500 */
+:where(html:not(.dark)) .bg-slate-100.text-slate-500 { color: rgb(71 85 105); }  /* slate-600 */
+:where(html:not(.dark)) .text-emerald-600 { color: rgb(4 120 87); }             /* emerald-700 */
+:where(html:not(.dark)) .text-amber-600 { color: rgb(180 83 9); }               /* amber-700 */
+:where(html:not(.dark)) .bg-red-100.text-red-600 { color: rgb(185 28 28); }     /* red-700 */
+:where(.dark) .text-slate-500, .dark .dark\:text-slate-500,
+:where(.dark) .text-slate-600, .dark .dark\:text-slate-600 { color: rgb(148 163 184); } /* slate-400 */
+.dark .dark\:bg-slate-700:is(.text-slate-400, .text-slate-500, .dark\:text-slate-400, .dark\:text-slate-500) { color: rgb(203 213 225); } /* slate-300 */
+:where(.dark) .text-brand-600 { color: #9a7aff; }                                /* brand-400 */

@@ -241,7 +241,7 @@ export default function ResumePage() {
                 </span>
                 <div className="min-w-0">
                   <p className="font-medium leading-tight">{t.label}</p>
-                  <p className={cn('text-[10px] leading-tight mt-0.5', tab === t.id ? 'text-white/70' : 'text-slate-400')}>{t.desc}</p>
+                  <p className={cn('text-[10px] leading-tight mt-0.5', tab === t.id ? 'text-white/90' : 'text-slate-400')}>{t.desc}</p>
                 </div>
                 {tab === t.id && <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" />}
               </button>

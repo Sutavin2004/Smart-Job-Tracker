@@ -69,7 +69,7 @@ export function FollowUpBanner() {
             </span>
           )}
         </div>
-        <button onClick={dismissAll} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        <button onClick={dismissAll} aria-label="Dismiss all reminders" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -101,6 +101,7 @@ export function FollowUpBanner() {
               </div>
               <button
                 onClick={() => dismiss(reminder.id)}
+                aria-label="Dismiss reminder"
                 className="text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 shrink-0 mt-0.5"
               >
                 <X className="w-3 h-3" />

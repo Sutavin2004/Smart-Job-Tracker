@@ -11,8 +11,9 @@ test('add a job, find it by search, drag it to Applied, then delete it', async (
   await expect(dialog).toBeHidden()
 
   // Search is case-insensitive.
-  await page.getByPlaceholder('Search jobs...').fill('e2e test')
-  const card = page.getByRole('button', { name: /E2E Test Co, Playwright Engineer\. Saved/ })
+  await page.getByLabel('Search jobs').fill('e2e test')
+  const column = (name: string) => page.getByRole('region', { name, exact: true })
+  const card = column('Saved').getByRole('button', { name: /E2E Test Co/ })
   await expect(card).toBeVisible()
 
   // Keyboard drag-and-drop: lift, move one column right, drop.
@@ -20,13 +21,17 @@ test('add a job, find it by search, drag it to Applied, then delete it', async (
   await page.keyboard.press('Space')
   await page.keyboard.press('ArrowRight')
   await page.keyboard.press('Space')
-  await expect(page.getByRole('button', { name: /E2E Test Co, Playwright Engineer\. Applied/ })).toBeVisible()
+  await expect(column('Applied').getByRole('button', { name: /E2E Test Co/ })).toBeVisible()
   await expect(page.getByText('E2E Test Co → Applied')).toBeVisible()
 
   // Persisted: reload and it's still in Applied.
   await page.reload()
-  await page.getByPlaceholder('Search jobs...').fill('E2E Test')
-  await expect(page.getByRole('button', { name: /E2E Test Co, Playwright Engineer\. Applied/ })).toBeVisible()
+  await page.getByLabel('Search jobs').fill('E2E Test')
+  await expect(column('Applied').getByRole('button', { name: /E2E Test Co/ })).toBeVisible()
+
+  // Enter on a card opens its details.
+  await column('Applied').getByRole('button', { name: /E2E Test Co/ }).press('Enter')
+  await expect(page).toHaveURL(/\/jobs\?id=/)
 
   // Clean up through the API.
   const jobs = await (await page.request.get('/api/jobs?search=E2E%20Test%20Co')).json()

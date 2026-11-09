@@ -171,6 +171,7 @@ export default function AnalyticsPage() {
           <div className="card p-5">
             <h2 className="text-sm font-semibold mb-4">By Status</h2>
             <div className="flex items-center gap-4">
+              <div aria-hidden="true">
               <ResponsiveContainer width={130} height={130}>
                 <PieChart>
                   <Pie data={statusPie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">
@@ -180,6 +181,7 @@ export default function AnalyticsPage() {
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
+              </div>
               <div className="space-y-1.5 flex-1">
                 {statusPie.map(e => (
                   <div key={e.name} className="flex items-center gap-2 text-xs">
@@ -197,6 +199,7 @@ export default function AnalyticsPage() {
           <div className="card p-5">
             <h2 className="text-sm font-semibold mb-4">By Source</h2>
             <div className="flex items-center gap-4">
+              <div aria-hidden="true">
               <ResponsiveContainer width={130} height={130}>
                 <PieChart>
                   <Pie data={sourcePie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">
@@ -206,6 +209,7 @@ export default function AnalyticsPage() {
                   </Pie>
                 </PieChart>
               </ResponsiveContainer>
+              </div>
               <div className="space-y-1.5 flex-1">
                 {sourcePie.map(e => (
                   <div key={e.name} className="flex items-center gap-2 text-xs">

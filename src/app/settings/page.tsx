@@ -262,7 +262,7 @@ export default function SettingsPage() {
                       </div>
                     </FieldRow>
                     <FieldRow label="Years of Experience">
-                      <input type="number" min="0" value={profile.yearsExperience} onChange={e => update('yearsExperience', Number(e.target.value))} className="input text-sm w-32" />
+                      <input type="number" min="0" aria-label="Years of experience" value={profile.yearsExperience} onChange={e => update('yearsExperience', Number(e.target.value))} className="input text-sm w-32" />
                     </FieldRow>
                     <FieldRow label="Education">
                       <input value={profile.education} onChange={e => update('education', e.target.value)} placeholder="B.Sc. Computer Science, U of T, 2025" className="input text-sm" />
