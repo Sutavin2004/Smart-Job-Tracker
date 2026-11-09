@@ -26,6 +26,7 @@
 ### Track applications
 - **Drag-and-drop board** (Saved → Applied → Interviewing → Offer …), keyboard accessible, with optimistic updates.
 - **Add from a link**: paste a Greenhouse, Lever or Ashby URL (read through their public APIs) or any page with schema.org `JobPosting` data. Claude reads the page as a fallback.
+- **Upload your résumé** as a PDF or Word file; the text is extracted for the AI tools.
 - Interviews, contacts, tasks, salary negotiation rounds, notes, follow-up reminders, CSV export.
 - **Dashboard and analytics**: weekly goal, response and offer rates, pipeline, activity heatmap, calendar.
 
@@ -33,7 +34,8 @@
 - Job analysis (strengths, risks, key skills), cover letters, resume tailoring, answers to application questions, interview prep, follow-up emails and salary advice.
 
 ### Accounts
-- **Anyone can sign up** with an email and password. Each account's board, profile, résumé and templates are private to it.
+- **Anyone can sign up** with an email and password, or with Google. Each account's board, profile, résumé and templates are private to it.
+- **Email** (through Resend): password reset links, email confirmation, and an optional morning email listing what the agent added.
 - **Isolation is enforced in one place**: API routes get a database client that adds the signed-in user to every query (`src/lib/scoped-db.ts`). A unit test fails if a data route imports the unscoped client, and an end-to-end test checks that one account can't read or change another's jobs.
 - **Daily limits per account** on AI actions and agent runs (configurable), shown under Settings → Account.
 - Passwords are hashed with scrypt; sessions are random tokens stored only as SHA-256 hashes, in an HTTP-only cookie. Sign-in and sign-up are rate-limited. Changing the password signs out other devices, and deleting the account removes all of its data.
@@ -96,6 +98,9 @@ npm run dev               # http://localhost:3000, then create an account
 | `RAPIDAPI_KEY` | Optional | JSearch (LinkedIn, Indeed, Glassdoor) |
 | `DAILY_AI_LIMIT`, `DAILY_AGENT_LIMIT` | Optional | Per-account daily limits (defaults 40 and 6) |
 | `SIGNUP_LIMIT_PER_HOUR` | Optional | New accounts allowed per IP address per hour (default 5) |
+| `RESEND_API_KEY` | Optional | Turns on password reset, email confirmation and the daily job digest ([resend.com](https://resend.com)) |
+| `EMAIL_FROM`, `APP_URL` | Optional | Sender address (needs a domain verified in Resend) and the base URL used in email links |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional | Shows "Continue with Google". Redirect URI: `https://<your-site>/api/auth/google/callback` |
 | `CRON_SECRET` | Optional | If set, the daily cron routes require it |
 | `DEMO_MODE` | Demo only | `true` turns on the public demo behaviour (see below) |
 

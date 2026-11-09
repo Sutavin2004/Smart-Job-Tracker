@@ -12,16 +12,32 @@ model User {
   id           String   @id @default(cuid())
   email        String   @unique
   name         String   @default("")
-  passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  /// Null for accounts that only sign in with Google.
+  passwordHash    String?
+  googleId        String?   @unique
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   sessions       Session[]
+  authTokens     AuthToken[]
   profile        UserProfile?
   jobs           Job[]
   agentSessions  AgentSession[]
   emailTemplates EmailTemplate[]
   usage          UsageCounter[]
+}
+
+/// One-time token for email links (password reset, email verification). `id` is the SHA-256 of the token.
+model AuthToken {
+  id        String   @id
+  userId    String
+  kind      String   // "reset" | "verify"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind])
 }
 
 /// Login session. `id` is the SHA-256 of the cookie token, so a leaked DB row can't be replayed.
@@ -286,6 +302,7 @@ model UserProfile {
   defaultSource   String   @default("LinkedIn")
   timezone        String   @default("America/Toronto")
   autoDiscover    Boolean  @default(false)
+  emailDigest     Boolean  @default(false) // email new matches after the daily run
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

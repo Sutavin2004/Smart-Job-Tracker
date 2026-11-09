@@ -8,7 +8,8 @@ import { IS_DEMO } from '@/lib/demo'
 export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { user }: Auth) => {
   if (IS_DEMO) return jsonError('Password changes are turned off in the demo.', 403)
   const { currentPassword, newPassword } = await req.json()
-  if (!(await verifyPassword(String(currentPassword ?? ''), user.passwordHash))) {
+  // Accounts created with Google can set a first password without a current one.
+  if (user.passwordHash && !(await verifyPassword(String(currentPassword ?? ''), user.passwordHash))) {
     return jsonError('Your current password is incorrect.', 400)
   }
   const problem = passwordProblem(newPassword)

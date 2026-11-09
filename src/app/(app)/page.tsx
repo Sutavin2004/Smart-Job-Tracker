@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn, formatRelative, stripEmoji } from '@/lib/utils'
 import { type Job, type Activity, STATUS_CONFIG } from '@/lib/types'
 import { StatusBadge } from '@/components/StatusBadge'
@@ -51,7 +52,15 @@ export default function DashboardPage() {
   // rendering it on the server caused a hydration mismatch (React #418).
   const [greeting, setGreeting] = useState('Hello')
 
-  useEffect(() => { setGreeting(getGreeting()); loadData() }, [])
+  useEffect(() => {
+    setGreeting(getGreeting())
+    loadData()
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verified') === '1') {
+      toast.success('Email confirmed')
+      window.history.replaceState(null, '', '/')
+    }
+  }, [])
 
   async function loadData() {
     setLoading(true)

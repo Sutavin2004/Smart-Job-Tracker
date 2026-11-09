@@ -4,6 +4,7 @@ import { hashPassword, rateLimited } from '@/lib/auth'
 import { clientIp, normalizeEmail, validEmail, passwordProblem, signedIn, jsonError } from '@/lib/auth-http'
 import { DEFAULT_TEMPLATES } from '@/lib/default-templates'
 import { IS_DEMO } from '@/lib/demo'
+import { sendVerification } from '@/lib/auth-emails'
 
 export async function POST(req: NextRequest) {
   if (IS_DEMO) return jsonError('Sign-up is turned off in the demo. Use the demo account instead.', 403)
@@ -31,5 +32,7 @@ export async function POST(req: NextRequest) {
       emailTemplates: { createMany: { data: DEFAULT_TEMPLATES } },
     },
   })
+  // Best effort: the account works without confirming the address.
+  await sendVerification(user).catch(e => console.error('verification email', e))
   return signedIn(user, 201)
 }

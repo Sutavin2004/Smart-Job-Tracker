@@ -40,6 +40,7 @@ export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }
     defaultSource: body.defaultSource ?? 'LinkedIn',
     timezone: body.timezone ?? 'America/Toronto',
     autoDiscover: Boolean(body.autoDiscover),
+    emailDigest: Boolean(body.emailDigest),
   }
 
   if (profile) {

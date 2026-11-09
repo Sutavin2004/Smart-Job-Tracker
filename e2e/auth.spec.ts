@@ -91,7 +91,7 @@ test("one account cannot see or change another account's jobs", async ({ playwri
 })
 
 for (const scheme of ['light', 'dark'] as const) {
-  for (const path of ['/login', '/signup']) {
+  for (const path of ['/login', '/signup', '/forgot-password', '/reset-password?token=abc']) {
     test(`${path} has no serious accessibility violations (${scheme})`, async ({ page }) => {
       const { default: AxeBuilder } = await import('@axe-core/playwright')
       await page.emulateMedia({ colorScheme: scheme })
@@ -104,3 +104,32 @@ for (const scheme of ['light', 'dark'] as const) {
     })
   }
 }
+
+test('password reset links that are fake or reused are rejected', async ({ request }) => {
+  const res = await request.post('/api/auth/reset', { data: { token: 'x'.repeat(43), password: 'a-new-password' } })
+  expect(res.status()).toBe(400)
+  expect((await res.json()).error).toMatch(/expired|used/i)
+})
+
+test('forgot-password page explains when email is not set up', async ({ page }) => {
+  await page.goto('/login')
+  await page.getByRole('link', { name: 'Forgot password?' }).click()
+  await expect(page).toHaveURL('/forgot-password')
+  // CI has no RESEND_API_KEY.
+  await expect(page.getByText(/not set up on this site yet/)).toBeVisible()
+})
+
+test('Google sign-in is hidden when not configured, and its route says so', async ({ page }) => {
+  await page.goto('/login')
+  await expect(page.getByRole('link', { name: 'Continue with Google' })).toHaveCount(0)
+  await page.goto('/api/auth/google')
+  await expect(page).toHaveURL(/\/login\?error=google_off/)
+  await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toHaveText(/not set up/)
+})
+
+test('a bad email confirmation link sends you to settings with a clear message', async ({ page }) => {
+  await page.request.post('/api/auth/signup', { data: { name: 'Verify Test', email: unique(), password: 'correct-horse-9' } })
+  await page.goto('/api/auth/verify?token=' + 'y'.repeat(43))
+  await expect(page).toHaveURL(/\/settings\?verify=expired/)
+  await expect(page.getByText('That confirmation link has expired.', { exact: false })).toBeVisible()
+})

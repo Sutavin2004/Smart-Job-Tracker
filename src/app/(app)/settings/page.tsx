@@ -30,9 +30,10 @@ const SHORTCUTS: [string, string][] = [
 ]
 
 interface Me {
-  user: { name: string; email: string; createdAt: string }
+  user: { name: string; email: string; createdAt: string; emailVerified: boolean; hasPassword: boolean; google: boolean }
   usage: { ai: { used: number; limit: number }; agent: { used: number; limit: number } }
   demo: boolean
+  emailEnabled: boolean
 }
 
 /** A titled block: description on the left, controls on the right. */
@@ -84,6 +85,11 @@ export default function SettingsPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verify') === 'expired') {
+      setTab('account')
+      toast.error('That confirmation link has expired. Send a new one below.')
+    } else if (params.get('tab') === 'account') setTab('account')
     setMounted(true)
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
     fetch('/api/auth/me').then(r => r.json()).then(setMe).catch(() => {})
@@ -149,7 +155,7 @@ export default function SettingsPage() {
 
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="pt-8">
         {tab === 'profile' && (profile ? <ProfileTab profile={profile} update={update} /> : <Loading />)}
-        {tab === 'account' && (me ? <AccountTab me={me} /> : <Loading />)}
+        {tab === 'account' && (me ? <AccountTab me={me} profile={profile} onProfile={setProfile} /> : <Loading />)}
         {tab === 'appearance' && mounted && (
           <Section title="Theme" description="System follows your device setting.">
             <div className="inline-flex rounded-lg border border-slate-200 p-0.5 dark:border-[#2A2B2E]" role="radiogroup" aria-label="Theme">
@@ -233,7 +239,7 @@ function ProfileTab({ profile, update }: { profile: UserProfile; update: (k: key
   )
 }
 
-function AccountTab({ me }: { me: Me }) {
+function AccountTab({ me, profile, onProfile }: { me: Me; profile: UserProfile | null; onProfile: (p: UserProfile) => void }) {
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
   const [busy, setBusy] = useState<'pw' | 'del' | null>(null)
@@ -252,7 +258,7 @@ function AccountTab({ me }: { me: Me }) {
     setBusy(null)
     if (!res.ok) return toast.error(data.error ?? 'Could not change your password.')
     setCurrent(''); setNext('')
-    toast.success('Password changed. Other devices were signed out.')
+    toast.success(me.user.hasPassword ? 'Password changed. Other devices were signed out.' : 'Password set. You can now sign in with it too.')
   }
 
   async function deleteAccount(e: React.FormEvent) {
@@ -261,7 +267,7 @@ function AccountTab({ me }: { me: Me }) {
     const res = await fetch('/api/auth/account', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: deletePw }),
+      body: JSON.stringify({ password: deletePw, confirm: confirmText }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) { setBusy(null); return toast.error(data.error ?? 'Could not delete the account.') }
@@ -289,18 +295,22 @@ function AccountTab({ me }: { me: Me }) {
         </div>
       </Section>
 
+      {!me.demo && <EmailSection me={me} profile={profile} onProfile={onProfile} />}
+
       {!me.demo && (
-        <Section title="Password" description="Changing it signs you out everywhere else.">
+        <Section title="Password" description={me.user.hasPassword ? 'Changing it signs you out everywhere else.' : 'You sign in with Google. Set a password to also sign in with your email.'}>
           <form onSubmit={changePassword} className="max-w-sm space-y-4">
-            <Field label="Current password" id="pw-current">
-              <input id="pw-current" type="password" autoComplete="current-password" className="input" value={current} onChange={e => setCurrent(e.target.value)} required />
-            </Field>
+            {me.user.hasPassword && (
+              <Field label="Current password" id="pw-current">
+                <input id="pw-current" type="password" autoComplete="current-password" className="input" value={current} onChange={e => setCurrent(e.target.value)} required />
+              </Field>
+            )}
             <Field label="New password" id="pw-new">
               <input id="pw-new" type="password" autoComplete="new-password" minLength={8} className="input" value={next} onChange={e => setNext(e.target.value)} required />
             </Field>
-            <button type="submit" disabled={busy !== null || !current || next.length < 8} className="btn-secondary">
+            <button type="submit" disabled={busy !== null || (me.user.hasPassword && !current) || next.length < 8} className="btn-secondary">
               {busy === 'pw' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Change password
+              {me.user.hasPassword ? 'Change password' : 'Set password'}
             </button>
           </form>
         </Section>
@@ -312,12 +322,14 @@ function AccountTab({ me }: { me: Me }) {
             <Field label='Type "delete my account" to confirm' id="del-confirm">
               <input id="del-confirm" className="input" value={confirmText} onChange={e => setConfirmText(e.target.value)} autoComplete="off" />
             </Field>
-            <Field label="Password" id="del-pw">
-              <input id="del-pw" type="password" autoComplete="current-password" className="input" value={deletePw} onChange={e => setDeletePw(e.target.value)} />
-            </Field>
+            {me.user.hasPassword && (
+              <Field label="Password" id="del-pw">
+                <input id="del-pw" type="password" autoComplete="current-password" className="input" value={deletePw} onChange={e => setDeletePw(e.target.value)} />
+              </Field>
+            )}
             <button
               type="submit"
-              disabled={busy !== null || confirmText.trim().toLowerCase() !== 'delete my account' || !deletePw}
+              disabled={busy !== null || confirmText.trim().toLowerCase() !== 'delete my account' || (me.user.hasPassword && !deletePw)}
               className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy === 'del' && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
@@ -327,6 +339,73 @@ function AccountTab({ me }: { me: Me }) {
         </Section>
       )}
     </>
+  )
+}
+
+function EmailSection({ me, profile, onProfile }: { me: Me; profile: UserProfile | null; onProfile: (p: UserProfile) => void }) {
+  const [sending, setSending] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const digestOn = Boolean(profile?.emailDigest)
+
+  async function resend() {
+    setSending(true)
+    const res = await fetch('/api/auth/resend-verification', { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    setSending(false)
+    if (res.ok) toast.success(`Sent. Check ${me.user.email}.`)
+    else toast.error(data.error ?? 'The email could not be sent.')
+  }
+
+  async function toggleDigest() {
+    setSaving(true)
+    const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emailDigest: !digestOn }) })
+    setSaving(false)
+    if (res.ok) onProfile(await res.json())
+    else toast.error('Could not save that setting.')
+  }
+
+  return (
+    <Section title="Email" description="Password resets, and an optional note when the morning search finds new jobs.">
+      {!me.emailEnabled ? (
+        <p className="text-[13px] text-slate-500">Email is not set up on this site yet.</p>
+      ) : (
+        <div className="max-w-md space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
+              {me.user.email}{' '}
+              <span className={cn('ml-1 text-[13px]', me.user.emailVerified ? 'text-brand-700 dark:text-brand-400' : 'text-amber-700 dark:text-amber-400')}>
+                {me.user.emailVerified ? 'Confirmed' : 'Not confirmed'}
+              </span>
+            </p>
+            {!me.user.emailVerified && (
+              <button onClick={resend} disabled={sending} className="btn-secondary py-1.5">
+                {sending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                Send confirmation email
+              </button>
+            )}
+          </div>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p id="digest-label" className="text-sm font-medium text-slate-900 dark:text-white">Email me new matches</p>
+              <p className="mt-0.5 text-[13px] leading-relaxed text-slate-500">
+                After the morning search (turn it on from the Job agent page), if it added anything.
+                {!me.user.emailVerified && ' Confirm your email first.'}
+              </p>
+            </div>
+            <button
+              role="switch"
+              aria-checked={digestOn}
+              aria-labelledby="digest-label"
+              onClick={toggleDigest}
+              disabled={saving || !profile || (!digestOn && !me.user.emailVerified)}
+              className={cn('relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-50', digestOn ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600')}
+            >
+              <span className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white transition-[left]', digestOn ? 'left-[18px]' : 'left-0.5')} />
+            </button>
+          </div>
+        </div>
+      )}
+    </Section>
   )
 }
 

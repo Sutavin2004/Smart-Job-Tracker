@@ -78,7 +78,7 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
     if (realJobs.length > 0) {
       log(`Live boards: ${realJobs.length} listings from ${sources.join(', ')}`, { step: 2 })
     } else {
-      log('ℹ️ Live boards returned 0 results — running AI discovery', { step: 2 })
+      log('Live boards returned no results, so trying AI search', { step: 2 })
     }
 
     // ── Step 2: AI-powered discovery (always runs if Anthropic key set) ──

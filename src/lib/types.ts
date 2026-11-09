@@ -189,6 +189,7 @@ export interface UserProfile {
   defaultSource: string
   timezone: string
   autoDiscover?: boolean
+  emailDigest?: boolean
 }
 
 export interface EmailTemplate {

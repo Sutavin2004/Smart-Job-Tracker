@@ -11,7 +11,8 @@ export async function hashPassword(password: string): Promise<string> {
   return ['scrypt', SCRYPT.N, SCRYPT.r, SCRYPT.p, salt.toString('base64'), hash.toString('base64')].join('$')
 }
 
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
+export async function verifyPassword(password: string, stored: string | null | undefined): Promise<boolean> {
+  if (!stored) return false
   const [alg, N, r, p, salt, hash] = stored.split('$')
   if (alg !== 'scrypt' || !salt || !hash) return false
   const expected = Buffer.from(hash, 'base64')
