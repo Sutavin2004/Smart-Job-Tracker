@@ -125,7 +125,6 @@ export default function CalendarPage() {
               {paddedDays.map((day, i) => {
                 if (!day) return <div key={`empty-${i}`} className="border-b border-r border-slate-200 dark:border-[#2A2B2E]" />
                 const events = getEventsForDay(day)
-                const hasEvents = events.interviews.length > 0 || events.deadlines.length > 0
                 const selected = selectedDate && isSameDay(day, selectedDate)
                 const today = isToday(day)
                 return (
@@ -133,7 +132,6 @@ export default function CalendarPage() {
                     key={day.toISOString()}
                     onClick={() => setSelectedDate(selected ? null : day)}
                     aria-pressed={Boolean(selected)}
-                    aria-label={`${format(day, 'MMMM d')}${hasEvents ? `, ${events.interviews.length + events.deadlines.length} events` : ''}`}
                     className={cn(
                       'flex min-h-[76px] flex-col items-stretch gap-0.5 border-b border-r border-slate-200 p-1.5 text-left text-xs transition-colors dark:border-[#2A2B2E]',
                       !isSameMonth(day, currentMonth) && 'opacity-40',
@@ -143,7 +141,7 @@ export default function CalendarPage() {
                     <span className={cn(
                       'inline-flex h-5 w-5 items-center justify-center self-start rounded-full tabular-nums',
                       today ? 'bg-brand-600 font-semibold text-white' : 'text-slate-600 dark:text-slate-400',
-                    )}>{format(day, 'd')}</span>
+                    )}><span className="sr-only">{format(day, 'MMMM')} </span>{format(day, 'd')}</span>
                     {events.interviews.slice(0, 2).map(iv => (
                       <span key={iv.id} className="truncate rounded-sm bg-brand-100 px-1 text-[11px] leading-[18px] text-brand-800 dark:bg-brand-900/60 dark:text-brand-200">{iv.job.company}</span>
                     ))}
