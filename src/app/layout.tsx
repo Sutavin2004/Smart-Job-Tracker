@@ -34,9 +34,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <QueryProvider>
+            <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-slate-900 focus:shadow-lg">
+              Skip to main content
+            </a>
             <div className="flex h-screen overflow-hidden">
               <Sidebar />
-              <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+              {/* tabIndex lets keyboard users scroll pages with no other focusable content */}
+              <main id="main-content" tabIndex={0} className="flex-1 overflow-y-auto pb-16 md:pb-0 focus:outline-none">
                 {children}
               </main>
             </div>
