@@ -188,6 +188,7 @@ export interface UserProfile {
   weeklyGoal: number
   defaultSource: string
   timezone: string
+  autoDiscover?: boolean
 }
 
 export interface EmailTemplate {
@@ -205,6 +206,7 @@ export interface EmailTemplate {
 export interface AgentSession {
   id: string
   status: string
+  trigger?: string
   searchQueries: string | null
   jobsFound: number
   jobsAdded: number

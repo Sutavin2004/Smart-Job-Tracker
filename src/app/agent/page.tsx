@@ -5,7 +5,7 @@ import {
   Bot, Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
   ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
   Sparkles, Briefcase, ArrowUpRight, Save, Settings2, Loader2,
-  Target, Brain, DollarSign, Wifi, ChevronUp,
+  Target, Brain, DollarSign, Wifi, ChevronUp, CalendarClock,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -86,7 +86,7 @@ function SessionJobRow({ job }: { job: SessionJob }) {
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 line-clamp-1 italic">{job.aiSuggestion}</p>
         )}
       </div>
-      <div className="flex items-center gap-2 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-2 shrink-0 md:opacity-0 md:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
         <Link
           href={`/jobs?id=${job.id}`}
           className="flex items-center gap-1 text-[11px] font-medium text-brand-600 dark:text-brand-400 hover:underline"
@@ -162,6 +162,11 @@ function SessionRow({ session }: { session: AgentSession }) {
           <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formatRelative(session.startedAt)}
+            {session.trigger === 'scheduled' && (
+              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 text-[10px] font-medium text-brand-700 dark:text-brand-300">
+                <CalendarClock className="w-3 h-3" /> Daily run
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -199,7 +204,7 @@ function SessionRow({ session }: { session: AgentSession }) {
                 <>
                   <div className="px-5 py-2.5 flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                      {jobs.length} job{jobs.length !== 1 ? 's' : ''} added · hover to see actions
+                      {jobs.length} job{jobs.length !== 1 ? 's' : ''} added
                     </span>
                     <Link
                       href="/jobs?discoveredBy=agent"
@@ -249,7 +254,8 @@ function SearchPreferencesPanel({
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draft),
+        // autoDiscover has its own toggle; leave it out so a stale draft can't overwrite it.
+        body: JSON.stringify(Object.fromEntries(Object.entries(draft).filter(([k]) => k !== 'autoDiscover'))),
       })
       if (!res.ok) throw new Error()
       const saved = await res.json()
@@ -437,6 +443,61 @@ function SearchPreferencesPanel({
   )
 }
 
+// ── Daily run toggle ─────────────────────────────────────────────────────────
+
+function DailyRunToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (p: UserProfile) => void }) {
+  const [saving, setSaving] = useState(false)
+  const on = Boolean(profile.autoDiscover)
+  const ready = Boolean(profile.targetRoles && profile.skills)
+
+  async function toggle() {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ autoDiscover: !on }),
+      })
+      if (!res.ok) throw new Error()
+      onSaved(await res.json())
+      toast.success(!on ? 'Daily discovery is on. New matches will appear each morning.' : 'Daily discovery is off')
+    } catch {
+      toast.error("Couldn't update that setting")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="card flex items-center gap-4 px-5 py-4">
+      <div className="w-9 h-9 rounded-xl bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center shrink-0">
+        <CalendarClock className="w-4 h-4 text-brand-600 dark:text-brand-400" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p id="daily-run-label" className="text-sm font-semibold text-slate-900 dark:text-white">Run every morning</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          {ready
+            ? 'Around 6–7 am Toronto time, the agent searches with your saved preferences and adds new matches to your board.'
+            : 'Set your target roles and skills first.'}
+        </p>
+      </div>
+      <button
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="daily-run-label"
+        onClick={toggle}
+        disabled={saving || (!on && !ready)}
+        className={cn(
+          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50',
+          on ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
+        )}
+      >
+        <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
+      </button>
+    </div>
+  )
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
@@ -536,7 +597,7 @@ export default function AgentPage() {
             <Bot className="w-6 h-6 text-brand-500" /> Job Discovery Agent
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Searches LinkedIn, Indeed & Glassdoor — scores every posting — adds the best matches automatically
+            Searches live job boards, scores every posting against your profile, and adds the best matches
           </p>
         </div>
         <div className={cn(
@@ -558,6 +619,8 @@ export default function AgentPage() {
         />
       )}
 
+      {profile && <DailyRunToggle profile={profile} onSaved={setProfile} />}
+
       {/* Agent launch card */}
       <div className="card p-6">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
@@ -569,7 +632,7 @@ export default function AgentPage() {
               {running ? 'Agent is running...' : 'Ready to find your next opportunity'}
             </h2>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Pulls real listings from LinkedIn, Indeed & Glassdoor via JSearch · RemoteOK · AI-augmented search
+              Real listings from Adzuna and JSearch (LinkedIn, Indeed, Glassdoor) when their keys are set, plus RemoteOK, Remotive and Jobicy for remote roles, and verified web search with an Anthropic key
             </p>
             {profile && profile.targetRoles && (
               <div className="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">

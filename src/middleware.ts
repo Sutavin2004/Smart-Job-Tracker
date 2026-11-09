@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AUTH_COOKIE, authEnabled, safeEqual, sessionToken } from '@/lib/auth'
 
-const PUBLIC_PATHS = ['/login', '/api/login', '/api/health']
+// The cron route authenticates itself (see api/cron/discover).
+const PUBLIC_PATHS = ['/login', '/api/login', '/api/health', '/api/cron/discover']
 
 export async function middleware(req: NextRequest) {
   // No APP_PASSWORD configured (e.g. local dev) → app stays open.

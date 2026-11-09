@@ -39,10 +39,14 @@ export async function PUT(req: NextRequest) {
     weeklyGoal: Number(body.weeklyGoal ?? 5),
     defaultSource: body.defaultSource ?? 'LinkedIn',
     timezone: body.timezone ?? 'America/Toronto',
+    autoDiscover: Boolean(body.autoDiscover),
   }
 
   if (profile) {
-    const updated = await prisma.userProfile.update({ where: { id: profile.id }, data })
+    // Partial update: only touch fields the client actually sent, so saving one
+    // setting (e.g. the daily-agent toggle) can't blank out the rest of the profile.
+    const patch = Object.fromEntries(Object.entries(data).filter(([k]) => k in body))
+    const updated = await prisma.userProfile.update({ where: { id: profile.id }, data: patch })
     return NextResponse.json(updated)
   }
 

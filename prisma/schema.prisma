@@ -232,6 +232,7 @@ model UserProfile {
   weeklyGoal      Int      @default(5)
   defaultSource   String   @default("LinkedIn")
   timezone        String   @default("America/Toronto")
+  autoDiscover    Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
@@ -239,6 +240,7 @@ model UserProfile {
 model AgentSession {
   id            String    @id @default(cuid())
   status        String    @default("running")
+  trigger       String    @default("manual")
   searchQueries String?
   jobsFound     Int       @default(0)
   jobsAdded     Int       @default(0)
@@ -247,6 +249,8 @@ model AgentSession {
   error         String?
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
+
+  @@index([startedAt])
 }
 
 model EmailTemplate {
