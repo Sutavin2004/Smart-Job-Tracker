@@ -10,10 +10,10 @@ import type { Job } from '@/lib/types'
 import { STATUS_CONFIG } from '@/lib/types'
 
 const QUICK_ACTIONS = [
-  { label: 'Add Job', icon: Plus, action: 'add-job', shortcut: '⌘N' },
-  { label: 'Run Agent', icon: Bot, action: 'nav:/agent' },
+  { label: 'Add job', icon: Plus, action: 'add-job', shortcut: '⌘N' },
+  { label: 'Run agent', icon: Bot, action: 'nav:/agent' },
   { label: 'Analytics', icon: BarChart2, action: 'nav:/analytics' },
-  { label: 'Resume Tools', icon: FileText, action: 'nav:/resume' },
+  { label: 'Resume tools', icon: FileText, action: 'nav:/resume' },
   { label: 'Settings', icon: Settings, action: 'nav:/settings' },
 ]
 
@@ -105,7 +105,7 @@ export function CommandPalette() {
             </div>
 
             <div className="max-h-80 overflow-y-auto py-2">
-              <p className="px-4 py-1 text-xs font-semibold text-slate-400 dark:text-slate-400">Quick Actions</p>
+              <p className="px-4 py-1 text-xs font-semibold text-slate-400 dark:text-slate-400">Quick actions</p>
               {QUICK_ACTIONS.map((action, i) => (
                 <button
                   key={action.action}

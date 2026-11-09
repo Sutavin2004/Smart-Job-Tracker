@@ -411,7 +411,7 @@ function SearchPreferencesPanel({
               {/* Exclude keywords */}
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  Exclude Keywords
+                  Exclude keywords
                 </label>
                 <input
                   value={draft.excludeKeywords}
@@ -426,7 +426,7 @@ function SearchPreferencesPanel({
                 <p className="text-xs text-slate-400">Changes apply on the next agent run</p>
                 <button onClick={save} disabled={saving} className="btn-primary text-sm py-2 px-5">
                   {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  {saving ? 'Saving…' : 'Save Preferences'}
+                  {saving ? 'Saving…' : 'Save preferences'}
                 </button>
               </div>
             </div>
@@ -748,7 +748,7 @@ export default function AgentPage() {
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-200 dark:border-[#2A2B2E] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past Sessions</h2>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past sessions</h2>
               <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs it found</p>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">

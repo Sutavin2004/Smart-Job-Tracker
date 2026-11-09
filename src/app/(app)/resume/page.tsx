@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Zap, Target, Save, CheckCircle, AlertCircle, ArrowUpRight,
-  Copy, Download, Loader2, ChevronRight, BookOpen, Lightbulb,
-  TrendingUp, XCircle, BarChart3, Sparkles, RefreshCw,
+  Zap, Target, CheckCircle, AlertCircle, ArrowUpRight,
+  Copy, Download, Upload, Loader2,
+  XCircle, Sparkles, RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -38,29 +38,6 @@ interface TailorResult {
   atsScoreAfter: number
 }
 
-function ScoreRing({ score, label, color }: { score: number; label: string; color: string }) {
-  const r = 30
-  const circ = 2 * Math.PI * r
-  const dash = (score / 100) * circ
-  return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative w-20 h-20">
-        <svg viewBox="0 0 72 72" className="w-full h-full -rotate-90">
-          <circle cx="36" cy="36" r={r} fill="none" stroke="currentColor" strokeWidth="5" className="text-slate-100 dark:text-slate-700" />
-          <circle
-            cx="36" cy="36" r={r} fill="none" strokeWidth="5"
-            stroke={color} strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-            className="transition-all duration-700"
-          />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xl font-semibold text-slate-900 dark:text-white">{score}</span>
-        </div>
-      </div>
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</p>
-    </div>
-  )
-}
 
 function ScoreBar({ score, label }: { score: number; label: string }) {
   const color = score >= 70 ? '#10b981' : score >= 45 ? '#f59e0b' : '#ef4444'
@@ -103,10 +80,10 @@ function downloadText(text: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-const TABS: { id: ResumeTab; label: string; icon: React.ReactNode; desc: string }[] = [
-  { id: 'master', label: 'Master Resume', icon: <BookOpen className="w-4 h-4" />, desc: 'Store your base resume' },
-  { id: 'analyzer', label: 'ATS Analyzer', icon: <BarChart3 className="w-4 h-4" />, desc: 'Score & improve' },
-  { id: 'tailor', label: 'Tailor to Job', icon: <Target className="w-4 h-4" />, desc: 'Customize per application' },
+const TABS: { id: ResumeTab; label: string }[] = [
+  { id: 'master', label: 'Your résumé' },
+  { id: 'analyzer', label: 'ATS check' },
+  { id: 'tailor', label: 'Tailor to a job' },
 ]
 
 export default function ResumePage() {
@@ -115,6 +92,30 @@ export default function ResumePage() {
   const [masterResume, setMasterResume] = useState('')
   const [savingMaster, setSavingMaster] = useState(false)
   const [masterDirty, setMasterDirty] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadedFrom, setUploadedFrom] = useState<string | null>(null)
+
+  async function uploadResume(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (masterResume.trim() && !window.confirm('Replace the text below with the contents of this file?')) return
+    setUploading(true)
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      const res = await fetch('/api/resume/upload', { method: 'POST', body })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error ?? 'That file could not be read.')
+      setMasterResume(data.text)
+      setMasterDirty(true)
+      setUploadedFrom(file.name)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'That file could not be read.')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const [analyzeResume, setAnalyzeResume] = useState('')
   const [analyzeJD, setAnalyzeJD] = useState('')
@@ -200,143 +201,95 @@ export default function ResumePage() {
   const hasJD = !!selectedJob?.jobDescription
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="px-5 pt-8 sm:px-8 sm:pt-10">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">
-              Résumé
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Check your résumé against applicant-tracking systems and tailor it to a specific job.
-            </p>
-          </div>
-          {profile?.masterResume && (
-            <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-100 dark:bg-[#26272A] px-3 py-2 rounded-xl">
-              <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-              Master resume saved · {wordCount(profile.masterResume)} words
-            </div>
-          )}
+    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Résumé</h1>
+          <p className="mt-1 text-sm text-slate-500">Keep one full résumé here. The AI tools use it to score jobs, write cover letters and tailor it per application.</p>
         </div>
+        {profile?.masterResume && (
+          <p className="text-[13px] text-slate-500">Saved résumé: {wordCount(profile.masterResume)} words</p>
+        )}
+      </header>
+
+      <div role="tablist" aria-label="Résumé tools" className="mt-6 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-[#2A2B2E]">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={cn(
+              '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-sm transition-colors',
+              tab === t.id
+                ? 'border-brand-600 font-medium text-slate-900 dark:border-brand-400 dark:text-white'
+                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white'
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      <div className="max-w-5xl mx-auto px-8 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar */}
-          <aside className="w-52 shrink-0 space-y-1">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all text-sm',
-                  tab === t.id
-                    ? 'bg-brand-600 text-white'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.05]'
-                )}
-              >
-                <span className={cn('shrink-0', tab === t.id ? 'text-white' : 'text-slate-400')}>
-                  {t.icon}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium leading-tight">{t.label}</p>
-                  <p className={cn('text-[11px] leading-tight mt-0.5', tab === t.id ? 'text-white/90' : 'text-slate-400')}>{t.desc}</p>
-                </div>
-                {tab === t.id && <ChevronRight className="w-3.5 h-3.5 ml-auto shrink-0" />}
-              </button>
-            ))}
-
-            {/* Quick stats */}
-            {profile?.masterResume && (
-              <div className="mt-4 p-3 rounded-xl bg-slate-100 dark:bg-[#1A1B1D] space-y-2">
-                <p className="text-xs font-semibold text-slate-400">Master Resume</p>
-                <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
-                  <p>{wordCount(profile.masterResume)} words</p>
-                  <p>{profile.masterResume.split('\n').filter(Boolean).length} lines</p>
-                </div>
-              </div>
-            )}
-          </aside>
-
-          {/* Main content */}
-          <main className="flex-1 min-w-0 space-y-5">
+      <div className="pt-6">
+        <div>
+          <div className="space-y-5">
 
             {/* ── MASTER RESUME ── */}
             {tab === 'master' && (
               <div className="space-y-4">
                 <div className="card overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-3.5 dark:border-[#2A2B2E]">
                     <div>
-                      <h2 className="font-semibold text-slate-900 dark:text-white">Master Resume</h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        This is used by all AI features — cover letters, job analysis, and tailoring
-                      </p>
+                      <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Your full résumé</h2>
+                      <p className="mt-0.5 text-[13px] text-slate-500">Upload a file or paste the text. Include everything; each tool picks what is relevant.</p>
                     </div>
                     <div className="flex items-center gap-2">
+                      <label className={cn('btn-secondary cursor-pointer py-1.5', uploading && 'pointer-events-none opacity-60')}>
+                        {uploading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Upload className="h-4 w-4" aria-hidden="true" />}
+                        {uploading ? 'Reading…' : 'Upload PDF or Word'}
+                        <input type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" className="sr-only" onChange={uploadResume} disabled={uploading} />
+                      </label>
                       {masterResume && (
-                        <CopyButton text={masterResume} label="Copy all" />
-                      )}
-                      {masterResume && (
-                        <button
-                          onClick={() => downloadText(masterResume, 'master-resume.txt')}
-                          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-brand-600 transition-colors"
-                        >
-                          <Download className="w-3.5 h-3.5" /> Download
+                        <button onClick={() => downloadText(masterResume, 'resume.txt')} className="btn-ghost py-1.5" title="Download as text">
+                          <Download className="h-4 w-4" aria-hidden="true" /><span className="sr-only">Download as text</span>
                         </button>
                       )}
-                      <button
-                        onClick={saveMaster}
-                        disabled={savingMaster || !masterDirty}
-                        className={cn(
-                          'flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all',
-                          masterDirty
-                            ? 'bg-brand-600 text-white hover:bg-brand-700'
-                            : 'bg-slate-100 dark:bg-[#26272A] text-slate-400 cursor-not-allowed'
-                        )}
-                      >
-                        {savingMaster ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <button onClick={saveMaster} disabled={savingMaster || !masterDirty} className="btn-primary py-1.5">
+                        {savingMaster && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                         {savingMaster ? 'Saving…' : masterDirty ? 'Save' : 'Saved'}
                       </button>
                     </div>
                   </div>
-                  <div className="p-6">
+                  <div className="p-5">
+                    {uploadedFrom && (
+                      <p className="mb-3 rounded-md bg-brand-50 px-3 py-2 text-[13px] text-brand-800 dark:bg-brand-900/40 dark:text-brand-200">
+                        Text from {uploadedFrom}. Check it over, fix anything that came through oddly, then save.
+                      </p>
+                    )}
                     <textarea
+                      aria-label="Résumé text"
                       value={masterResume}
                       onChange={e => { setMasterResume(e.target.value); setMasterDirty(true) }}
                       rows={24}
-                      placeholder={`Paste your full resume here. Include everything — the AI will pick what's relevant per job.\n\nTips for best results:\n• Use plain text (no tables or columns)\n• Include metrics: "Increased performance by 40%"\n• List all technologies, tools, and frameworks\n• Include education, projects, and certifications\n• The more detail, the better the tailoring`}
+                      placeholder="Paste your résumé here, or upload a PDF or Word file above."
                       className="input font-mono text-xs resize-none leading-relaxed"
                     />
                     <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
-                      <span>{wordCount(masterResume)} words · {masterResume.length.toLocaleString()} characters</span>
-                      {masterDirty && <span className="text-amber-500">Unsaved changes</span>}
+                      <span>{wordCount(masterResume)} words</span>
+                      {masterDirty && <span className="text-amber-700 dark:text-amber-400">Not saved yet</span>}
                     </div>
                   </div>
                 </div>
 
-                {/* Tips */}
-                <div className="card p-5">
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-                    <Lightbulb className="w-4 h-4 text-amber-500" /> Tips for a strong master resume
-                  </h3>
-                  <ul className="space-y-2">
-                    {[
-                      'Use plain text — no tables, columns, or graphics (ATS systems struggle with formatting)',
-                      'Quantify achievements: "reduced load time by 60%" beats "improved performance"',
-                      'List every tool and technology — even ones you used briefly in a project',
-                      'Include all projects, even personal ones — they signal initiative',
-                      'Keep education, certifications, and courses — they are keyword gold',
-                    ].map((tip, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
-                        <span className="w-4 h-4 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 flex items-center justify-center text-[11px] font-semibold shrink-0 mt-0.5">
-                          {i + 1}
-                        </span>
-                        {tip}
-                      </li>
-                    ))}
+                <section className="card p-5" aria-labelledby="tips-heading">
+                  <h3 id="tips-heading" className="text-sm font-semibold text-slate-900 dark:text-white">What makes this work better</h3>
+                  <ul className="mt-3 list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-slate-600 marker:text-slate-400 dark:text-slate-300">
+                    <li>Numbers beat adjectives: “cut load time by 60%” says more than “improved performance”.</li>
+                    <li>List every tool you have used, even briefly. Keyword matching depends on it.</li>
+                    <li>Keep personal projects, courses and certifications. They are trimmed per job, not here.</li>
                   </ul>
-                </div>
+                </section>
               </div>
             )}
 
@@ -347,14 +300,14 @@ export default function ResumePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                   <div className="card overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-[#2A2B2E]">
-                      <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Resume Text</h2>
+                      <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Resume text</h2>
                       <div className="flex items-center gap-3">
                         {profile?.masterResume && analyzeResume !== profile.masterResume && (
                           <button
                             onClick={() => setAnalyzeResume(profile.masterResume ?? '')}
                             className="flex items-center gap-1 text-xs text-brand-600 hover:underline"
                           >
-                            <RefreshCw className="w-3 h-3" /> Use master
+                            <RefreshCw className="w-3 h-3" /> Use saved résumé
                           </button>
                         )}
                         <span className="text-xs text-slate-400">{wordCount(analyzeResume)} words</span>
@@ -365,7 +318,7 @@ export default function ResumePage() {
                         value={analyzeResume}
                         onChange={e => setAnalyzeResume(e.target.value)}
                         rows={14}
-                        placeholder="Paste your resume here (or click 'Use master' above to load your saved resume)..."
+                        placeholder="Paste your resume here (or click 'Use saved résumé' above to load your saved resume)..."
                         className="input font-mono text-xs resize-none"
                       />
                     </div>
@@ -374,8 +327,8 @@ export default function ResumePage() {
                   <div className="card overflow-hidden">
                     <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 dark:border-[#2A2B2E]">
                       <div>
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Job Description</h2>
-                        <p className="text-[11px] text-slate-400">Optional — enables keyword matching score</p>
+                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Job description</h2>
+                        <p className="text-[11px] text-slate-400">Optional. Adds a keyword match score.</p>
                       </div>
                     </div>
                     <div className="p-5">
@@ -383,7 +336,7 @@ export default function ResumePage() {
                         value={analyzeJD}
                         onChange={e => setAnalyzeJD(e.target.value)}
                         rows={8}
-                        placeholder="Paste the job description here to get a tailored keyword match score and missing keyword list..."
+                        placeholder="Paste the job posting to see which of its keywords your résumé is missing."
                         className="input text-xs resize-none"
                       />
                     </div>
@@ -394,8 +347,8 @@ export default function ResumePage() {
                         className="btn-primary w-full justify-center py-2.5"
                       >
                         {analyzing
-                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing…</>
-                          : <><Zap className="w-4 h-4" /> Analyze Resume</>
+                          ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</>
+                          : <><Zap className="w-4 h-4" /> Check résumé</>
                         }
                       </button>
                     </div>
@@ -420,22 +373,14 @@ export default function ResumePage() {
                     {/* Score rings */}
                     <div className="card p-6">
                       <div className="flex items-center justify-between mb-5">
-                        <h3 className="font-semibold text-slate-900 dark:text-white">Score Breakdown</h3>
+                        <h3 className="font-semibold text-slate-900 dark:text-white">Scores</h3>
                         <CopyButton text={`ATS Analysis\nOverall: ${analysis.overallScore}/100\nATS: ${analysis.atsScore}/100\nReadability: ${analysis.readabilityScore}/100\n\n${analysis.summary}`} label="Copy report" />
                       </div>
-                      <div className="flex items-center justify-around mb-6">
-                        <ScoreRing score={analysis.overallScore} label="Overall" color="#1D6B57" />
-                        <ScoreRing score={analysis.atsScore} label="ATS" color="#0284C7" />
-                        <ScoreRing score={analysis.readabilityScore} label="Readability" color="#52525B" />
-                        {analysis.keywordMatchScore > 0 && (
-                          <ScoreRing score={analysis.keywordMatchScore} label="Keywords" color="#D97706" />
-                        )}
-                      </div>
                       <div className="space-y-3">
-                        <ScoreBar score={analysis.overallScore} label="Overall Score" />
-                        <ScoreBar score={analysis.atsScore} label="ATS Compatibility" />
+                        <ScoreBar score={analysis.overallScore} label="Overall" />
+                        <ScoreBar score={analysis.atsScore} label="ATS compatibility" />
                         <ScoreBar score={analysis.readabilityScore} label="Readability" />
-                        {analysis.keywordMatchScore > 0 && <ScoreBar score={analysis.keywordMatchScore} label="Keyword Match" />}
+                        {analysis.keywordMatchScore > 0 && <ScoreBar score={analysis.keywordMatchScore} label="Keyword match" />}
                       </div>
                     </div>
 
@@ -450,8 +395,7 @@ export default function ResumePage() {
                       {/* Strong points */}
                       {analysis.strongPoints.length > 0 && (
                         <div className="card p-5">
-                          <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-1.5">
-                            <CheckCircle className="w-3.5 h-3.5" /> Strong Points
+                          <h3 className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-3 flex items-center gap-1.5"> What works
                           </h3>
                           <ul className="space-y-2">
                             {analysis.strongPoints.map((p, i) => (
@@ -466,8 +410,7 @@ export default function ResumePage() {
                       {/* Improvements */}
                       {analysis.improvements.length > 0 && (
                         <div className="card p-5">
-                          <h3 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5" /> Improvements
+                          <h3 className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 flex items-center gap-1.5"> What to improve
                           </h3>
                           <ul className="space-y-2">
                             {analysis.improvements.map((p, i) => (
@@ -482,8 +425,7 @@ export default function ResumePage() {
                       {/* ATS Warnings */}
                       {analysis.atsWarnings.length > 0 && (
                         <div className="card p-5">
-                          <h3 className="text-xs font-semibold text-red-600 dark:text-red-400 mb-3 flex items-center gap-1.5">
-                            <AlertCircle className="w-3.5 h-3.5" /> ATS Warnings
+                          <h3 className="text-xs font-semibold text-red-600 dark:text-red-400 mb-3 flex items-center gap-1.5"> ATS Warnings
                           </h3>
                           <ul className="space-y-2">
                             {analysis.atsWarnings.map((w, i) => (
@@ -620,7 +562,7 @@ export default function ResumePage() {
                   <div className="space-y-5">
                     {/* ATS score improvement */}
                     <div className="card p-5">
-                      <h3 className="font-semibold text-slate-900 dark:text-white mb-4">ATS Score Improvement</h3>
+                      <h3 className="font-semibold text-slate-900 dark:text-white mb-4">ATS score improvement</h3>
                       <div className="flex items-center gap-6">
                         <div className="text-center">
                           <p className="text-3xl font-semibold text-slate-400">{tailorResult.atsScoreBefore}</p>
@@ -653,7 +595,7 @@ export default function ResumePage() {
                     {/* Keyword analysis */}
                     {tailorResult.topKeywords?.length > 0 && (
                       <div className="card p-5">
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Keyword Match</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Keyword match</h3>
                         <div className="flex flex-wrap gap-1.5 mb-2">
                           {tailorResult.topKeywords.map(k => (
                             <span key={k} className={cn(
@@ -679,7 +621,7 @@ export default function ResumePage() {
                     {tailorResult.tailoredSummary && (
                       <div className="card p-5">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tailored Summary</h3>
+                          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Tailored summary</h3>
                           <CopyButton text={tailorResult.tailoredSummary} />
                         </div>
                         <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed bg-brand-50 dark:bg-brand-900/10 p-4 rounded-xl border border-brand-100 dark:border-brand-900/30">
@@ -691,7 +633,7 @@ export default function ResumePage() {
                     {/* Skills to emphasize */}
                     {tailorResult.skillsToEmphasize?.length > 0 && (
                       <div className="card p-5">
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Skills to Emphasize</h3>
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-2">Skills to emphasize</h3>
                         <div className="flex flex-wrap gap-2">
                           {tailorResult.skillsToEmphasize.map(s => (
                             <span key={s} className="text-xs font-medium px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300">
@@ -727,7 +669,7 @@ export default function ResumePage() {
                       <div className="card overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
                           <div>
-                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Full Tailored Resume</h3>
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Full tailored resume</h3>
                             <p className="text-xs text-slate-500 mt-0.5">Complete resume optimized for {selectedJob?.company} · {selectedJob?.role}</p>
                           </div>
                           <div className="flex items-center gap-3">
@@ -759,7 +701,7 @@ export default function ResumePage() {
                 )}
               </div>
             )}
-          </main>
+          </div>
         </div>
       </div>
     </div>

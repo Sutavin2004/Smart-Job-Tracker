@@ -56,7 +56,7 @@ function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }
         onClick={() => setOpen(o => !o)}
         className="flex items-center justify-between w-full px-5 py-4 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors"
       >
-        <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-slate-500" /> New Task</span>
+        <span className="flex items-center gap-2"><Plus className="w-4 h-4 text-slate-500" /> New task</span>
         {open ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
       </button>
 
@@ -94,7 +94,7 @@ function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }
           <div className="grid grid-cols-2 gap-3">
             {/* Due date */}
             <div>
-              <label className="block text-xs font-medium text-slate-500 mb-1">Due Date</label>
+              <label className="block text-xs font-medium text-slate-500 mb-1">Due date</label>
               <input
                 type="date"
                 value={dueDate}
@@ -121,7 +121,7 @@ function AddTaskForm({ jobs, onCreated }: { jobs: Job[]; onCreated: () => void }
           <div className="flex gap-2 pt-1">
             <button type="submit" disabled={saving} className="btn-primary text-xs py-2 flex-1">
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              {saving ? 'Adding…' : 'Add Task'}
+              {saving ? 'Adding…' : 'Add task'}
             </button>
             <button
               type="button"
@@ -206,7 +206,7 @@ export default function TasksPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
         {([
-          { label: 'All Tasks', value: tasks.length, filter: 'all', valueClass: 'text-slate-900 dark:text-white' },
+          { label: 'All tasks', value: tasks.length, filter: 'all', valueClass: 'text-slate-900 dark:text-white' },
           { label: 'Pending', value: pendingCount, filter: 'pending', valueClass: 'text-amber-600' },
           { label: 'Completed', value: tasks.length - pendingCount, filter: 'completed', valueClass: 'text-emerald-600' },
         ] as const).map(item => (

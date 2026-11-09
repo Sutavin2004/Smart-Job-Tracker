@@ -110,7 +110,7 @@ export function AddJobModal({ onClose, onCreated }: Props) {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onMouseDown={e => { if (e.target === e.currentTarget) onClose() }}>
       <div role="dialog" aria-modal="true" aria-labelledby={`${id}-title`} className="bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
-          <h2 id={`${id}-title`} className="text-base font-semibold">New Application</h2>
+          <h2 id={`${id}-title`} className="text-base font-semibold">New application</h2>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
             <X className="w-5 h-5" />
           </button>
@@ -219,7 +219,7 @@ export function AddJobModal({ onClose, onCreated }: Props) {
           <div className="flex gap-3 pt-1">
             <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">Cancel</button>
             <button type="submit" disabled={loading} className="btn-primary flex-1 justify-center">
-              {loading ? 'Saving…' : 'Add Application'}
+              {loading ? 'Saving…' : 'Add application'}
             </button>
           </div>
         </form>

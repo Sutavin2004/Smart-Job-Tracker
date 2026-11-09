@@ -3,11 +3,11 @@ import { test, expect } from '@playwright/test'
 test('add a job, find it by search, drag it to Applied, then delete it', async ({ page }) => {
   await page.goto('/jobs')
   await page.getByRole('button', { name: 'Add', exact: true }).click()
-  const dialog = page.getByRole('dialog', { name: 'New Application' })
+  const dialog = page.getByRole('dialog', { name: 'New application' })
   await dialog.getByLabel('Company').fill('E2E Test Co')
   await dialog.getByLabel('Role').fill('Playwright Engineer')
   await dialog.getByLabel('Location').fill('Toronto, ON')
-  await dialog.getByRole('button', { name: 'Add Application' }).click()
+  await dialog.getByRole('button', { name: 'Add application' }).click()
   await expect(dialog).toBeHidden()
 
   // Search is case-insensitive.

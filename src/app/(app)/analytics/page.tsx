@@ -1,8 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { Bot, TrendingUp } from 'lucide-react'
+import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { STATUS_CONFIG } from '@/lib/types'
 
 interface Analytics {
@@ -27,7 +26,6 @@ const STATUS_COLORS: Record<string, string> = {
   offered: '#22775F', rejected: '#EF4444', ghosted: '#A8A29E', withdrawn: '#D1D1D6',
 }
 
-const PIE_COLORS = ['#1D6B57', '#0284C7', '#F59E0B', '#97C7B6', '#A1A1AA', '#7DD3FC', '#A8A29E']
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null)
@@ -64,9 +62,6 @@ export default function AnalyticsPage() {
       color: STATUS_COLORS[status] ?? '#A1A1AA',
     }))
 
-  const sourcePie = Object.entries(data.sourceCounts ?? {})
-    .filter(([, count]) => count > 0)
-    .map(([source, count], i) => ({ name: source, value: count, color: PIE_COLORS[i % PIE_COLORS.length] }))
 
   // Funnel data
   const funnelStages = [
@@ -88,197 +83,164 @@ export default function AnalyticsPage() {
   }
   const maxHeat = Math.max(...heatDays.map(d => d.count), 1)
 
-  const KPI = [
-    { label: 'Total', value: data.total, sub: 'all time' },
-    { label: 'Applied', value: data.applied, sub: 'excluding saved' },
-    { label: 'Responded', value: data.responded, sub: 'any response' },
-    { label: 'Offers', value: data.offered, sub: 'received' },
-    { label: 'Response Rate', value: `${data.responseRate}%`, sub: 'of applications' },
-    { label: 'Offer Rate', value: `${data.offerRate}%`, sub: 'of applications' },
-    { label: 'Upcoming', value: data.upcomingInterviews, sub: 'interviews' },
-    { label: 'AI Score Avg', value: data.avgAiScore ? `${data.avgAiScore}/100` : '—', sub: 'of analyzed jobs' },
+  const STATS = [
+    { label: 'Tracked', value: data.total },
+    { label: 'Applied', value: data.applied },
+    { label: 'Heard back', value: data.responded },
+    { label: 'Offers', value: data.offered },
+    { label: 'Response rate', value: `${data.responseRate}%` },
+    { label: 'Offer rate', value: `${data.offerRate}%` },
   ]
+
+  const sources = Object.entries(data.sourceCounts ?? {}).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1])
+  const maxSource = Math.max(...sources.map(([, c]) => c), 1)
+  const statuses = statusPie.slice().sort((a, b) => b.value - a.value)
+  const maxStatus = Math.max(...statuses.map(s => s.value), 1)
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
-      <div className="flex items-center gap-2">
+      <header>
         <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Analytics</h1>
-      </div>
+        <p className="mt-1 text-sm text-slate-500">How your applications are moving. Rates count only jobs you have applied to.</p>
+      </header>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {KPI.map(({ label, value, sub }) => (
-          <div key={label} className="card p-3 text-center">
-            <p className="text-xl font-semibold text-slate-900 dark:text-white tabular-nums">{value}</p>
-            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{label}</p>
-            <p className="text-[11px] text-slate-400">{sub}</p>
+      <section aria-label="Summary" className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-slate-200 dark:lg:divide-[#2A2B2E]">
+        {STATS.map(({ label, value }) => (
+          <div key={label} className="px-5 py-4">
+            <p className="text-[13px] text-slate-500">{label}</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">{value}</p>
           </div>
         ))}
-      </div>
+      </section>
 
-      {/* Weekly activity chart */}
-      <div className="card p-5">
-        <h2 className="text-sm font-semibold mb-4">Application Activity</h2>
-        <ResponsiveContainer width="100%" height={180}>
-          <AreaChart data={data.weeklyApplications}>
-            <defs>
-              <linearGradient id="brand" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#1D6B57" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#1D6B57" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <XAxis dataKey="week" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-            <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={24} />
-            <Tooltip
-              contentStyle={{ fontSize: 12, borderRadius: 10, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.12)' }}
-            />
-            <Area type="monotone" dataKey="count" name="Applications" stroke="#1D6B57" strokeWidth={2} fill="url(#brand)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+      <section className="card p-5" aria-labelledby="weekly-heading">
+        <div className="flex items-baseline justify-between">
+          <h2 id="weekly-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Applications per week</h2>
+          <span className="text-[13px] text-slate-500">Last {data.weeklyApplications.length} weeks</span>
+        </div>
+        <div className="mt-4" aria-hidden="true">
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={data.weeklyApplications} margin={{ top: 4, right: 0, left: -12, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke="currentColor" className="text-slate-200 dark:text-[#2A2B2E]" />
+              <XAxis dataKey="week" tick={{ fontSize: 11, fill: '#63636B' }} tickLine={false} axisLine={false} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#63636B' }} tickLine={false} axisLine={false} width={32} />
+              <Tooltip cursor={{ fill: 'rgba(99,99,107,0.08)' }} contentStyle={{ fontSize: 12, borderRadius: 6, border: '1px solid #E4E4E7', boxShadow: 'none' }} />
+              <Bar dataKey="count" name="Applications" fill="#1D6B57" radius={[3, 3, 0, 0]} maxBarSize={28} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </section>
 
-      {/* Funnel */}
-      <div className="card p-5">
-        <h2 className="text-sm font-semibold mb-5">Conversion Funnel</h2>
-        <div className="space-y-3">
-          {funnelStages.map((stage, i) => {
-            const prev = i > 0 ? funnelStages[i - 1].count : null
-            const rate = prev && prev > 0 ? Math.round((stage.count / prev) * 100) : null
-            return (
-              <div key={stage.label} className="flex items-center gap-4">
-                <div className="w-24 text-right text-xs font-medium text-slate-600 dark:text-slate-300 shrink-0">{stage.label}</div>
-                <div className="flex-1 flex items-center gap-3">
-                  <div
-                    className="h-8 rounded-lg flex items-center px-3 text-xs font-semibold text-white transition-all"
-                    style={{ width: `${Math.max(4, (stage.count / maxFunnel) * 100)}%`, background: stage.color }}
-                  >
-                    {stage.count}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className="card p-5" aria-labelledby="funnel-heading">
+          <h2 id="funnel-heading" className="text-sm font-semibold text-slate-900 dark:text-white">From saved to offer</h2>
+          <p className="mt-1 text-[13px] text-slate-500">Percentages show how many moved on from the stage before.</p>
+          <ol className="mt-4 space-y-3">
+            {funnelStages.map((stage, i) => {
+              const prev = i > 0 ? funnelStages[i - 1].count : null
+              const rate = prev && prev > 0 ? Math.round((stage.count / prev) * 100) : null
+              return (
+                <li key={stage.label}>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="text-slate-700 dark:text-slate-300">{stage.label}</span>
+                    <span className="tabular-nums text-slate-500">
+                      {stage.count}{rate !== null && <span className="ml-2 text-slate-400">{rate}%</span>}
+                    </span>
                   </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-sm bg-slate-100 dark:bg-[#26272A]">
+                    <div className="h-full rounded-sm" style={{ width: `${(stage.count / maxFunnel) * 100}%`, background: stage.color }} />
+                  </div>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+
+        <section className="card p-5" aria-labelledby="status-heading">
+          <h2 id="status-heading" className="text-sm font-semibold text-slate-900 dark:text-white">By stage</h2>
+          <ul className="mt-4 space-y-3">
+            {statuses.map(e => (
+              <li key={e.name}>
+                <div className="flex justify-between text-[13px]">
+                  <span className="text-slate-700 dark:text-slate-300">{e.name}</span>
+                  <span className="tabular-nums text-slate-500">{e.value}</span>
                 </div>
-                {rate !== null && (
-                  <div className="text-xs text-slate-400 w-12 shrink-0">{rate}%</div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      </div>
+                <div className="mt-1 h-2 overflow-hidden rounded-sm bg-slate-100 dark:bg-[#26272A]">
+                  <div className="h-full rounded-sm" style={{ width: `${(e.value / maxStatus) * 100}%`, background: e.color }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      {/* Pie charts row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {statusPie.length > 0 && (
-          <div className="card p-5">
-            <h2 className="text-sm font-semibold mb-4">By Status</h2>
-            <div className="flex items-center gap-4">
-              {/* inert: decorative (the legend has the numbers) and keeps chart parts out of the tab order */}
-              <div aria-hidden="true" inert>
-              <ResponsiveContainer width={130} height={130}>
-                <PieChart>
-                  <Pie data={statusPie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">
-                    {statusPie.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              </div>
-              <div className="space-y-1.5 flex-1">
-                {statusPie.map(e => (
-                  <div key={e.name} className="flex items-center gap-2 text-xs">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />
-                    <span className="text-slate-600 dark:text-slate-300">{e.name}</span>
-                    <span className="ml-auto font-semibold text-slate-900 dark:text-white">{e.value}</span>
+        {sources.length > 0 && (
+          <section className="card p-5" aria-labelledby="source-heading">
+            <h2 id="source-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Where jobs came from</h2>
+            <ul className="mt-4 space-y-3">
+              {sources.map(([name, count]) => (
+                <li key={name}>
+                  <div className="flex justify-between text-[13px]">
+                    <span className="truncate text-slate-700 dark:text-slate-300">{name}</span>
+                    <span className="tabular-nums text-slate-500">{count}</span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <div className="mt-1 h-2 overflow-hidden rounded-sm bg-slate-100 dark:bg-[#26272A]">
+                    <div className="h-full rounded-sm bg-slate-400 dark:bg-slate-500" style={{ width: `${(count / maxSource) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
 
-        {sourcePie.length > 0 && (
-          <div className="card p-5">
-            <h2 className="text-sm font-semibold mb-4">By Source</h2>
-            <div className="flex items-center gap-4">
-              {/* inert: decorative (the legend has the numbers) and keeps chart parts out of the tab order */}
-              <div aria-hidden="true" inert>
-              <ResponsiveContainer width={130} height={130}>
-                <PieChart>
-                  <Pie data={sourcePie} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={2} dataKey="value">
-                    {sourcePie.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
-              </div>
-              <div className="space-y-1.5 flex-1">
-                {sourcePie.map(e => (
-                  <div key={e.name} className="flex items-center gap-2 text-xs">
-                    <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: e.color }} />
-                    <span className="text-slate-600 dark:text-slate-300 truncate">{e.name}</span>
-                    <span className="ml-auto font-semibold text-slate-900 dark:text-white">{e.value}</span>
-                  </div>
-                ))}
-              </div>
+        <section className="card p-5" aria-labelledby="agent-heading">
+          <h2 id="agent-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Job agent</h2>
+          <dl className="mt-4 grid grid-cols-3 gap-4">
+            <div>
+              <dt className="text-[13px] text-slate-500">Found by agent</dt>
+              <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{data.agentDiscoveredCount}</dd>
             </div>
-          </div>
-        )}
+            <div>
+              <dt className="text-[13px] text-slate-500">Added by you</dt>
+              <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{data.manuallyAddedCount}</dd>
+            </div>
+            <div>
+              <dt className="text-[13px] text-slate-500">Average fit</dt>
+              <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">{data.avgAiScore ? `${data.avgAiScore}/100` : '–'}</dd>
+            </div>
+          </dl>
+          <p className="mt-4 text-[13px] text-slate-500">{data.upcomingInterviews} {data.upcomingInterviews === 1 ? 'interview' : 'interviews'} coming up.</p>
+        </section>
       </div>
 
-      {/* Agent stats */}
-      {(data.agentDiscoveredCount > 0 || data.manuallyAddedCount > 0) && (
-        <div className="card p-5">
-          <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><Bot className="w-4 h-4 text-slate-500" /> Agent vs Manual</h2>
-          <div className="flex gap-6">
-            <div>
-              <p className="text-2xl font-semibold text-brand-600">{data.agentDiscoveredCount}</p>
-              <p className="text-xs text-slate-500">AI discovered</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-slate-700 dark:text-slate-200">{data.manuallyAddedCount}</p>
-              <p className="text-xs text-slate-500">Manually added</p>
-            </div>
-            <div>
-              <p className="text-2xl font-semibold text-amber-600">{data.avgAiScore}/100</p>
-              <p className="text-xs text-slate-500">Avg AI fit score</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Activity heatmap */}
-      <div className="card p-5 overflow-x-auto">
-        <h2 className="text-sm font-semibold mb-4 flex items-center gap-2"><TrendingUp className="w-4 h-4 text-slate-500" /> Activity Heatmap (last year)</h2>
-        <div className="flex gap-1">
-          {Array.from({ length: 52 }).map((_, w) => (
-            <div key={w} className="flex flex-col gap-1">
+      <section className="card overflow-x-auto p-5" aria-labelledby="heat-heading">
+        <h2 id="heat-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Activity over the past year</h2>
+        <div className="mt-4 flex gap-[3px]" aria-hidden="true">
+          {Array.from({ length: 53 }).map((_, w) => (
+            <div key={w} className="flex flex-col gap-[3px]">
               {Array.from({ length: 7 }).map((_, d) => {
-                const dayIndex = w * 7 + d
-                const day = heatDays[dayIndex]
-                if (!day) return <div key={d} className="w-3 h-3" />
+                const day = heatDays[w * 7 + d]
+                if (!day) return <div key={d} className="h-[11px] w-[11px]" />
                 const intensity = day.count / maxHeat
                 return (
                   <div
                     key={d}
-                    title={`${day.date}: ${day.count} application${day.count !== 1 ? 's' : ''}`}
-                    className="w-3 h-3 rounded-sm transition-colors"
-                    style={{
-                      background: day.count === 0 ? 'rgba(148,163,184,0.1)' : `rgba(132,72,255,${0.2 + intensity * 0.8})`
-                    }}
+                    title={`${day.date}: ${day.count} ${day.count === 1 ? 'application' : 'applications'}`}
+                    className="h-[11px] w-[11px] rounded-[2px]"
+                    style={{ background: day.count === 0 ? 'rgba(99,99,107,0.12)' : `rgba(29,107,87,${0.3 + intensity * 0.7})` }}
                   />
                 )
               })}
             </div>
           ))}
         </div>
-        <div className="flex items-center gap-2 mt-3 text-[11px] text-slate-400">
-          <span>Less</span>
-          {[0.1, 0.3, 0.5, 0.7, 1].map(i => (
-            <div key={i} className="w-3 h-3 rounded-sm" style={{ background: `rgba(132,72,255,${i})` }} />
+        <div className="mt-3 flex items-center gap-1.5 text-[12px] text-slate-500">
+          <span>Fewer</span>
+          {[0.12, 0.4, 0.6, 0.8, 1].map((a, i) => (
+            <div key={a} className="h-[11px] w-[11px] rounded-[2px]" style={{ background: i === 0 ? 'rgba(99,99,107,0.12)' : `rgba(29,107,87,${a})` }} />
           ))}
           <span>More</span>
         </div>
-      </div>
+      </section>
     </div>
   )
 }

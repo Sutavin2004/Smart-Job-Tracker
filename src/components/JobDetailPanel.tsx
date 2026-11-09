@@ -433,7 +433,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             <div className="flex gap-2 pt-1">
               <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 justify-center">
-                {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <><Save className="w-3.5 h-3.5" /> Save Changes</>}
+                {saving ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving…</> : <><Save className="w-3.5 h-3.5" /> Save changes</>}
               </button>
               <button onClick={handleDelete} disabled={deleting} className="btn-danger">
                 <Trash2 className="w-3.5 h-3.5" />
@@ -550,7 +550,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-slate-500" /> Salary Advice</p>
                 <button onClick={handleSalaryAdvice} disabled={loadingSalary} className="btn-secondary text-xs py-1 px-2.5">
-                  {loadingSalary ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Get Advice'}
+                  {loadingSalary ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Get advice'}
                 </button>
               </div>
               {salaryAdvice && <p className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.06] rounded-xl p-3 leading-relaxed">{salaryAdvice}</p>}
@@ -593,7 +593,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
               {coverLetter && (
                 <div className="bg-slate-50 dark:bg-white/[0.06] rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
-                    <p className="text-xs font-semibold text-slate-500">Cover Letter</p>
+                    <p className="text-xs font-semibold text-slate-500">Cover letter</p>
                     <button onClick={() => { navigator.clipboard.writeText(coverLetter); toast.success('Copied!') }} className="text-xs text-brand-600 hover:underline">Copy</button>
                   </div>
                   <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{coverLetter}</p>
@@ -620,7 +620,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                   </div>
                   {(tailorResult.missingKeywords as string[] ?? []).length > 0 && (
                     <div>
-                      <p className="text-xs font-semibold text-red-600 mb-1">Missing Keywords</p>
+                      <p className="text-xs font-semibold text-red-600 mb-1">Missing keywords</p>
                       <div className="flex flex-wrap gap-1">
                         {(tailorResult.missingKeywords as string[]).map(k => <span key={k} className="text-[11px] bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-1.5 py-0.5 rounded-full">{k}</span>)}
                       </div>
@@ -628,7 +628,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                   )}
                   {tailorResult.tailoredSummary != null && (
                     <div>
-                      <p className="text-xs font-semibold text-slate-500 mb-1">Tailored Summary</p>
+                      <p className="text-xs font-semibold text-slate-500 mb-1">Tailored summary</p>
                       <p className="text-xs text-slate-600 dark:text-slate-300 bg-brand-50 dark:bg-brand-900/10 p-2.5 rounded-lg">{String(tailorResult.tailoredSummary)}</p>
                     </div>
                   )}
@@ -686,7 +686,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold">{tasks.filter(t => !t.completed).length} pending · {tasks.filter(t => t.completed).length} done</p>
               <button onClick={() => setShowAddTask(v => !v)} className="btn-secondary text-xs py-1.5 px-2.5">
-                <Plus className="w-3.5 h-3.5" /> Add Task
+                <Plus className="w-3.5 h-3.5" /> Add task
               </button>
             </div>
 
@@ -695,7 +695,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 <input value={newTaskTitle} onChange={e => setNewTaskTitle(e.target.value)} placeholder="Task title..." className="input text-xs" onKeyDown={e => e.key === 'Enter' && handleAddTask()} />
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="label">Due Date</label>
+                    <label className="label">Due date</label>
                     <input type="date" value={newTaskDue} onChange={e => setNewTaskDue(e.target.value)} className="input text-xs" />
                   </div>
                   <div>
@@ -708,7 +708,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                   </div>
                 </div>
                 <button onClick={handleAddTask} disabled={addingTask || !newTaskTitle.trim()} className="btn-primary text-xs w-full justify-center">
-                  {addingTask ? 'Adding…' : 'Add Task'}
+                  {addingTask ? 'Adding…' : 'Add task'}
                 </button>
               </div>
             )}
@@ -778,7 +778,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 </div>
                 <input value={intNotes} onChange={e => setIntNotes(e.target.value)} placeholder="Interviewer, platform, notes..." className="input text-xs" />
                 <button onClick={handleAddInterview} disabled={addingInterview || !intDate} className="btn-primary text-xs">
-                  {addingInterview ? 'Scheduling…' : 'Schedule Interview'}
+                  {addingInterview ? 'Scheduling…' : 'Schedule interview'}
                 </button>
               </div>
             )}

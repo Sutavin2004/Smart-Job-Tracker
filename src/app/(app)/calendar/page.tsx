@@ -172,7 +172,7 @@ export default function CalendarPage() {
                 ))}
                 {selectedEvents.deadlines.map(d => (
                   <div key={d.id} className="bg-red-50 dark:bg-red-900/20 rounded-lg p-3 mb-2">
-                    <p className="text-xs font-semibold text-red-700 dark:text-red-300">Application Deadline</p>
+                    <p className="text-xs font-semibold text-red-700 dark:text-red-300">Application deadline</p>
                     <p className="text-xs text-slate-700 dark:text-slate-300">{d.company} — {d.role}</p>
                   </div>
                 ))}
@@ -185,7 +185,7 @@ export default function CalendarPage() {
             <div className="card p-4">
               <div className="flex items-center gap-2 mb-3">
                 <Clock className="w-4 h-4 text-slate-500" />
-                <h2 className="text-sm font-semibold">Upcoming Interviews</h2>
+                <h2 className="text-sm font-semibold">Upcoming interviews</h2>
               </div>
               {upcomingInterviews.length === 0 ? (
                 <p className="text-xs text-slate-400">None scheduled.</p>

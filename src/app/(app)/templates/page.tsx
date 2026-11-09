@@ -47,11 +47,11 @@ export default function TemplatesPage() {
     <div className="mx-auto max-w-4xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Email Templates</h1>
+          <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Email templates</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{templates.length} templates</p>
         </div>
         <button onClick={() => setShowNew(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> New Template
+          <Plus className="w-4 h-4" /> New template
         </button>
       </div>
 
@@ -94,7 +94,7 @@ export default function TemplatesPage() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-[#1A1B1D] rounded-2xl shadow-modal w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-[#2A2B2E]">
-              <h2 className="text-base font-semibold">New Template</h2>
+              <h2 className="text-base font-semibold">New template</h2>
               <button onClick={() => setShowNew(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
@@ -203,7 +203,7 @@ function TemplateEditor({
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Template Name</label>
+          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Template name</label>
           <input
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
