@@ -92,8 +92,8 @@ export default function DashboardPage() {
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
       {/* Greeting + Add button */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
             {getGreeting()}{firstName ? `, ${firstName}` : ''}! 👋
           </h1>
@@ -105,7 +105,7 @@ export default function DashboardPage() {
               : `You have ${(analytics?.statusCounts?.applied ?? 0) + (analytics?.statusCounts?.interviewing ?? 0)} applications in progress — keep going! 💪`}
           </p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="btn-primary">
+        <button onClick={() => setShowAdd(true)} className="btn-primary whitespace-nowrap">
           <Plus className="w-4 h-4" /> Add Job
         </button>
       </div>

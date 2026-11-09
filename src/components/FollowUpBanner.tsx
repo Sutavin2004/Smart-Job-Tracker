@@ -46,7 +46,7 @@ export function FollowUpBanner() {
 
   return (
     <div className={cn(
-      'fixed bottom-4 right-4 z-50 w-80 rounded-2xl shadow-2xl border overflow-hidden',
+      'fixed bottom-20 right-4 left-4 sm:left-auto md:bottom-4 z-50 sm:w-80 rounded-2xl shadow-2xl border overflow-hidden',
       highUrgency.length > 0
         ? 'bg-amber-50 dark:bg-amber-900/90 border-amber-200 dark:border-amber-700'
         : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700'

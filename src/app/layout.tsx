@@ -56,6 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <FollowUpBanner />
             <Toaster
               position="bottom-right"
+              mobileOffset={{ bottom: 84 }}
               richColors
               toastOptions={{
                 classNames: {
