@@ -115,6 +115,7 @@ export async function seedDemoData(prisma: PrismaClient) {
     {
       company: 'Notion',
       role: 'Full Stack Developer',
+      jobUrl: 'https://www.notion.so/careers',
       status: 'saved',
       priority: 'medium',
       location: 'Remote',

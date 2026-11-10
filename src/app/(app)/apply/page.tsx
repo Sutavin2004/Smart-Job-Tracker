@@ -213,15 +213,19 @@ export default function ApplyPage() {
                       </button>
                     </div>
 
-                    {(kit.notes.length > 0 || kit.missingKeywords.length > 0) && (
+                    {(() => {
+                      // Keywords the AI's notes already mention don't need a second line.
+                      const unmentioned = kit.missingKeywords.filter(k => !kit.notes.some(n => n.toLowerCase().includes(k.toLowerCase())))
+                      return (kit.notes.length > 0 || unmentioned.length > 0) && (
                       <div className="rounded-md bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
                         <p className="font-medium">Check before you send</p>
                         <ul className="mt-1 list-disc pl-5">
                           {kit.notes.map(n => <li key={n}>{n}</li>)}
-                          {kit.missingKeywords.length > 0 && <li>The posting mentions {kit.missingKeywords.slice(0, 8).join(', ')}, which your résumé doesn&apos;t show. Add them only if they are true.</li>}
+                          {unmentioned.length > 0 && <li>The posting mentions {unmentioned.slice(0, 8).join(', ')}, which your résumé doesn&apos;t show. Add them only if they are true.</li>}
                         </ul>
                       </div>
-                    )}
+                      )
+                    })()}
 
                     <Block title="Résumé" text={kit.resume} />
                     {kit.coverLetter && <Block title="Cover letter" text={kit.coverLetter} />}
