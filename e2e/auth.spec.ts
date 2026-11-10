@@ -150,3 +150,33 @@ test('the extension can send page HTML for sites the server cannot fetch', async
   expect(job.company).toBe('Login Only Co')
   expect(job.role).toBe('Platform Engineer')
 })
+
+test('extension tracking adds a new job as Applied, then moves a saved one', async ({ request }) => {
+  await signUp(request, unique())
+  const created = await request.post('/api/jobs/track', { data: { source: 'LinkedIn', company: 'Track Co', role: 'Data Analyst', location: 'Toronto, ON', jobUrl: 'https://www.linkedin.com/jobs/view/1/' } })
+  expect(created.status()).toBe(201)
+  const { jobId } = await created.json()
+  expect((await (await request.get(`/api/jobs/${jobId}`)).json()).status).toBe('applied')
+
+  // A saved job with the same company and role is moved, not duplicated.
+  const saved = await (await request.post('/api/jobs', { data: { company: 'Saved Inc', role: 'Frontend Engineer', status: 'saved' } })).json()
+  const moved = await (await request.post('/api/jobs/track', { data: { source: 'Indeed', company: 'saved inc', role: 'Frontend Engineer' } })).json()
+  expect(moved).toMatchObject({ result: 'moved', jobId: saved.id })
+  const again = await (await request.post('/api/jobs/track', { data: { source: 'Indeed', company: 'Saved Inc', role: 'Frontend Engineer' } })).json()
+  expect(again.result).toBe('already-tracked')
+})
+
+test('preparing an application explains what is missing instead of failing', async ({ request }) => {
+  await signUp(request, unique())
+  const job = await (await request.post('/api/jobs', { data: { company: 'Kit Co', role: 'Engineer' } })).json()
+  const res = await request.post(`/api/jobs/${job.id}/prepare`)
+  expect(res.status()).toBe(422) // no AI key in CI, and no résumé yet
+  expect((await request.get(`/api/jobs/${job.id}/download?doc=resume`)).status()).toBe(404)
+  const kit = await (await request.get(`/api/jobs/${job.id}/kit`)).json()
+  expect(kit).toMatchObject({ resume: null, coverLetter: null, answers: [] })
+})
+
+test('the inbound email webhook refuses unsigned requests', async ({ request }) => {
+  const res = await request.post('/api/inbound/resend', { data: { type: 'email.received', data: { email_id: 'x' } } })
+  expect([401, 503]).toContain(res.status())
+})

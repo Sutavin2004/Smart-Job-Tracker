@@ -8,14 +8,14 @@ import { cn } from '@/lib/utils'
 import { signOut } from '@/components/Sidebar'
 import type { UserProfile } from '@/lib/types'
 
-type Tab = 'profile' | 'account' | 'appearance' | 'data' | 'extension' | 'shortcuts'
+type Tab = 'profile' | 'account' | 'tracking' | 'appearance' | 'data' | 'shortcuts'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
   { id: 'account', label: 'Account' },
+  { id: 'tracking', label: 'Auto-tracking' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'data', label: 'Data' },
-  { id: 'extension', label: 'Chrome extension' },
   { id: 'shortcuts', label: 'Shortcuts' },
 ]
 
@@ -91,7 +91,7 @@ export default function SettingsPage() {
     if (params.get('verify') === 'expired') {
       setTab('account')
       setVerifyExpired(true)
-    } else if (params.get('tab') === 'account') setTab('account')
+    } else if (params.get('tab') === 'account' || params.get('tab') === 'tracking') setTab(params.get('tab') as Tab)
     setMounted(true)
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
     fetch('/api/auth/me').then(r => r.json()).then(setMe).catch(() => {})
@@ -184,15 +184,18 @@ export default function SettingsPage() {
           </Section>
         )}
         {tab === 'data' && <DataTab />}
-        {tab === 'extension' && (
-          <Section title="Save jobs from any site" description="Click the extension on a job posting and it is added to your board. It works on LinkedIn and other sites that need you to be signed in.">
+        {tab === 'tracking' && <EmailTrackingSection />}
+        {tab === 'tracking' && (
+          <Section title="Chrome extension" description="Click the extension on a job posting and it is added to your board. It works on LinkedIn and other sites that need you to be signed in.">
             <ol className="max-w-lg list-decimal space-y-2 pl-5 text-sm leading-relaxed text-slate-700 marker:text-slate-400 dark:text-slate-300">
               <li><a href="/jobtrack-extension.zip" download className="font-medium text-brand-700 underline underline-offset-4 dark:text-brand-400">Download the extension</a> and unzip it.</li>
               <li>In Chrome, go to <span className="font-medium">chrome://extensions</span> and turn on <span className="font-medium">Developer mode</span> (top right).</li>
               <li>Click <span className="font-medium">Load unpacked</span> and choose the unzipped folder.</li>
               <li>Pin it from the puzzle-piece menu. Stay signed in to JobTrack in Chrome, open a job posting, and click the JobTrack icon.</li>
             </ol>
-            <p className="mt-4 text-[13px] text-slate-500">It reads only the tab you click it on, and only when you click it.</p>
+            <p className="mt-4 text-[13px] text-slate-500">
+              It also notices when you submit an application on LinkedIn or Indeed and adds the job as Applied, without a click. It reads a page only when you click it, or when you are on a LinkedIn or Indeed application page.
+            </p>
           </Section>
         )}
         {tab === 'shortcuts' && (
@@ -423,6 +426,79 @@ function EmailSection({ me, profile, onProfile }: { me: Me; profile: UserProfile
           </div>
         </div>
       )}
+    </Section>
+  )
+}
+
+interface InboundState {
+  enabled: boolean
+  address: string | null
+  recent: { id: string; subject: string; outcome: string; link: string | null; jobId: string | null; receivedAt: string }[]
+}
+
+function EmailTrackingSection() {
+  const [state, setState] = useState<InboundState | null>(null)
+  const [copied, setCopied] = useState(false)
+  useEffect(() => { fetch('/api/inbound').then(r => r.json()).then(setState).catch(() => setState(null)) }, [])
+
+  if (!state) return <Section title="Track applications from email"><Loading /></Section>
+  if (!state.enabled) {
+    return (
+      <Section title="Track applications from email" description="Jobs you apply to on LinkedIn, Indeed and company sites are added from their confirmation emails.">
+        <p className="text-[13px] text-slate-500">Email tracking is not set up on this site yet.</p>
+      </Section>
+    )
+  }
+
+  const confirmation = state.recent.find(r => r.outcome.startsWith('Gmail forwarding confirmation'))
+  return (
+    <Section title="Track applications from email" description="When you apply on LinkedIn, Indeed or a company site, its confirmation email is forwarded here and the job is added to your board as Applied.">
+      <div className="max-w-xl space-y-5">
+        <div>
+          <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300">Your private forwarding address</p>
+          <div className="mt-1.5 flex gap-2">
+            <code className="min-w-0 flex-1 truncate rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-slate-800 dark:border-[#2A2B2E] dark:bg-[#121314] dark:text-slate-200">{state.address}</code>
+            <button onClick={async () => { await navigator.clipboard.writeText(state.address ?? ''); setCopied(true); setTimeout(() => setCopied(false), 1500) }} className="btn-secondary">{copied ? 'Copied' : 'Copy'}</button>
+          </div>
+          <p className="mt-1.5 text-[13px] text-slate-500">Anyone with this address could add jobs to your board, so keep it private.</p>
+        </div>
+
+        <div>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">Set it up in Gmail (about 3 minutes)</p>
+          <ol className="mt-2 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-slate-700 marker:text-slate-400 dark:text-slate-300">
+            <li>In Gmail, open <a className="underline underline-offset-2" href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noreferrer">Settings → Forwarding and POP/IMAP</a> and click <span className="font-medium">Add a forwarding address</span>. Paste the address above.</li>
+            <li>Gmail sends a confirmation to that address. It shows up below within a minute, with a link and a code. Open the link (or enter the code in Gmail) to confirm. Leave forwarding itself <span className="font-medium">disabled</span>; the filter in the next step does the forwarding.</li>
+            <li>Create a filter: in the Gmail search box, click the filter icon, and in <span className="font-medium">From</span> paste<br /><code className="text-[12px]">jobs-noreply@linkedin.com OR indeedapply@indeed.com OR no-reply@us.greenhouse-mail.io OR no-reply@hire.lever.co</code></li>
+            <li>Click <span className="font-medium">Create filter</span>, tick <span className="font-medium">Forward it to</span>, choose your JobTrack address, then <span className="font-medium">Create filter</span>.</li>
+          </ol>
+          <p className="mt-2 text-[13px] text-slate-500">Other email can be forwarded by hand any time. Anything that isn&apos;t an application confirmation is ignored.</p>
+        </div>
+
+        {confirmation?.link && (
+          <p className="rounded-md bg-brand-50 px-4 py-3 text-[13px] text-brand-900 dark:bg-brand-900/40 dark:text-brand-100">
+            {confirmation.outcome}. <a href={confirmation.link} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-2">Open Gmail&apos;s confirmation link</a>
+          </p>
+        )}
+
+        <div>
+          <p className="text-sm font-medium text-slate-900 dark:text-white">Recent emails</p>
+          {state.recent.length === 0 ? (
+            <p className="mt-1 text-[13px] text-slate-500">Nothing received yet.</p>
+          ) : (
+            <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-[#26272A] dark:border-[#2A2B2E]">
+              {state.recent.map(r => (
+                <li key={r.id} className="px-3 py-2.5">
+                  <p className="truncate text-[13px] text-slate-900 dark:text-white">{r.subject || '(no subject)'}</p>
+                  <p className="text-[12px] text-slate-500">
+                    {new Date(r.receivedAt).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}: {r.outcome}
+                    {r.jobId && <> <a href={`/jobs?id=${r.jobId}`} className="underline underline-offset-2">Open</a></>}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </Section>
   )
 }

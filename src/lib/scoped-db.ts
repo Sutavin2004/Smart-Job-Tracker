@@ -8,7 +8,7 @@ import { prisma } from './prisma'
  * use this (via withAuth) instead of the raw client, so a route can't leak or
  * modify another user's data even if it forgets a check.
  */
-const OWNED = new Set(['Job', 'UserProfile', 'AgentSession', 'EmailTemplate'])
+const OWNED = new Set(['Job', 'UserProfile', 'AgentSession', 'EmailTemplate', 'InboundEmail'])
 const CHILD_OF_JOB = new Set(['Interview', 'Activity', 'Document', 'Contact', 'Task', 'SalaryNegotiation', 'ApplicationQA'])
 
 export class NotFoundError extends Error {

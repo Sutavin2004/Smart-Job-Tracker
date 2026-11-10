@@ -2,14 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Bot, BarChart2, Settings } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Bot, Send, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TABS = [
   { href: '/', icon: LayoutDashboard, label: 'Home' },
   { href: '/jobs', icon: Briefcase, label: 'Board' },
+  { href: '/apply', icon: Send, label: 'Apply' },
   { href: '/agent', icon: Bot, label: 'Agent' },
-  { href: '/analytics', icon: BarChart2, label: 'Analytics' },
   { href: '/settings', icon: Settings, label: 'Settings' },
 ]
 

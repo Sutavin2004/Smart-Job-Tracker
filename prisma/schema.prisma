@@ -9,18 +9,21 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String   @default("")
+  id              String    @id @default(cuid())
+  email           String    @unique
+  name            String    @default("")
   /// Null for accounts that only sign in with Google.
   passwordHash    String?
   googleId        String?   @unique
+  /// Secret part of this user's forwarding address for application emails.
+  inboundToken    String?   @unique
   emailVerifiedAt DateTime?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
   sessions       Session[]
   authTokens     AuthToken[]
+  inboundEmails  InboundEmail[]
   profile        UserProfile?
   jobs           Job[]
   agentSessions  AgentSession[]
@@ -32,12 +35,28 @@ model User {
 model AuthToken {
   id        String   @id
   userId    String
-  kind      String   // "reset" | "verify"
+  kind      String // "reset" | "verify"
   expiresAt DateTime
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, kind])
+}
+
+/// An application-confirmation email forwarded to the user's JobTrack address, and what was done with it.
+model InboundEmail {
+  id         String   @id @default(cuid())
+  userId     String
+  fromAddr   String
+  subject    String
+  outcome    String // short human-readable result, e.g. "Added Shopify, Frontend Engineer as Applied"
+  link       String? // e.g. Gmail's forwarding-confirmation link
+  providerId String?  @unique // the email's id at Resend, so retried webhooks aren't processed twice
+  jobId      String?
+  receivedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, receivedAt])
 }
 
 /// Login session. `id` is the SHA-256 of the cookie token, so a leaked DB row can't be replayed.
@@ -74,56 +93,57 @@ model UsageCounter {
 }
 
 model Job {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company         String
-  role            String
-  status          String    @default("saved")
-  priority        String    @default("medium")
-  excitement      Int?
-  pinned          Boolean   @default(false)
-  archived        Boolean   @default(false)
-  color           String?
-  tags            String?
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    String
+  role       String
+  status     String  @default("saved")
+  priority   String  @default("medium")
+  excitement Int?
+  pinned     Boolean @default(false)
+  archived   Boolean @default(false)
+  color      String?
+  tags       String?
 
   jobUrl          String?
   jobDescription  String?
   parsedKeywords  String?
   parsedTechStack String?
 
-  location        String?
-  remote          Boolean   @default(false)
-  hybrid          Boolean   @default(false)
+  location String?
+  remote   Boolean @default(false)
+  hybrid   Boolean @default(false)
 
-  salary          String?
-  salaryRaw       String?
-  salaryMin       Int?
-  salaryMax       Int?
-  currency        String?   @default("CAD")
+  salary    String?
+  salaryRaw String?
+  salaryMin Int?
+  salaryMax Int?
+  currency  String? @default("CAD")
 
   companySize     String?
   companyStage    String?
   industry        String?
   benefits        String?
-  visaSponsorship Boolean   @default(false)
+  visaSponsorship Boolean @default(false)
 
-  source          String?
-  referralContact String?
-  resumeVersion   String?
-  dateApplied     DateTime  @default(now())
-  deadline        DateTime?
-  followUpDate    DateTime?
-  lastContactDate DateTime?
-  recruiterName   String?
-  recruiterEmail  String?
-  recruiterPhone  String?
+  source                String?
+  referralContact       String?
+  resumeVersion         String?
+  applicationPreparedAt DateTime? // when a tailored résumé, cover letter and answers were last generated
+  dateApplied           DateTime  @default(now())
+  deadline              DateTime?
+  followUpDate          DateTime?
+  lastContactDate       DateTime?
+  recruiterName         String?
+  recruiterEmail        String?
+  recruiterPhone        String?
 
   offerDeadline   DateTime?
   offerAmount     String?
   rejectionReason String?
 
-  notes           String?
+  notes String?
 
   aiScore         Int?
   aiSuggestion    String?
@@ -135,15 +155,15 @@ model Job {
   aiCultureFit    String?
   aiLastAnalyzed  DateTime?
 
-  discoveredBy    String?
-  agentSessionId  String?
-  agentNotes      String?
+  discoveredBy   String?
+  agentSessionId String?
+  agentNotes     String?
 
-  coverLetter     String?
-  techStack       String?
+  coverLetter String?
+  techStack   String?
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   interviews         Interview[]
   activities         Activity[]
@@ -303,6 +323,7 @@ model UserProfile {
   timezone        String   @default("America/Toronto")
   autoDiscover    Boolean  @default(false)
   emailDigest     Boolean  @default(false) // email new matches after the daily run
+  autoPrepare     Boolean  @default(true) // prepare applications for the best new matches after each run
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }

@@ -41,6 +41,7 @@ export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }
     timezone: body.timezone ?? 'America/Toronto',
     autoDiscover: Boolean(body.autoDiscover),
     emailDigest: Boolean(body.emailDigest),
+    autoPrepare: body.autoPrepare === undefined ? true : Boolean(body.autoPrepare),
   }
 
   if (profile) {

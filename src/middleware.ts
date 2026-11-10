@@ -5,7 +5,7 @@ import { IS_DEMO, DEMO_BLOCKED_API } from '@/lib/demo'
 // Reachable without signing in. Real session checks happen in API routes
 // (withAuth) and in the app layout; this only redirects early.
 const PUBLIC_PAGES = ['/login', '/signup', '/forgot-password', '/reset-password']
-const PUBLIC_API = /^\/api\/(health|auth\/(login|signup|demo|logout|forgot|reset|verify|google)|cron\/)/
+const PUBLIC_API = /^\/api\/(health|auth\/(login|signup|demo|logout|forgot|reset|verify|google)|cron\/|inbound\/resend$)/
 
 export function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl

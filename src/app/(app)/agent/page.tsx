@@ -489,6 +489,40 @@ function DailyRunToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (
   )
 }
 
+function AutoPrepareToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (p: UserProfile) => void }) {
+  const [saving, setSaving] = useState(false)
+  const on = profile.autoPrepare !== false
+
+  async function toggle() {
+    setSaving(true)
+    const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ autoPrepare: !on }) })
+    setSaving(false)
+    if (!res.ok) return toast.error("Couldn't update that setting")
+    onSaved(await res.json())
+  }
+
+  return (
+    <div className="card flex items-center gap-4 px-5 py-4">
+      <div className="min-w-0 flex-1">
+        <p id="auto-prepare-label" className="text-sm font-semibold text-slate-900 dark:text-white">Prepare applications for the best matches</p>
+        <p className="mt-0.5 text-xs text-slate-500">
+          Writes a tailored résumé, cover letter and answers for your top 3 new matches. Find them under <Link href="/apply" className="underline underline-offset-2">Ready to apply</Link>. Uses up to 3 AI actions a day.
+        </p>
+      </div>
+      <button
+        role="switch"
+        aria-checked={on}
+        aria-labelledby="auto-prepare-label"
+        onClick={toggle}
+        disabled={saving}
+        className={cn('relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50', on ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600')}
+      >
+        <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
+      </button>
+    </div>
+  )
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
@@ -608,6 +642,7 @@ export default function AgentPage() {
       )}
 
       {profile && <DailyRunToggle profile={profile} onSaved={setProfile} />}
+      {profile && <AutoPrepareToggle profile={profile} onSaved={setProfile} />}
 
       {/* Agent launch card */}
       <div className="card p-6">
@@ -734,9 +769,10 @@ export default function AgentPage() {
                 <button onClick={runAgent} className="btn-secondary text-xs py-1.5 px-3">
                   <RotateCcw className="w-3.5 h-3.5" /> Run again
                 </button>
-                <Link href="/jobs?discoveredBy=agent" className="btn-primary text-xs py-1.5 px-3">
-                  <Briefcase className="w-3.5 h-3.5" /> View on Board
+                <Link href="/jobs?discoveredBy=agent" className="btn-secondary text-xs py-1.5 px-3">
+                  <Briefcase className="w-3.5 h-3.5" /> View on board
                 </Link>
+                <Link href="/apply" className="btn-primary text-xs py-1.5 px-3">Review and apply</Link>
               </div>
             </div>
           </motion.div>

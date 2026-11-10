@@ -3,8 +3,8 @@ import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const API = join(process.cwd(), 'src/app/api')
-// Routes allowed to use the unscoped client: they deal with accounts or run across users.
-const ALLOWED = [/^auth\//, /^cron\//, /^health\//]
+// Routes allowed without a session: accounts, cron jobs, health, and the signed inbound-email webhook.
+const ALLOWED = [/^auth\//, /^cron\//, /^health\//, /^inbound\/resend\//]
 
 function routes(dir: string): string[] {
   return readdirSync(dir).flatMap(name => {

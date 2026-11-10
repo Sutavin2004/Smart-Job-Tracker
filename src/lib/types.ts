@@ -9,6 +9,7 @@ export type EmailTemplateType = 'follow_up' | 'thank_you' | 'withdraw' | 'counte
 
 export interface Job {
   id: string
+  applicationPreparedAt?: string | null
   company: string
   role: string
   status: JobStatus
@@ -190,6 +191,7 @@ export interface UserProfile {
   timezone: string
   autoDiscover?: boolean
   emailDigest?: boolean
+  autoPrepare?: boolean
 }
 
 export interface EmailTemplate {

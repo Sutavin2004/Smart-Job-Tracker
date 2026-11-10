@@ -32,6 +32,8 @@
 - **Dashboard and analytics**: weekly goal, response and offer rates, pipeline, activity heatmap, calendar.
 
 ### Apply with AI (Claude)
+- **Ready to apply**: your saved jobs, best fit first, each with a résumé and cover letter tailored to the posting (download as Word) and answers to common application questions. The top 3 new matches are prepared automatically. The AI only rewords and reorders what is in your résumé, and lists any gaps for you to check.
+- **Automatic tracking**: forward LinkedIn, Indeed and company-site confirmation emails (one Gmail filter) and each application is added to the board as Applied. The Chrome extension also notices Easy Apply and Indeed Apply submissions.
 - Job analysis (strengths, risks, key skills), cover letters, resume tailoring, answers to application questions, interview prep, follow-up emails and salary advice.
 
 ### Accounts
@@ -101,6 +103,7 @@ npm run dev               # http://localhost:3000, then create an account
 | `SIGNUP_LIMIT_PER_HOUR` | Optional | New accounts allowed per IP address per hour (default 5) |
 | `RESEND_API_KEY` | Optional | Turns on password reset, email confirmation and the daily job digest ([resend.com](https://resend.com)) |
 | `EMAIL_FROM`, `APP_URL` | Optional | Sender address (needs a domain verified in Resend) and the base URL used in email links |
+| `INBOUND_DOMAIN`, `RESEND_WEBHOOK_SECRET` | Optional | Tracks applications from forwarded confirmation emails (Resend receiving domain and webhook secret) |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Optional | Shows "Continue with Google". Redirect URI: `https://<your-site>/api/auth/google/callback` |
 | `CRON_SECRET` | Optional | If set, the daily cron routes require it |
 | `DEMO_MODE` | Demo only | `true` turns on the public demo behaviour (see below) |

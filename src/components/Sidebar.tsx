@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Briefcase, BarChart2, Calendar, Settings,
   Sun, Moon, CheckSquare, Mail, FileText,
-  PanelLeftClose, PanelLeftOpen, Bot, LogOut,
+  PanelLeftClose, PanelLeftOpen, Bot, LogOut, Send,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react'
 const NAV_MAIN = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/jobs', label: 'Board', icon: Briefcase },
+  { href: '/apply', label: 'Ready to apply', icon: Send },
   { href: '/agent', label: 'Job agent', icon: Bot },
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
   { href: '/calendar', label: 'Calendar', icon: Calendar },

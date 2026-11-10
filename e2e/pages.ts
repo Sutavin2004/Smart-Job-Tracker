@@ -3,6 +3,7 @@ export const PAGES = [
   { path: '/', heading: /(good (morning|afternoon|evening)|hello)/i },
   { path: '/jobs', heading: /jobs board/i },
   { path: '/agent', heading: /job agent/i },
+  { path: '/apply', heading: /ready to apply/i },
   { path: '/analytics', heading: /analytics/i },
   { path: '/calendar', heading: /calendar/i },
   { path: '/tasks', heading: /tasks/i },
