@@ -24,7 +24,7 @@ interface Kit {
   missingKeywords: string[]
 }
 
-interface AutoState { autoPrepare: boolean; hasResume: boolean; aiEnabled: boolean; pending: number }
+interface AutoState { autoPrepare: boolean; hasResume: boolean; aiEnabled: boolean; pending: number; demo?: boolean }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [done, setDone] = useState(false)
@@ -118,10 +118,10 @@ export default function ApplyPage() {
         </p>
       </header>
 
-      {auto && !auto.aiEnabled && (
-        <p className="mt-5 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">AI features are not set up on this site, so applications can&apos;t be prepared yet.</p>
+      {auto?.demo && (
+        <p className="mt-5 rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-[#1A1B1D] dark:text-slate-300">In the demo, AI writing is off. The Notion job has a sample prepared application so you can see what one looks like.</p>
       )}
-      {auto?.aiEnabled && !auto.hasResume && (
+      {auto?.aiEnabled && !auto.hasResume && !auto.demo && (
         <p className="mt-5 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           Add your full résumé first. Every tailored version is built from it. <Link href="/resume" className="font-medium underline underline-offset-4">Go to Résumé</Link>
         </p>
@@ -192,7 +192,11 @@ export default function ApplyPage() {
                 ) : !kit?.resume ? (
                   <div className="mt-6 rounded-lg border border-dashed border-slate-300 p-6 text-center dark:border-[#34353A]">
                     <p className="text-sm text-slate-700 dark:text-slate-300">No tailored application yet.</p>
-                    <p className="mt-1 text-[13px] text-slate-500">Writes a résumé and cover letter for this posting from your saved résumé, plus answers to common questions. Uses one AI action.</p>
+                    <p className="mt-1 text-[13px] text-slate-500">
+                      {auto && !auto.aiEnabled
+                        ? auto.demo ? 'AI writing is off in the demo. Open the Notion job to see a prepared application.' : 'AI writing is not set up on this site yet.'
+                        : 'Writes a résumé and cover letter for this posting from your saved résumé, plus answers to common questions. Uses one AI action.'}
+                    </p>
                     <button onClick={() => prepare(selected.id)} disabled={preparing !== null || !auto?.aiEnabled || !auto?.hasResume} className="btn-primary mt-4">
                       {preparing === selected.id && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
                       {preparing === selected.id ? 'Preparing… about 30 seconds' : 'Prepare application'}

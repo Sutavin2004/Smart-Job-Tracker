@@ -7,6 +7,7 @@ export const IS_DEMO = process.env.DEMO_MODE === 'true'
 
 export const DEMO_BLOCKED_API = [
   /^\/api\/jobs\/import-url$/, // server-side fetch of arbitrary URLs
+  /^\/api\/jobs\/[^/]+\/prepare$/, // AI writing
 ]
 
 export const DEMO_REPO_URL = 'https://github.com/Sutavin2004/Smart-Job-Tracker'

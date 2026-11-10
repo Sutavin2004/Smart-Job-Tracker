@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
 import { prepareTopMatches, unpreparedTopMatches } from '@/lib/apply/top-matches'
+import { IS_DEMO } from '@/lib/demo'
 
 export const maxDuration = 180
 
@@ -13,7 +14,8 @@ export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Aut
   return NextResponse.json({
     autoPrepare: Boolean(profile?.autoPrepare),
     hasResume: (profile?.masterResume?.trim().length ?? 0) >= 200,
-    aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY),
+    aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY) && !IS_DEMO,
+    demo: IS_DEMO,
     pending: pending.length,
   })
 })

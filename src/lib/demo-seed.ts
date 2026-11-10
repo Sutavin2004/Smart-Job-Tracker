@@ -4,6 +4,7 @@ import { defaultTemplatesFor } from './default-templates'
 
 /** Credentials for the shared demo account (only created by the seed: demo + CI, never production). */
 import { DEMO_EMAIL, DEMO_PASSWORD } from './demo-credentials'
+import { DEMO_RESUME, DEMO_KIT } from './demo-kit'
 export { DEMO_EMAIL, DEMO_PASSWORD }
 
 /**
@@ -44,6 +45,7 @@ export async function seedDemoData(prisma: PrismaClient) {
       currency: 'CAD',
       weeklyGoal: 5,
       defaultSource: 'LinkedIn',
+      masterResume: DEMO_RESUME,
     },
   })
 
@@ -124,7 +126,7 @@ export async function seedDemoData(prisma: PrismaClient) {
       source: 'Indeed',
       industry: 'Productivity',
       techStack: 'React, TypeScript, Node.js, PostgreSQL, Redis',
-      jobDescription: "Build features for Notion's collaborative workspace used by millions of teams. Work on real-time sync, performance, and new product areas.",
+      jobDescription: "Build features for Notion's collaborative workspace used by millions of teams. Work on real-time sync, performance, and new product areas. You have experience with React, TypeScript, Node.js and PostgreSQL; Redis is a plus.",
       aiScore: 78,
       aiSuggestion: 'Good match — strong on frontend. Brush up on real-time/collab systems before applying.',
       excitement: 5,
@@ -309,6 +311,19 @@ export async function seedDemoData(prisma: PrismaClient) {
       await prisma.activity.create({
         data: { jobId: job.id, type: 'ai_analyzed', message: `AI analysis: ${job.aiScore}/100 fit score` },
       })
+    }
+
+    // One prepared application, so the Ready to apply page has something to show.
+    if (job.company === 'Notion') {
+      await prisma.document.createMany({
+        data: [
+          { jobId: job.id, type: 'resume', name: 'Résumé for Notion', content: DEMO_KIT.resume, version: 'kit-demo', isActive: true },
+          { jobId: job.id, type: 'cover_letter', name: 'Cover letter for Notion', content: DEMO_KIT.coverLetter, version: 'kit-demo', isActive: true },
+          { jobId: job.id, type: 'kit_notes', name: 'Application notes', content: JSON.stringify({ notes: DEMO_KIT.notes, matchedKeywords: DEMO_KIT.matchedKeywords, missingKeywords: DEMO_KIT.missingKeywords }), version: 'kit-demo', isActive: true },
+        ],
+      })
+      await prisma.applicationQA.createMany({ data: DEMO_KIT.answers.map(a => ({ jobId: job.id, ...a })) })
+      await prisma.job.update({ where: { id: job.id }, data: { applicationPreparedAt: new Date(), coverLetter: DEMO_KIT.coverLetter } })
     }
 
     await prisma.task.create({

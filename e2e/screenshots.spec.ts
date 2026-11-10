@@ -5,6 +5,7 @@ const SHOTS = [
   { path: '/', name: 'dashboard' },
   { path: '/jobs', name: 'jobs-board' },
   { path: '/agent', name: 'job-agent' },
+  { path: '/apply', name: 'ready-to-apply' },
   { path: '/analytics', name: 'analytics' },
 ]
 
@@ -15,6 +16,11 @@ for (const scheme of ['light', 'dark'] as const) {
       test(`${name} (${scheme})`, async ({ page }) => {
         await page.goto(path)
         await page.waitForLoadState('networkidle')
+        // On Ready to apply, show the job that has a prepared application.
+        if (path === '/apply') {
+          await page.getByRole('button', { name: /Notion/ }).click()
+          await page.getByRole('heading', { name: 'Cover letter' }).waitFor()
+        }
         // Hide the floating reminders popup so it doesn't cover the page.
         const dismiss = page.getByRole('button', { name: 'Dismiss all reminders' })
         if (await dismiss.isVisible()) await dismiss.click()

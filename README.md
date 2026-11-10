@@ -12,8 +12,10 @@
 | Jobs board | Job Agent |
 |---|---|
 | ![Jobs board](docs/screenshots/jobs-board-light.png) | ![Job Agent](docs/screenshots/job-agent-dark.png) |
-| **Analytics** | **Mobile** |
-| ![Analytics](docs/screenshots/analytics-light.png) | <img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard" width="260"> |
+| **Ready to apply** | **Analytics** |
+| ![Ready to apply](docs/screenshots/ready-to-apply-light.png) | ![Analytics](docs/screenshots/analytics-light.png) |
+| **Sign in** | **Mobile** |
+| ![Sign in](docs/screenshots/sign-in.png) | <img src="docs/screenshots/mobile-dashboard.png" alt="Mobile dashboard" width="260"> |
 
 ## Features
 
