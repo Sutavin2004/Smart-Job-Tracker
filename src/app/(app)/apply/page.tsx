@@ -228,17 +228,17 @@ export default function ApplyPage() {
                     {kit.answers.length > 0 && (
                       <div>
                         <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Answers to common questions</h3>
-                        <dl className="mt-3 space-y-4">
+                        <ul className="mt-3 space-y-4">
                           {kit.answers.map(a => (
-                            <div key={a.id}>
+                            <li key={a.id}>
                               <div className="flex items-center justify-between gap-2">
-                                <dt className="text-[13px] font-medium text-slate-700 dark:text-slate-300">{a.question}</dt>
+                                <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300">{a.question}</p>
                                 <CopyButton text={a.answer} label="Copy" />
                               </div>
-                              <dd className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{a.answer}</dd>
-                            </div>
+                              <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{a.answer}</p>
+                            </li>
                           ))}
-                        </dl>
+                        </ul>
                       </div>
                     )}
                   </div>
