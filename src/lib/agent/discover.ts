@@ -50,7 +50,7 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
 
     log('Starting', { step: 1 })
     log(`Searching for: ${roles.slice(0, 3).join(', ')}`, { step: 2 })
-    log(`Locations: ${locations.join(', ')}${profile.preferRemote ? ' + Remote' : ''}`, { step: 2 })
+    log(`Locations: ${locations.join(', ')}${profile.preferRemote && !locations.some(l => /remote/i.test(l)) ? ' + Remote' : ''}`, { step: 2 })
 
     const boardLabels: string[] = []
     if (hasRapidApi) boardLabels.push('LinkedIn · Indeed · Glassdoor (JSearch)')
@@ -87,7 +87,9 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
 
     if (hasAnthropic) {
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-      const needed = Math.max(0, 12 - realJobs.length)
+      // Remote boards return many listings that fail scoring (US-only, wrong level),
+      // so the raw count says little: always search the web for some local matches.
+      const needed = Math.max(6, 12 - realJobs.length)
 
       if (needed > 0) {
         log(`AI searching for ${needed} more matches...`, { step: 2 })
