@@ -4,7 +4,7 @@ import { withAuth, type Auth } from '@/lib/api'
 import { consumeQuota, QuotaError } from '@/lib/quota'
 import { AI_MODELS } from '@/lib/ai-models'
 import { IS_DEMO } from '@/lib/demo'
-import { basicFields, parseAutofill, mergeAutofill, AUTOFILL_PROMPT, type Autofill } from '@/lib/resume/autofill'
+import { basicFields, parseAutofill, mergeAutofill, AUTOFILL_PROMPT, AUTOFILL_TOOL, type Autofill } from '@/lib/resume/autofill'
 
 export const maxDuration = 60
 
@@ -29,10 +29,18 @@ export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { db, user 
       const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
       const res = await anthropic.messages.create({
         model: AI_MODELS.fast,
-        max_tokens: 1500,
+        max_tokens: 2000,
+        tools: [AUTOFILL_TOOL],
+        tool_choice: { type: 'tool', name: AUTOFILL_TOOL.name },
         messages: [{ role: 'user', content: AUTOFILL_PROMPT(resume) }],
       })
-      ai = parseAutofill(res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join(''))
+      const call = res.content.find(b => b.type === 'tool_use')
+      const text = res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('')
+      ai = parseAutofill(call ? JSON.stringify((call as { input: unknown }).input) : text)
+      if (!Object.keys(ai).length) {
+        console.error('autofill: empty reply', res.stop_reason, text.slice(0, 300))
+        note = 'The AI step returned nothing usable, so only contact details and links were filled in.'
+      }
       usedAi = true
     } catch (e) {
       note = e instanceof QuotaError ? e.message : 'The AI step failed, so only contact details and links were filled in.'

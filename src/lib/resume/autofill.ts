@@ -67,7 +67,7 @@ export function mergeAutofill(current: Record<string, unknown>, found: Autofill,
   return patch
 }
 
-export const AUTOFILL_PROMPT = (resume: string) => `Read this résumé and fill in a job-search profile for its owner. Use only what the résumé says or clearly implies. Return ONLY a JSON object with these keys (use null when unknown):
+export const AUTOFILL_PROMPT = (resume: string) => `Read this résumé and fill in a job-search profile for its owner. Use only what the résumé says or clearly implies. Call save_profile with these fields (use null when unknown):
 
 {
   "name": "full name",
@@ -88,3 +88,32 @@ export const AUTOFILL_PROMPT = (resume: string) => `Read this résumé and fill 
 
 RÉSUMÉ:
 ${resume.slice(0, 15000)}`
+
+const str = (description: string) => ({ type: ['string', 'null'], description })
+const list = (description: string) => ({ type: 'array', items: { type: 'string' }, description })
+
+/** Structured-output tool so the reply is always valid JSON. */
+export const AUTOFILL_TOOL = {
+  name: 'save_profile',
+  description: 'Save the job-search profile read from the résumé.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      name: str('full name'),
+      email: str('email'),
+      phone: str('phone number as written'),
+      linkedin: str('full LinkedIn profile URL'),
+      github: str('full GitHub profile URL'),
+      portfolio: str('personal website URL'),
+      currentTitle: str('short current status or job title'),
+      yearsExperience: { type: ['number', 'null'], description: 'years of professional experience incl. internships, rounded down' },
+      education: str('highest degree, school and graduation date in one line'),
+      bio: str('2-3 sentence first-person summary'),
+      skills: list('15 most relevant hard skills, most important first'),
+      targetRoles: list('4-5 job titles they are a strong fit for'),
+      targetLocations: list("their city, nearby cities and 'Remote'"),
+      jobSearchGoals: str('1-2 first-person sentences on the role they want next'),
+    },
+    required: ['currentTitle', 'education', 'bio', 'skills', 'targetRoles', 'targetLocations', 'jobSearchGoals'],
+  },
+}
