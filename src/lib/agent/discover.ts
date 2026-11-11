@@ -110,7 +110,7 @@ Target salary: ${profile.currency} ${profile.targetSalaryMin}k–${profile.targe
 Exclude keywords: ${profile.excludeKeywords || 'None'}
 
 Search LinkedIn, Indeed, Glassdoor, and company career pages.
-Only include postings you found in the search results. For each one give: company name, role title, location, salary if shown, the exact URL of the posting from the search results, and a brief description. If you find fewer than ${needed}, list only what you found.`
+Prefer the employer's own careers page or its applicant system (Greenhouse, Lever, Workday, Ashby and similar) over job-listing sites that repost jobs; use a listing site only when that is all you found. Only include postings you found in the search results. For each one give: company name, role title, location, salary if shown, the exact URL of the posting from the search results, and a brief description. If you find fewer than ${needed}, list only what you found.`
 
         try {
           const res = await anthropic.messages.create({

@@ -4,6 +4,7 @@ import { withAuth, type Auth } from '@/lib/api'
 import { consumeQuota, QuotaError } from '@/lib/quota'
 import { AI_MODELS } from '@/lib/ai-models'
 import { IS_DEMO } from '@/lib/demo'
+import { rescoreSaved } from '@/lib/agent/rescore'
 import { basicFields, parseAutofill, mergeAutofill, AUTOFILL_PROMPT, AUTOFILL_TOOL, type Autofill } from '@/lib/resume/autofill'
 
 export const maxDuration = 60
@@ -52,5 +53,6 @@ export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { db, user 
   const found = { ...ai, ...basicFields(resume) }
   const patch = mergeAutofill(profile as unknown as Record<string, unknown>, found, Boolean(overwrite))
   const updated = Object.keys(patch).length ? await db.userProfile.update({ where: { id: profile.id }, data: patch as Record<string, string | number> }) : profile
+  if (Object.keys(patch).length) await rescoreSaved(db).catch(e => console.error('rescore', e))
   return NextResponse.json({ filled: Object.keys(patch), usedAi, note, profile: updated })
 })

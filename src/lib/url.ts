@@ -11,3 +11,12 @@ export function normalizeUrl(raw: string): string {
     return raw.trim().toLowerCase()
   }
 }
+
+// Sites that repost listings from elsewhere. Applying through the employer is more reliable.
+const AGGREGATORS = /(^|\.)(canadajobs\.works|speedyapply\.com|jooble\.org|talent\.com|simplyhired\.(com|ca)|ziprecruiter\.(com|ca)|jobillico\.com|careerjet\.(com|ca)|adzuna\.(com|ca)|jobrapido\.com|neuvoo\.(com|ca)|whatjobs\.com|learn4good\.com|jobleads\.com|builtin\.com|remoterocketship\.com|hiring\.cafe|jobgether\.com|wellfound\.com)$/i
+
+/** True if the link goes to a job-listing site rather than the employer or an ATS. */
+export function isAggregator(url: string | null | undefined): boolean {
+  if (!url) return false
+  try { return AGGREGATORS.test(new URL(url).hostname.replace(/^www\./, '')) } catch { return false }
+}

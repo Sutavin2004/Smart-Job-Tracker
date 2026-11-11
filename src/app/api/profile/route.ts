@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
+import { rescoreSaved } from '@/lib/agent/rescore'
+
+const SCORING_FIELDS = ['targetRoles', 'skills', 'yearsExperience', 'targetLocations', 'preferRemote', 'preferHybrid', 'targetSalaryMin', 'targetSalaryMax', 'excludeKeywords']
 
 export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db, user }: Auth) => {
   const profile = await db.userProfile.findFirst()
@@ -49,6 +52,8 @@ export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }
     // setting (e.g. the daily-agent toggle) can't blank out the rest of the profile.
     const patch = Object.fromEntries(Object.entries(data).filter(([k]) => k in body))
     const updated = await db.userProfile.update({ where: { id: profile.id }, data: patch })
+    // Keep fit scores in step with the settings they depend on.
+    if (SCORING_FIELDS.some(f => f in body)) await rescoreSaved(db).catch(e => console.error('rescore', e))
     return NextResponse.json(updated)
   }
 

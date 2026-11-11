@@ -10,3 +10,14 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('https://jobs.lever.co/acme?id=1')).not.toBe(normalizeUrl('https://jobs.lever.co/acme?id=2'))
   })
 })
+
+import { isAggregator } from './url'
+describe('isAggregator', () => {
+  it('spots job-listing sites but not employers or ATS pages', () => {
+    expect(isAggregator('https://www.canadajobs.works/job/x')).toBe(true)
+    expect(isAggregator('https://www.speedyapply.com/jobs/at/yelp/x')).toBe(true)
+    expect(isAggregator('https://jobs.scotiabank.com/job/Toronto/1')).toBe(false)
+    expect(isAggregator('https://boards.greenhouse.io/policyme/jobs/1')).toBe(false)
+    expect(isAggregator(null)).toBe(false)
+  })
+})

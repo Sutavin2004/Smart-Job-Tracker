@@ -41,6 +41,7 @@ RULES
 - Use ONLY facts in the candidate's résumé and profile. Never invent employers, titles, dates, degrees, tools, numbers or achievements.
 - You may reorder sections, choose which bullets to keep, rewrite bullets to use the posting's language where the meaning is the same, and write a short summary at the top.
 - If the posting asks for something the candidate doesn't show, do not add it. List it under "notes" instead.
+- Write the notes directly to the candidate in second person ("Your résumé doesn't show AWS…"). Don't ask them to confirm dates or facts that the résumé states plainly; only flag real gaps and real risks.
 - Keep the résumé to what fits on one or two pages. Plain text. Put section headings on their own line in capitals (e.g. EXPERIENCE). Start bullets with "- ".
 - The cover letter: 3 short paragraphs, under 250 words, specific to this company and role, no clichés like "I am writing to express my interest". Sign with the candidate's name.
 - Answers: 2–5 sentences each, first person, based on real résumé content. For salary, use the candidate's target if given, otherwise say they are flexible and want to learn more about the range.
@@ -70,7 +71,7 @@ Return ONLY a JSON object:
   "answers": [${QUESTIONS.map(q => `{"question": ${JSON.stringify(q)}, "answer": "..."}`).join(', ')}],
   "matchedKeywords": ["posting keywords the résumé already covers"],
   "missingKeywords": ["important posting keywords the résumé does not cover"],
-  "notes": ["honest gaps or things to double-check before applying"]
+  "notes": ["honest gaps or things to double-check before applying, written to the candidate as \"you\" and \"your résumé\" (never \"the candidate\"), one short sentence or two each"]
 }`
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })

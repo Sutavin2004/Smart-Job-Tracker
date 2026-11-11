@@ -6,6 +6,7 @@ import { ExternalLink, Download, Copy, Check, Loader2, RefreshCw } from 'lucide-
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Job } from '@/lib/types'
+import { isAggregator } from '@/lib/url'
 
 interface Kit {
   id: string
@@ -176,6 +177,11 @@ export default function ApplyPage() {
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">{selected.company}</h2>
                     <p className="text-sm text-slate-600 dark:text-slate-300">{selected.role}{selected.location ? `, ${selected.location}` : ''}</p>
                     {selected.aiScore != null && <p className="mt-1 text-[13px] text-slate-500">Fit {selected.aiScore}/100{kit?.aiSuggestion ? `. ${kit.aiSuggestion}` : ''}</p>}
+                    {isAggregator(selected.jobUrl) && (
+                      <p className="mt-2 text-[13px] text-amber-700 dark:text-amber-400">
+                        This link goes to a job-listing site, not {selected.company}. Search {selected.company}&apos;s careers page for the same role and apply there if you can.
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {selected.jobUrl && (

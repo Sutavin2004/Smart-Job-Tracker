@@ -115,3 +115,28 @@ describe('agent relevance filters', () => {
     expect(usOnly.fitReason).toMatch(/another country/)
   })
 })
+
+import { skillTerms, roleMatch, requiredYears, experienceScore } from './scoring'
+
+describe('scoring for early-career candidates', () => {
+  it('splits compound skills into terms a posting would use', () => {
+    expect(skillTerms('Linux system administration (RHEL)')).toEqual(expect.arrayContaining(['rhel', 'linux']))
+    expect(skillTerms('RAG systems')).toContain('rag')
+    expect(skillTerms('CI/CD')).toContain('continuous integration')
+  })
+  it('scores the closest target role, not the whole list', () => {
+    expect(roleMatch('Full Stack Developer (React + Next.js)', 'DevOps Engineer, Full-Stack Developer')).toBe(1)
+    expect(roleMatch('Junior Software Engineer', 'Software Engineer')).toBe(1)
+    expect(roleMatch('Product Designer', 'Software Engineer')).toBe(0)
+  })
+  it('reads years asked for in different phrasings', () => {
+    expect(requiredYears('You have 2+ years of professional software engineering')).toBe(2)
+    expect(requiredYears('3-5 years of experience with AWS')).toBe(3)
+    expect(requiredYears('We were founded 10 years ago')).toBeNull()
+  })
+  it('rewards entry-level postings and penalizes experience gaps', () => {
+    expect(experienceScore('Build things.', 1, 'Junior Software Engineer')).toBe(1)
+    expect(experienceScore('Requires 2+ years of professional engineering', 1, 'Software Engineer')).toBe(0.5)
+    expect(experienceScore('Requires 5+ years of experience', 1, 'Software Engineer')).toBe(0.1)
+  })
+})
