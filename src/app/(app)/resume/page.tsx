@@ -93,6 +93,8 @@ export default function ResumePage() {
   const [savingMaster, setSavingMaster] = useState(false)
   const [masterDirty, setMasterDirty] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [autofilling, setAutofilling] = useState(false)
+  const [filled, setFilled] = useState<string[] | null>(null)
   const [uploadedFrom, setUploadedFrom] = useState<string | null>(null)
 
   async function uploadResume(e: React.ChangeEvent<HTMLInputElement>) {
@@ -143,17 +145,46 @@ export default function ResumePage() {
     if (!profile) return
     setSavingMaster(true)
     try {
-      await fetch('/api/profile', {
+      // Send only the résumé so this can't overwrite profile fields changed elsewhere.
+      const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...profile, masterResume }),
+        body: JSON.stringify({ masterResume }),
       })
-      toast.success('Master resume saved!')
+      if (!res.ok) throw new Error()
+      setProfile(await res.json())
       setMasterDirty(false)
+      toast.success('Résumé saved')
+      await autofill(false)
     } catch {
-      toast.error('Failed to save')
+      toast.error('Could not save your résumé. Try again.')
     } finally {
       setSavingMaster(false)
+    }
+  }
+
+  const FIELD_LABELS: Record<string, string> = {
+    name: 'name', email: 'email', phone: 'phone', linkedin: 'LinkedIn', github: 'GitHub', portfolio: 'website',
+    currentTitle: 'current title', yearsExperience: 'years of experience', education: 'education', bio: 'summary',
+    skills: 'skills', targetRoles: 'target roles', targetLocations: 'locations', jobSearchGoals: 'what you are looking for',
+  }
+
+  /** Fill in the profile and job-agent settings from the saved résumé. */
+  async function autofill(overwrite: boolean) {
+    setAutofilling(true)
+    try {
+      const res = await fetch('/api/profile/autofill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ overwrite }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { toast.error(data.error ?? 'Could not fill in your profile.'); return }
+      if (data.profile) setProfile(data.profile)
+      setFilled(data.filled ?? [])
+      if (data.note) toast.error(data.note)
+    } finally {
+      setAutofilling(false)
     }
   }
 
@@ -262,6 +293,21 @@ export default function ResumePage() {
                     </div>
                   </div>
                   <div className="p-5">
+                    {autofilling && (
+                      <p role="status" className="mb-3 flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 text-[13px] text-slate-700 dark:bg-[#222326] dark:text-slate-300">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Filling in your profile and job agent settings from your résumé…
+                      </p>
+                    )}
+                    {!autofilling && filled && (
+                      <div role="status" className="mb-3 rounded-md bg-brand-50 px-3 py-2.5 text-[13px] text-brand-900 dark:bg-brand-900/40 dark:text-brand-100">
+                        {filled.length > 0 ? (
+                          <>Filled in your {filled.map(f => FIELD_LABELS[f] ?? f).join(', ')} from your résumé. Review them on the <a href="/agent" className="font-medium underline underline-offset-2">Job agent</a> page and in <a href="/settings" className="font-medium underline underline-offset-2">Settings</a>.</>
+                        ) : (
+                          <>Your profile already has everything the résumé covers, so nothing was changed.</>
+                        )}{' '}
+                        <button onClick={() => { if (window.confirm('Replace your profile and job agent settings with what is in this résumé?')) autofill(true) }} className="font-medium underline underline-offset-2">Fill in again from the résumé</button>
+                      </div>
+                    )}
                     {uploadedFrom && (
                       <p className="mb-3 rounded-md bg-brand-50 px-3 py-2 text-[13px] text-brand-800 dark:bg-brand-900/40 dark:text-brand-200">
                         Text from {uploadedFrom}. Check it over, fix anything that came through oddly, then save.
@@ -273,11 +319,15 @@ export default function ResumePage() {
                       onChange={e => { setMasterResume(e.target.value); setMasterDirty(true) }}
                       rows={24}
                       placeholder="Paste your résumé here, or upload a PDF or Word file above."
-                      className="input font-mono text-xs resize-none leading-relaxed"
+                      className="input resize-y font-mono text-xs leading-relaxed"
                     />
-                    <div className="flex items-center justify-between mt-2 text-xs text-slate-400">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
                       <span>{wordCount(masterResume)} words</span>
-                      {masterDirty && <span className="text-amber-700 dark:text-amber-400">Not saved yet</span>}
+                      {masterDirty ? (
+                        <span className="text-amber-700 dark:text-amber-400">Not saved yet. Saving also fills in your profile.</span>
+                      ) : profile?.masterResume && !autofilling && filled === null ? (
+                        <button onClick={() => autofill(false)} className="text-[13px] font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-400">Fill in my profile from this résumé</button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

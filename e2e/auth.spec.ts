@@ -180,3 +180,15 @@ test('the inbound email webhook refuses unsigned requests', async ({ request }) 
   const res = await request.post('/api/inbound/resend', { data: { type: 'email.received', data: { email_id: 'x' } } })
   expect([401, 503]).toContain(res.status())
 })
+
+test('saving a résumé fills in empty profile fields without touching ones already set', async ({ request }) => {
+  await signUp(request, unique(), 'Typed Name')
+  const resume = `Jordan Lee\nToronto, ON | +1 (416) 555-0100 | linkedin.com/in/jordan-lee | github.com/jordanlee\n\nEXPERIENCE\nSoftware Developer Intern, Northwind (2025)\n- Built internal dashboards in React and TypeScript used by 40 people across three teams.`
+  await request.put('/api/profile', { data: { masterResume: resume } })
+  const res = await request.post('/api/profile/autofill', { data: {} })
+  expect(res.status()).toBe(200)
+  const { filled, profile } = await res.json()
+  expect(filled).toEqual(expect.arrayContaining(['phone', 'linkedin', 'github']))
+  expect(profile.github).toBe('https://github.com/jordanlee')
+  expect(profile.name).toBe('Typed Name') // set at sign-up, so not replaced
+})
