@@ -209,7 +209,7 @@ test('the welcome tour is offered once, walks through the menu and can be replay
 
   // Finished once, so it isn't offered again…
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Tour Taker')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Tour')
   await expect(page.getByRole('dialog')).toHaveCount(0)
   // …but Settings → Help replays it.
   await page.goto('/settings?tab=help')
