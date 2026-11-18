@@ -289,8 +289,10 @@ export function learn(jobs: OutcomeJob[], targetRoles = '', now = Date.now()): L
     }
   }
 
-  // Biggest differences first.
-  insights.sort((a, b) => Math.abs(b.rate - b.otherRate) - Math.abs(a.rate - a.otherRate))
+  // What works first, then what doesn't; biggest differences first within each.
+  insights.sort((a, b) =>
+    (a.direction === b.direction ? 0 : a.direction === 'better' ? -1 : 1)
+    || Math.abs(b.rate - b.otherRate) - Math.abs(a.rate - a.otherRate))
 
   return {
     applied: scored.length,

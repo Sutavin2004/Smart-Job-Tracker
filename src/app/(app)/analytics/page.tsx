@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
       <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
         <header>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Analytics</h1>
-          <p className="mt-1 text-sm text-slate-500">How your applications are moving. Rates count only jobs you have applied to.</p>
+          <p className="mt-1 text-sm text-slate-500">How your applications are moving. The response rate counts interviews, offers and rejections as replies, and leaves out applications sent in the last three weeks that are still waiting.</p>
         </header>
         <section className="card px-6 py-14 text-center">
           <h2 className="text-base font-semibold text-slate-900 dark:text-white">Nothing to measure yet</h2>
@@ -126,7 +126,7 @@ export default function AnalyticsPage() {
     <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
       <header>
         <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">How your applications are moving. Rates count only jobs you have applied to.</p>
+        <p className="mt-1 text-sm text-slate-500">How your applications are moving. The response rate counts interviews, offers and rejections as replies, and leaves out applications sent in the last three weeks that are still waiting.</p>
       </header>
 
       <section aria-label="Summary" className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 lg:divide-x lg:divide-slate-200 dark:lg:divide-[#2A2B2E]">

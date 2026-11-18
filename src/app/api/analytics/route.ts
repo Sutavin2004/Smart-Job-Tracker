@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
+import { outcomeOf } from '@/lib/insights/learn'
 import { subDays, subMonths, subWeeks, format } from 'date-fns'
 
 export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Auth) => {
@@ -21,7 +22,11 @@ export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Aut
   }
 
   const applied = jobs.filter(j => j.status !== 'saved')
-  const responded = jobs.filter(j => ['interviewing', 'offered', 'rejected', 'ghosted'].includes(j.status))
+  // Same definition as "What's working": a reply is an interview, offer or rejection. Ghosted is
+  // not a reply, and applications still inside the waiting window don't count against the rate.
+  const outcomes = jobs.map(j => outcomeOf(j, now.getTime()).outcome)
+  const responded = jobs.filter((_, i) => outcomes[i] === 'replied')
+  const withOutcome = outcomes.filter(o => o === 'replied' || o === 'no_reply').length
   const offered = jobs.filter(j => j.status === 'offered')
 
   // Weekly applications (last 8 weeks)
@@ -73,7 +78,7 @@ export const GET = withAuth(async (_req: NextRequest, _ctx: unknown, { db }: Aut
     responded: responded.length,
     offered: offered.length,
     offerRate: applied.length > 0 ? Math.round((offered.length / applied.length) * 100) : 0,
-    responseRate: applied.length > 0 ? Math.round((responded.length / applied.length) * 100) : 0,
+    responseRate: withOutcome > 0 ? Math.round((responded.length / withOutcome) * 100) : 0,
     weeklyApplications,
     monthlyApplications,
     upcomingInterviews: upcoming14.length,
