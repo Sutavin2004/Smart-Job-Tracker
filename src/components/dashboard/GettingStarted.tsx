@@ -78,7 +78,7 @@ export function GettingStarted({ hasResume, hasRunAgent, hasApplied, onAddJob, p
         {steps.map((step, i) => {
           const current = i === next
           return (
-            <li key={step.title} className="flex items-start gap-4 py-4 first:pt-0 last:pb-0">
+            <li key={step.title} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 gap-y-3 py-4 first:pt-0 last:pb-0 sm:flex">
               <span
                 aria-hidden="true"
                 className={cn(
@@ -98,8 +98,8 @@ export function GettingStarted({ hasResume, hasRunAgent, hasApplied, onAddJob, p
               </div>
               {!step.done && (
                 step.locked
-                  ? <span className="shrink-0 pt-1 text-[13px] text-slate-400">After step {i}</span>
-                  : <Link href={step.href} className={cn('shrink-0', current ? 'btn-primary' : 'btn-secondary')}>{step.cta}</Link>
+                  ? <span className="col-start-2 shrink-0 text-[13px] text-slate-500 sm:pt-1">After step {i}</span>
+                  : <Link href={step.href} className={cn('col-start-2 shrink-0 justify-self-start', current ? 'btn-primary' : 'btn-secondary')}>{step.cta}</Link>
               )}
             </li>
           )

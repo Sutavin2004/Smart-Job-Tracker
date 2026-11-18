@@ -140,39 +140,25 @@ function SessionRow({ session }: { session: AgentSession }) {
             : 'cursor-default'
         )}
       >
-        <div className={cn(
-          'w-2 h-2 rounded-full shrink-0',
-          session.status === 'completed' ? 'bg-green-500'
-            : session.status === 'failed' ? 'bg-red-500'
-            : 'bg-amber-500 animate-pulse'
-        )} />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-slate-900 dark:text-white">
             {session.status === 'completed'
-              ? `Found ${session.jobsFound} jobs · Added ${session.jobsAdded} new`
+              ? (session.jobsAdded ? `Added ${session.jobsAdded} new ${session.jobsAdded === 1 ? 'job' : 'jobs'}` : 'No new jobs this time')
               : session.status === 'failed'
-              ? `Failed: ${session.error ?? 'Unknown error'}`
-              : 'Running...'}
+              ? 'This search didn’t finish'
+              : 'Searching…'}
           </p>
-          <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1">
+          <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formatRelative(session.startedAt)}
             {session.trigger === 'scheduled' && (
-              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-brand-50 dark:bg-brand-900/30 px-1.5 py-0.5 text-[11px] font-medium text-brand-700 dark:text-brand-300">
-                <CalendarClock className="w-3 h-3" /> Daily run
+              <span className="ml-1 inline-flex items-center gap-1 text-slate-500">
+                <CalendarClock className="w-3 h-3" aria-hidden="true" /> morning search
               </span>
             )}
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className={cn(
-            'text-[11px] font-semibold px-2 py-0.5 rounded-full',
-            session.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-              : session.status === 'failed' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300'
-              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
-          )}>
-            {session.status}
-          </span>
           {isClickable && (
             <div className="text-slate-400">
               {expanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
@@ -474,7 +460,7 @@ export default function AgentPage() {
         </div>
       )}
 
-      {sessions.length === 0 && !running && (
+      {sessions.length === 0 && !running && !profileIncomplete && (
         <div className="card p-10 text-center">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No searches yet</p>
           <p className="text-[13px] text-slate-500 mt-1">Each search shows up here with the jobs it added.</p>
