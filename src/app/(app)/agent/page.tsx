@@ -4,15 +4,13 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
   ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
-  Sparkles, Briefcase, ArrowUpRight, Save, Loader2,
-  Target, Brain, DollarSign, Wifi, ChevronUp, CalendarClock,
+  Sparkles, Briefcase, ArrowUpRight, Loader2, CalendarClock,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { formatRelative } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { AgentSession, UserProfile } from '@/lib/types'
-import { CURRENCY_OPTIONS } from '@/lib/types'
 import Link from 'next/link'
 
 interface LogLine {
@@ -225,304 +223,6 @@ function SessionRow({ session }: { session: AgentSession }) {
   )
 }
 
-// ── Inline search preferences panel ─────────────────────────────────────────
-
-function SearchPreferencesPanel({
-  profile,
-  onSaved,
-}: {
-  profile: UserProfile
-  onSaved: (p: UserProfile) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<UserProfile>(profile)
-  const [saving, setSaving] = useState(false)
-
-  // Sync if parent profile changes (initial load)
-  useEffect(() => { setDraft(profile) }, [profile])
-
-  function update(key: keyof UserProfile, value: unknown) {
-    setDraft(d => ({ ...d, [key]: value }))
-  }
-
-  async function save() {
-    setSaving(true)
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        // autoDiscover has its own toggle; leave it out so a stale draft can't overwrite it.
-        body: JSON.stringify(Object.fromEntries(Object.entries(draft).filter(([k]) => k !== 'autoDiscover'))),
-      })
-      if (!res.ok) throw new Error()
-      const saved = await res.json()
-      onSaved(saved)
-      toast.success('Search preferences saved!')
-      setOpen(false)
-    } catch {
-      toast.error('Failed to save')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const isComplete = !!draft.targetRoles && !!draft.skills
-
-  return (
-    <div className="card overflow-hidden">
-      {/* Header — always visible */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 dark:hover:bg-white/[0.05] transition-colors text-left"
-      >
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-slate-900 dark:text-white">Search preferences</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-            {isComplete
-              ? [draft.targetRoles.split(',').filter(Boolean).slice(0, 2).map(r => r.trim()).join(', '), draft.preferRemote && 'remote', draft.preferHybrid && 'hybrid'].filter(Boolean).join(', ')
-              : 'Add target roles and skills to run the agent'}
-          </p>
-        </div>
-        {!isComplete && (
-          <span className="text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full shrink-0">
-            Required
-          </span>
-        )}
-        {open ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
-      </button>
-
-      {/* Expandable form */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
-          >
-            <div className="border-t border-slate-200 dark:border-[#2A2B2E] p-5 space-y-5">
-
-              {/* Target roles + skills */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Target className="w-3.5 h-3.5 text-slate-500" /> Target Roles *
-                  </label>
-                  <input
-                    value={draft.targetRoles}
-                    onChange={e => update('targetRoles', e.target.value)}
-                    placeholder="Software Engineer, Frontend Developer"
-                    className="input text-sm"
-                  />
-                  <p className="text-[11px] text-slate-400">Comma-separated · up to 3 used per search</p>
-                </div>
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Brain className="w-3.5 h-3.5 text-slate-500" /> Skills *
-                  </label>
-                  <input
-                    value={draft.skills}
-                    onChange={e => update('skills', e.target.value)}
-                    placeholder="TypeScript, React, Next.js, Python"
-                    className="input text-sm"
-                  />
-                  <p className="text-[11px] text-slate-400">Used to score how well each job fits you</p>
-                </div>
-              </div>
-
-              {/* Locations */}
-              <div className="space-y-1.5">
-                <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500" /> Target Locations
-                </label>
-                <input
-                  value={draft.targetLocations}
-                  onChange={e => update('targetLocations', e.target.value)}
-                  placeholder="Toronto, Vancouver, New York (comma-separated)"
-                  className="input text-sm"
-                />
-              </div>
-
-              {/* Salary + work style in one row */}
-              <div className="flex flex-wrap gap-4 items-end">
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <DollarSign className="w-3.5 h-3.5 text-slate-500" /> Salary Range
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={draft.currency}
-                      onChange={e => update('currency', e.target.value)}
-                      className="input text-sm w-20"
-                    >
-                      {CURRENCY_OPTIONS.map(c => <option key={c}>{c}</option>)}
-                    </select>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-                      <input
-                        type="number"
-                        value={draft.targetSalaryMin}
-                        onChange={e => update('targetSalaryMin', Number(e.target.value))}
-                        placeholder="60"
-                        className="input text-sm pl-5 w-24"
-                      />
-                    </div>
-                    <span className="text-slate-400 text-sm">–</span>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-                      <input
-                        type="number"
-                        value={draft.targetSalaryMax}
-                        onChange={e => update('targetSalaryMax', Number(e.target.value))}
-                        placeholder="120"
-                        className="input text-sm pl-5 w-24"
-                      />
-                    </div>
-                    <span className="text-slate-400 text-xs">k/yr</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                    <Wifi className="w-3.5 h-3.5 text-slate-500" /> Work Style
-                  </label>
-                  <div className="flex gap-2">
-                    {([['preferRemote', 'Remote'] , ['preferHybrid', 'Hybrid']] as [keyof UserProfile, string][]).map(([key, label]) => (
-                      <label key={key as string} className={cn(
-                        'flex items-center gap-1.5 px-3 py-2 rounded-xl border-2 cursor-pointer text-sm font-medium transition-all select-none',
-                        draft[key]
-                          ? 'border-brand-400 bg-brand-50 dark:bg-brand-900/20 text-brand-700 dark:text-brand-300'
-                          : 'border-slate-200 dark:border-[#2A2B2E] text-slate-500 hover:border-slate-300 dark:hover:border-slate-600'
-                      )}>
-                        <input
-                          type="checkbox"
-                          checked={draft[key] as boolean}
-                          onChange={e => update(key, e.target.checked)}
-                          className="sr-only"
-                        />
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Exclude keywords */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  Exclude keywords
-                </label>
-                <input
-                  value={draft.excludeKeywords}
-                  onChange={e => update('excludeKeywords', e.target.value)}
-                  placeholder="senior, lead, manager, 10+ years (comma-separated)"
-                  className="input text-sm"
-                />
-                <p className="text-[11px] text-slate-400">Jobs containing these words will be filtered out</p>
-              </div>
-
-              <div className="flex items-center justify-between pt-1 border-t border-slate-200 dark:border-[#2A2B2E]">
-                <p className="text-xs text-slate-400">Changes apply on the next agent run</p>
-                <button onClick={save} disabled={saving} className="btn-primary text-sm py-2 px-5">
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                  {saving ? 'Saving…' : 'Save preferences'}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ── Daily run toggle ─────────────────────────────────────────────────────────
-
-function DailyRunToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (p: UserProfile) => void }) {
-  const [saving, setSaving] = useState(false)
-  const on = Boolean(profile.autoDiscover)
-  const ready = Boolean(profile.targetRoles && profile.skills)
-
-  async function toggle() {
-    setSaving(true)
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ autoDiscover: !on }),
-      })
-      if (!res.ok) throw new Error()
-      onSaved(await res.json())
-      toast.success(!on ? 'Daily discovery is on. New matches will appear each morning.' : 'Daily discovery is off')
-    } catch {
-      toast.error("Couldn't update that setting")
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="card flex items-center gap-4 px-5 py-4">
-      <div className="flex-1 min-w-0">
-        <p id="daily-run-label" className="text-sm font-semibold text-slate-900 dark:text-white">Run every morning</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-          {ready
-            ? 'Around 6–7 am Toronto time, the agent searches with your saved preferences and adds new matches to your board.'
-            : 'Set your target roles and skills first.'}
-        </p>
-      </div>
-      <button
-        role="switch"
-        aria-checked={on}
-        aria-labelledby="daily-run-label"
-        onClick={toggle}
-        disabled={saving || (!on && !ready)}
-        className={cn(
-          'relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50',
-          on ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'
-        )}
-      >
-        <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
-      </button>
-    </div>
-  )
-}
-
-function AutoPrepareToggle({ profile, onSaved }: { profile: UserProfile; onSaved: (p: UserProfile) => void }) {
-  const [saving, setSaving] = useState(false)
-  const on = profile.autoPrepare !== false
-
-  async function toggle() {
-    setSaving(true)
-    const res = await fetch('/api/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ autoPrepare: !on }) })
-    setSaving(false)
-    if (!res.ok) return toast.error("Couldn't update that setting")
-    onSaved(await res.json())
-  }
-
-  return (
-    <div className="card flex items-center gap-4 px-5 py-4">
-      <div className="min-w-0 flex-1">
-        <p id="auto-prepare-label" className="text-sm font-semibold text-slate-900 dark:text-white">Prepare applications for the best matches</p>
-        <p className="mt-0.5 text-xs text-slate-500">
-          Writes a tailored résumé, cover letter and answers for your top 3 new matches. Find them under <Link href="/apply" className="underline underline-offset-2">Ready to apply</Link>. Uses up to 3 AI actions a day.
-        </p>
-      </div>
-      <button
-        role="switch"
-        aria-checked={on}
-        aria-labelledby="auto-prepare-label"
-        onClick={toggle}
-        disabled={saving}
-        className={cn('relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50', on ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600')}
-      >
-        <span className={cn('inline-block h-5 w-5 rounded-full bg-white shadow transition-transform', on ? 'translate-x-5' : 'translate-x-0.5')} />
-      </button>
-    </div>
-  )
-}
-
 // ── Main page ────────────────────────────────────────────────────────────────
 
 export default function AgentPage() {
@@ -538,6 +238,18 @@ export default function AgentPage() {
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
     loadSessions()
   }, [])
+
+  // "Run the agent" on the Profile page lands here with ?run=1: start once the profile is loaded.
+  const autoRun = useRef(false)
+  useEffect(() => {
+    if (!profile || autoRun.current) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('run') !== '1') return
+    autoRun.current = true
+    window.history.replaceState(null, '', '/agent')
+    if (profile.targetRoles && profile.skills) runAgent()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile])
 
   useEffect(() => {
     if (terminalRef.current) {
@@ -633,16 +345,26 @@ export default function AgentPage() {
         </div>
       </div>
 
-      {/* Search preferences (replaces the old warning banner) */}
+      {/* What the agent searches for. Edited on the Profile page, so there's one place for it. */}
       {profile && (
-        <SearchPreferencesPanel
-          profile={profile}
-          onSaved={setProfile}
-        />
+        <div className="card flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4 text-sm">
+          <dl className="flex min-w-0 flex-1 flex-wrap gap-x-6 gap-y-2">
+            <div className="min-w-0">
+              <dt className="text-[12px] text-slate-500">Searching for</dt>
+              <dd className="truncate text-slate-900 dark:text-white">{profile.targetRoles.split(',').map(r => r.trim()).filter(Boolean).slice(0, 3).join(', ') || 'No roles yet'}</dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-[12px] text-slate-500">In</dt>
+              <dd className="truncate text-slate-900 dark:text-white">{[profile.targetLocations, profile.preferRemote && !/remote/i.test(profile.targetLocations) ? 'Remote' : ''].filter(Boolean).join(', ') || 'Anywhere'}</dd>
+            </div>
+            <div>
+              <dt className="text-[12px] text-slate-500">Every morning</dt>
+              <dd className="text-slate-900 dark:text-white">{profile.autoDiscover ? 'On' : 'Off'}</dd>
+            </div>
+          </dl>
+          <Link href="/profile" className="btn-secondary py-1.5">Change in Profile</Link>
+        </div>
       )}
-
-      {profile && <DailyRunToggle profile={profile} onSaved={setProfile} />}
-      {profile && <AutoPrepareToggle profile={profile} onSaved={setProfile} />}
 
       {/* Agent launch card */}
       <div className="card p-6">
@@ -676,7 +398,7 @@ export default function AgentPage() {
             {profileIncomplete && (
               <p className="mt-3 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                Add target roles and skills above to run the agent.
+                Add roles and skills on your <Link href="/profile" className="underline underline-offset-2">Profile</Link> to run the agent.
               </p>
             )}
           </div>

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Briefcase, BarChart2, Calendar, Settings,
-  Sun, Moon, CheckSquare, Mail, FileText,
+  Sun, Moon, CheckSquare, Mail, UserRound,
   PanelLeftClose, PanelLeftOpen, Bot, LogOut, Send,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -23,7 +23,7 @@ const NAV_MAIN = [
 ]
 
 const NAV_TOOLS = [
-  { href: '/resume', label: 'Résumé', icon: FileText },
+  { href: '/profile', label: 'Profile', icon: UserRound },
   { href: '/templates', label: 'Email templates', icon: Mail },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
@@ -55,6 +55,7 @@ export function Sidebar({ user, demo }: { user: { name: string; email: string };
       <Link
         href={href}
         title={collapsed ? label : undefined}
+        data-tour={href}
         aria-current={active ? 'page' : undefined}
         className={cn('sidebar-nav-item', active && 'active', collapsed && 'justify-center px-2')}
       >

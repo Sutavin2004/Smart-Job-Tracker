@@ -42,3 +42,25 @@ describe('mergeAutofill', () => {
     expect(mergeAutofill(current, found, true)).toEqual(found)
   })
 })
+
+import { searchDefaults } from './autofill'
+
+describe('searchDefaults', () => {
+  const blank = { targetSalaryMin: 0, targetSalaryMax: 0, currency: 'USD', excludeKeywords: '', autoDiscover: false, targetRoles: 'DevOps Engineer', skills: 'Python' }
+  it('sets a new-grad range in the local currency, senior skip words and the daily run', () => {
+    expect(searchDefaults(blank, 1, 'ca')).toEqual({
+      targetSalaryMin: 60, targetSalaryMax: 85, currency: 'CAD',
+      excludeKeywords: 'senior, sr., lead, staff, principal, manager, director, 5+ years', autoDiscover: true,
+    })
+  })
+  it('scales with experience', () => {
+    expect(searchDefaults(blank, 5, 'us')).toMatchObject({ targetSalaryMin: 90, targetSalaryMax: 130, excludeKeywords: 'principal, director, vp, 10+ years' })
+    expect(searchDefaults(blank, 5, 'us').currency).toBeUndefined()
+  })
+  it('never overwrites settings the user chose', () => {
+    expect(searchDefaults({ ...blank, targetSalaryMin: 80, excludeKeywords: 'senior', autoDiscover: true }, 1, 'ca')).toEqual({})
+  })
+  it('leaves the daily run off until roles and skills are known', () => {
+    expect(searchDefaults({ ...blank, targetRoles: '' }, 1, 'ca').autoDiscover).toBeUndefined()
+  })
+})

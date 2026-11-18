@@ -117,3 +117,43 @@ export const AUTOFILL_TOOL = {
     required: ['currentTitle', 'education', 'bio', 'skills', 'targetRoles', 'targetLocations', 'jobSearchGoals'],
   },
 }
+
+export interface SearchDefaults {
+  targetSalaryMin?: number
+  targetSalaryMax?: number
+  currency?: string
+  excludeKeywords?: string
+  autoDiscover?: boolean
+}
+
+const CURRENCY_BY_COUNTRY: Record<string, string> = { ca: 'CAD', us: 'USD', gb: 'GBP', au: 'AUD' }
+
+/**
+ * Starting job-search settings a résumé can't state directly: a salary range from
+ * experience level, skip words for senior roles, and the daily search. Only fills
+ * settings still at their defaults, so nothing the user chose is overwritten.
+ * Salaries are in thousands, matching the rest of the app.
+ */
+export function searchDefaults(
+  current: { targetSalaryMin: number; targetSalaryMax: number; currency: string; excludeKeywords: string; autoDiscover?: boolean | null; targetRoles?: string; skills?: string },
+  years: number,
+  country: string | null,
+): SearchDefaults {
+  const out: SearchDefaults = {}
+  if (!current.targetSalaryMin && !current.targetSalaryMax) {
+    // Rough bands for Canadian and US tech roles; the user sees and can change them.
+    const bands: [number, number, number][] = [[1, 60, 85], [3, 70, 100], [6, 90, 130], [99, 110, 160]]
+    const [, lo, hi] = bands.find(([max]) => years <= max)!
+    out.targetSalaryMin = lo
+    out.targetSalaryMax = hi
+    const currency = country ? CURRENCY_BY_COUNTRY[country] : undefined
+    if (currency && currency !== current.currency) out.currency = currency
+  }
+  if (!current.excludeKeywords.trim()) {
+    out.excludeKeywords = years <= 3
+      ? 'senior, sr., lead, staff, principal, manager, director, 5+ years'
+      : years <= 7 ? 'principal, director, vp, 10+ years' : 'intern, junior, entry level'
+  }
+  if (!current.autoDiscover && current.targetRoles && current.skills) out.autoDiscover = true
+  return out
+}

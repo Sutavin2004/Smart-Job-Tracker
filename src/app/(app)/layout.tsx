@@ -9,6 +9,8 @@ import { DemoBanner } from '@/components/DemoBanner'
 import { SessionWatcher } from '@/components/SessionWatcher'
 import { getUserByToken, SESSION_COOKIE } from '@/lib/auth'
 import { IS_DEMO } from '@/lib/demo'
+import { scopedDb } from '@/lib/scoped-db'
+import { WelcomeTour } from '@/components/WelcomeTour'
 
 // Every page in this group needs a signed-in user, checked against the database.
 export const dynamic = 'force-dynamic'
@@ -20,6 +22,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const path = (await headers()).get('x-pathname') ?? '/'
     redirect(path === '/' || !path.startsWith('/') || path.startsWith('//') ? '/login' : `/login?next=${encodeURIComponent(path)}`)
   }
+
+  // Offer the welcome tour until it has been finished or skipped once.
+  const profile = await scopedDb(user.id).userProfile.findFirst({ select: { tourSeenAt: true } })
+  const offerTour = !profile?.tourSeenAt
 
   return (
     <>
@@ -41,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <KeyboardShortcuts />
       <FollowUpBanner />
       <SessionWatcher />
+      <WelcomeTour offer={offerTour} />
     </>
   )
 }

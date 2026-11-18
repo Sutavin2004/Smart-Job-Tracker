@@ -294,38 +294,39 @@ model ApplicationQA {
 }
 
 model UserProfile {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name            String   @default("")
-  email           String   @default("")
-  phone           String   @default("")
-  linkedin        String   @default("")
-  github          String   @default("")
-  portfolio       String   @default("")
-  currentTitle    String   @default("")
-  yearsExperience Int      @default(0)
-  targetRoles     String   @default("")
-  targetSalaryMin Int      @default(0)
-  targetSalaryMax Int      @default(0)
-  currency        String   @default("CAD")
-  skills          String   @default("")
-  education       String   @default("")
-  bio             String   @default("")
-  masterResume    String   @default("")
-  jobSearchGoals  String   @default("")
-  preferRemote    Boolean  @default(false)
-  preferHybrid    Boolean  @default(true)
-  targetLocations String   @default("")
-  excludeKeywords String   @default("")
-  weeklyGoal      Int      @default(5)
-  defaultSource   String   @default("LinkedIn")
-  timezone        String   @default("America/Toronto")
-  autoDiscover    Boolean  @default(false)
-  emailDigest     Boolean  @default(false) // email new matches after the daily run
-  autoPrepare     Boolean  @default(true) // prepare applications for the best new matches after each run
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String    @default("")
+  email           String    @default("")
+  phone           String    @default("")
+  linkedin        String    @default("")
+  github          String    @default("")
+  portfolio       String    @default("")
+  currentTitle    String    @default("")
+  yearsExperience Int       @default(0)
+  targetRoles     String    @default("")
+  targetSalaryMin Int       @default(0)
+  targetSalaryMax Int       @default(0)
+  currency        String    @default("CAD")
+  skills          String    @default("")
+  education       String    @default("")
+  bio             String    @default("")
+  masterResume    String    @default("")
+  jobSearchGoals  String    @default("")
+  preferRemote    Boolean   @default(false)
+  preferHybrid    Boolean   @default(true)
+  targetLocations String    @default("")
+  excludeKeywords String    @default("")
+  weeklyGoal      Int       @default(5)
+  defaultSource   String    @default("LinkedIn")
+  timezone        String    @default("America/Toronto")
+  autoDiscover    Boolean   @default(false)
+  emailDigest     Boolean   @default(false) // email new matches after the daily run
+  autoPrepare     Boolean   @default(true) // prepare applications for the best new matches after each run
+  tourSeenAt      DateTime? // set once the user finishes or skips the welcome tour
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model AgentSession {

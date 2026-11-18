@@ -13,7 +13,8 @@ const QUICK_ACTIONS = [
   { label: 'Add job', icon: Plus, action: 'add-job', shortcut: '⌘N' },
   { label: 'Run agent', icon: Bot, action: 'nav:/agent' },
   { label: 'Analytics', icon: BarChart2, action: 'nav:/analytics' },
-  { label: 'Resume tools', icon: FileText, action: 'nav:/resume' },
+  { label: 'Profile and résumé', icon: FileText, action: 'nav:/profile' },
+  { label: 'Check my résumé', icon: FileText, action: 'nav:/resume' },
   { label: 'Settings', icon: Settings, action: 'nav:/settings' },
 ]
 

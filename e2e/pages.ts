@@ -7,7 +7,8 @@ export const PAGES = [
   { path: '/analytics', heading: /analytics/i },
   { path: '/calendar', heading: /calendar/i },
   { path: '/tasks', heading: /tasks/i },
-  { path: '/resume', heading: /résumé/i },
+  { path: '/profile', heading: /^profile$/i },
+  { path: '/resume', heading: /résumé check/i },
   { path: '/templates', heading: /templates/i },
   { path: '/settings', heading: /settings/i },
 ] as const

@@ -31,7 +31,7 @@ export function KeyboardShortcuts() {
         case 'j': router.push('/jobs'); break
         case 'g': router.push('/agent'); break
         case 'a': router.push('/analytics'); break
-        case 'r': router.push('/resume'); break
+        case 'p': router.push('/profile'); break
         case 's': router.push('/settings'); break
       }
     }

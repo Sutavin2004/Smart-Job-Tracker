@@ -192,3 +192,60 @@ test('saving a résumé fills in empty profile fields without touching ones alre
   expect(profile.github).toBe('https://github.com/jordanlee')
   expect(profile.name).toBe('Typed Name') // set at sign-up, so not replaced
 })
+
+test('the welcome tour is offered once, walks through the menu and can be replayed', async ({ page }) => {
+  await signUp(page.request, unique(), 'Tour Taker')
+  await page.goto('/')
+  const card = page.getByRole('dialog', { name: 'Welcome to JobTrack' })
+  await expect(card).toBeVisible()
+  await card.getByRole('button', { name: 'Show me around' }).click()
+  await expect(page.getByRole('dialog', { name: 'Start with your profile' })).toBeVisible()
+  for (const title of ['The job agent finds jobs for you', 'Ready to apply', 'Your board', 'Your dashboard']) {
+    await page.getByRole('button', { name: 'Next' }).click()
+    await expect(page.getByRole('dialog', { name: title })).toBeVisible()
+  }
+  await page.getByRole('button', { name: 'Set up my profile' }).click()
+  await expect(page).toHaveURL('/profile')
+
+  // Finished once, so it isn't offered again…
+  await page.goto('/')
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Tour Taker')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  // …but Settings → Help replays it.
+  await page.goto('/settings?tab=help')
+  await page.getByRole('link', { name: 'Take the tour' }).click()
+  await expect(page.getByRole('dialog', { name: 'Start with your profile' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('pasting a résumé on Profile fills in the profile and starting search settings', async ({ page }) => {
+  await signUp(page.request, unique(), 'Jordan Lee')
+  await page.request.put('/api/profile', { data: { tourSeen: true } })
+  await page.goto('/profile')
+  await page.getByRole('button', { name: 'Paste the text instead' }).click()
+  await page.getByLabel('Résumé text').fill(`Jordan Lee
+Toronto, ON | +1 (416) 555-0100 | linkedin.com/in/jordan-lee | github.com/jordanlee
+
+EXPERIENCE
+Software Developer Intern, Northwind (2025)
+- Built internal dashboards in React and TypeScript used by 40 people across three teams.`)
+  await page.getByRole('button', { name: 'Save résumé' }).click()
+  await expect(page.getByRole('status').filter({ hasText: 'Filled in from your résumé' })).toContainText('phone')
+  await expect(page.getByText('Résumé saved')).toBeVisible()
+  await expect(page.getByLabel('Phone')).toHaveValue('+1 (416) 555-0100')
+  await expect(page.getByLabel('GitHub')).toHaveValue('https://github.com/jordanlee')
+  // Starting search settings for someone early in their career.
+  await expect(page.getByLabel('Skip jobs that mention')).toHaveValue(/senior/)
+  await expect(page.getByLabel('Minimum')).not.toHaveValue('')
+
+  // Edits wait for Save, and Run the agent needs roles and skills.
+  await expect(page.getByRole('button', { name: 'Run the agent' })).toBeDisabled()
+  await page.getByLabel('Roles').fill('Software Engineer')
+  await page.getByLabel('Skills').fill('React, TypeScript')
+  await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeVisible()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.getByRole('region', { name: 'Unsaved changes' })).toHaveCount(0)
+  const profile = await (await page.request.get('/api/profile')).json()
+  expect(profile).toMatchObject({ targetRoles: 'Software Engineer', skills: 'React, TypeScript', phone: '+1 (416) 555-0100' })
+})

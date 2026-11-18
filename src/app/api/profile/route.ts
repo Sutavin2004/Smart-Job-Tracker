@@ -50,7 +50,9 @@ export const PUT = withAuth(async (req: NextRequest, _ctx: unknown, { db, user }
   if (profile) {
     // Partial update: only touch fields the client actually sent, so saving one
     // setting (e.g. the daily-agent toggle) can't blank out the rest of the profile.
-    const patch = Object.fromEntries(Object.entries(data).filter(([k]) => k in body))
+    const patch: Record<string, unknown> = Object.fromEntries(Object.entries(data).filter(([k]) => k in body))
+    // The welcome tour: true marks it seen, false offers it again.
+    if ('tourSeen' in body) patch.tourSeenAt = body.tourSeen ? new Date() : null
     const updated = await db.userProfile.update({ where: { id: profile.id }, data: patch })
     // Keep fit scores in step with the settings they depend on.
     if (SCORING_FIELDS.some(f => f in body)) await rescoreSaved(db).catch(e => console.error('rescore', e))

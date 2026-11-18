@@ -6,6 +6,7 @@ const SHOTS = [
   { path: '/jobs', name: 'jobs-board' },
   { path: '/agent', name: 'job-agent' },
   { path: '/apply', name: 'ready-to-apply' },
+  { path: '/profile', name: 'profile' },
   { path: '/analytics', name: 'analytics' },
 ]
 

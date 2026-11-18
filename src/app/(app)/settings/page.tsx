@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Loader2, Download, Upload } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { toast } from 'sonner'
@@ -8,15 +9,14 @@ import { cn } from '@/lib/utils'
 import { signOut } from '@/components/Sidebar'
 import type { UserProfile } from '@/lib/types'
 
-type Tab = 'profile' | 'account' | 'tracking' | 'appearance' | 'data' | 'shortcuts'
+type Tab = 'account' | 'tracking' | 'appearance' | 'data' | 'help'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'profile', label: 'Profile' },
   { id: 'account', label: 'Account' },
   { id: 'tracking', label: 'Auto-tracking' },
   { id: 'appearance', label: 'Appearance' },
   { id: 'data', label: 'Data' },
-  { id: 'shortcuts', label: 'Shortcuts' },
+  { id: 'help', label: 'Help' },
 ]
 
 const SHORTCUTS: [string, string][] = [
@@ -26,7 +26,7 @@ const SHORTCUTS: [string, string][] = [
   ['J', 'Go to board'],
   ['G', 'Go to job agent'],
   ['A', 'Go to analytics'],
-  ['R', 'Go to résumé'],
+  ['P', 'Go to profile'],
   ['S', 'Go to settings'],
 ]
 
@@ -79,10 +79,9 @@ function Meter({ label, used, limit }: { label: string; used: number; limit: num
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
-  const [tab, setTab] = useState<Tab>('profile')
+  const [tab, setTab] = useState<Tab>('account')
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [me, setMe] = useState<Me | null>(null)
-  const [saving, setSaving] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [verifyExpired, setVerifyExpired] = useState(false)
 
@@ -91,47 +90,19 @@ export default function SettingsPage() {
     if (params.get('verify') === 'expired') {
       setTab('account')
       setVerifyExpired(true)
-    } else if (params.get('tab') === 'account' || params.get('tab') === 'tracking') setTab(params.get('tab') as Tab)
+    } else if (['account', 'tracking', 'appearance', 'data', 'help'].includes(params.get('tab') ?? '')) setTab(params.get('tab') as Tab)
     setMounted(true)
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
     fetch('/api/auth/me').then(r => r.json()).then(setMe).catch(() => {})
   }, [])
-
-  function update(key: keyof UserProfile, value: unknown) {
-    setProfile(p => (p ? { ...p, [key]: value } : p))
-  }
-
-  async function saveProfile() {
-    if (!profile) return
-    setSaving(true)
-    try {
-      const res = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(profile),
-      })
-      if (!res.ok) throw new Error()
-      toast.success('Profile saved')
-    } catch {
-      toast.error('Could not save your profile. Try again.')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Settings</h1>
-          <p className="mt-1 text-sm text-slate-500">Your profile, account and data.</p>
+          <p className="mt-1 text-sm text-slate-500">Your account, tracking and data. Your details and job search live on your <Link href="/profile" className="underline underline-offset-4">Profile</Link>.</p>
         </div>
-        {tab === 'profile' && profile && (
-          <button onClick={saveProfile} disabled={saving} className="btn-primary">
-            {saving && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {saving ? 'Saving…' : 'Save profile'}
-          </button>
-        )}
       </header>
 
       <div role="tablist" aria-label="Settings sections" className="mt-6 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-[#2A2B2E]">
@@ -161,7 +132,6 @@ export default function SettingsPage() {
             That confirmation link has expired or was already used. Send a new one from the Email section below.
           </p>
         )}
-        {tab === 'profile' && (profile ? <ProfileTab profile={profile} update={update} /> : <Loading />)}
         {tab === 'account' && (me ? <AccountTab me={me} profile={profile} onProfile={setProfile} /> : <Loading />)}
         {tab === 'appearance' && mounted && (
           <Section title="Theme" description="System follows your device setting.">
@@ -198,7 +168,12 @@ export default function SettingsPage() {
             </p>
           </Section>
         )}
-        {tab === 'shortcuts' && (
+        {tab === 'help' && (
+          <Section title="Welcome tour" description="A one-minute walk through the main pages.">
+            <Link href="/?tour=1" className="btn-secondary">Take the tour</Link>
+          </Section>
+        )}
+        {tab === 'help' && (
           <Section title="Keyboard shortcuts" description="Single-key shortcuts work when you are not typing in a field.">
             <dl className="divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-[#2A2B2E] dark:border-[#2A2B2E]">
               {SHORTCUTS.map(([key, desc]) => (
@@ -217,47 +192,6 @@ export default function SettingsPage() {
 
 function Loading() {
   return <div className="flex items-center gap-2 py-10 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading…</div>
-}
-
-function ProfileTab({ profile, update }: { profile: UserProfile; update: (k: keyof UserProfile, v: unknown) => void }) {
-  const text = (key: keyof UserProfile, label: string, placeholder = '', type = 'text') => (
-    <Field label={label} id={`p-${key}`}>
-      <input id={`p-${key}`} type={type} className="input" value={(profile[key] as string) ?? ''} placeholder={placeholder} onChange={e => update(key, e.target.value)} />
-    </Field>
-  )
-  return (
-    <>
-      <Section title="About you" description="Used on cover letters and in emails the app drafts for you.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {text('name', 'Full name')}
-          {text('email', 'Contact email', '', 'email')}
-          {text('phone', 'Phone')}
-          {text('currentTitle', 'Current title', 'e.g. Software Engineering Student')}
-          <Field label="Years of experience" id="p-years">
-            <input id="p-years" type="number" min={0} className="input w-32" value={profile.yearsExperience} onChange={e => update('yearsExperience', Number(e.target.value))} />
-          </Field>
-          {text('education', 'Education', 'e.g. B.Sc. Computer Science, 2025')}
-        </div>
-      </Section>
-      <Section title="Links" description="Added to cover letters when they are relevant.">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {text('linkedin', 'LinkedIn', 'https://linkedin.com/in/…')}
-          {text('github', 'GitHub', 'https://github.com/…')}
-          {text('portfolio', 'Website', 'https://…')}
-        </div>
-      </Section>
-      <Section title="Background for the AI" description="The assistant reads this when it scores jobs and writes for you. A few honest sentences work best.">
-        <div className="space-y-4">
-          <Field label="Summary" id="p-bio">
-            <textarea id="p-bio" rows={4} className="input resize-y" value={profile.bio} onChange={e => update('bio', e.target.value)} placeholder="What you are good at, what you have built, what you want next." />
-          </Field>
-          <Field label="What you are looking for" id="p-goals">
-            <textarea id="p-goals" rows={3} className="input resize-y" value={profile.jobSearchGoals} onChange={e => update('jobSearchGoals', e.target.value)} placeholder="Team size, kind of work, location, anything that is a must-have." />
-          </Field>
-        </div>
-      </Section>
-    </>
-  )
 }
 
 function AccountTab({ me, profile, onProfile }: { me: Me; profile: UserProfile | null; onProfile: (p: UserProfile) => void }) {

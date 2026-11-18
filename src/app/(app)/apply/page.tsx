@@ -124,7 +124,7 @@ export default function ApplyPage() {
       )}
       {auto?.aiEnabled && !auto.hasResume && !auto.demo && (
         <p className="mt-5 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
-          Add your full résumé first. Every tailored version is built from it. <Link href="/resume" className="font-medium underline underline-offset-4">Go to Résumé</Link>
+          Add your full résumé first. Every tailored version is built from it. <Link href="/profile" className="font-medium underline underline-offset-4">Go to Profile</Link>
         </p>
       )}
       {autoRunning && (

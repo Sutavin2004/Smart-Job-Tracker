@@ -5,7 +5,8 @@ import { consumeQuota, QuotaError } from '@/lib/quota'
 import { AI_MODELS } from '@/lib/ai-models'
 import { IS_DEMO } from '@/lib/demo'
 import { rescoreSaved } from '@/lib/agent/rescore'
-import { basicFields, parseAutofill, mergeAutofill, AUTOFILL_PROMPT, AUTOFILL_TOOL, type Autofill } from '@/lib/resume/autofill'
+import { basicFields, parseAutofill, mergeAutofill, searchDefaults, AUTOFILL_PROMPT, AUTOFILL_TOOL, type Autofill } from '@/lib/resume/autofill'
+import { homeCountry } from '@/lib/scoring'
 
 export const maxDuration = 60
 
@@ -51,8 +52,12 @@ export const POST = withAuth(async (req: NextRequest, _ctx: unknown, { db, user 
 
   // Contact details and links come from exact matches; the AI fills in the rest.
   const found = { ...ai, ...basicFields(resume) }
-  const patch = mergeAutofill(profile as unknown as Record<string, unknown>, found, Boolean(overwrite))
-  const updated = Object.keys(patch).length ? await db.userProfile.update({ where: { id: profile.id }, data: patch as Record<string, string | number> }) : profile
+  const filled = mergeAutofill(profile as unknown as Record<string, unknown>, found, Boolean(overwrite))
+  // Then starting search settings the résumé can't state (salary, skip words, daily run).
+  const merged = { ...profile, ...filled } as typeof profile
+  const defaults = searchDefaults(merged, Number(merged.yearsExperience) || 0, homeCountry(String(merged.targetLocations ?? '')))
+  const patch: Record<string, string | number | boolean> = { ...filled, ...defaults }
+  const updated = Object.keys(patch).length ? await db.userProfile.update({ where: { id: profile.id }, data: patch }) : profile
   if (Object.keys(patch).length) await rescoreSaved(db).catch(e => console.error('rescore', e))
-  return NextResponse.json({ filled: Object.keys(patch), usedAi, note, profile: updated })
+  return NextResponse.json({ filled: Object.keys(filled), suggested: Object.keys(defaults), usedAi, note, profile: updated })
 })
