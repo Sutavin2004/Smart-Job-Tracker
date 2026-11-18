@@ -42,7 +42,14 @@ export async function searchAdzuna(role: string, location: string): Promise<RawJ
   const res = await fetch(`https://api.adzuna.com/v1/api/jobs/${cc}/search/1?${params}`, { signal: AbortSignal.timeout(12000) }).catch(() => null)
   if (!res) throw new BoardError('Adzuna', 'did not respond')
   if (res.status === 401 || res.status === 403) throw new BoardError('Adzuna', 'rejected the App ID or App Key. Check both in your Vercel settings: each should be one line with no extra text')
-  if (!res.ok) throw new BoardError('Adzuna', `returned an error (${res.status})`)
+  if (res.status === 429) throw new BoardError('Adzuna', 'is limiting requests right now. It will be searched again on the next run')
+  if (!res.ok) {
+    // Adzuna explains errors as { exception: 'AUTH_FAIL', display: '…' }. Never echo the request (it holds the key).
+    const body = await res.json().catch(() => ({})) as { exception?: string; display?: string }
+    if (body.exception === 'AUTH_FAIL') throw new BoardError('Adzuna', 'rejected the App ID or App Key. Check both in your Vercel settings: each should be one line with no extra text')
+    const why = [body.exception, body.display].filter(Boolean).join(': ').replace(/[a-f0-9]{16,}/gi, '…').slice(0, 140)
+    throw new BoardError('Adzuna', `returned an error (${res.status}${why ? `, ${why}` : ''})`)
+  }
 
   const data = await res.json().catch(() => ({})) as { results?: Record<string, unknown>[] }
   const items = data.results ?? []

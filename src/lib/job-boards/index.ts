@@ -19,10 +19,23 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
 
   const searchPromises: Promise<RawJob[]>[] = []
 
+  // Adzuna's free plan rejects bursts, so its searches run one after another.
+  const adzunaQueries = roles.slice(0, 3).flatMap(role => locations.filter(l => !/^remote$/i.test(l.trim())).slice(0, 2).map(loc => [role, loc] as const))
+  searchPromises.push((async () => {
+    const out: RawJob[] = []
+    let firstError: unknown = null
+    for (const [i, [role, loc]] of adzunaQueries.entries()) {
+      if (i) await new Promise(r => setTimeout(r, 1100))
+      try { out.push(...await searchAdzuna(role, loc)) } catch (e) { firstError ??= e }
+    }
+    // Report a failure only if nothing came back at all.
+    if (!out.length && firstError) throw firstError
+    return out
+  })())
+
   for (const role of roles.slice(0, 3)) {
     for (const loc of locations.slice(0, 2)) {
       searchPromises.push(searchJSearch(role, loc, preferRemote))
-      searchPromises.push(searchAdzuna(role, loc))
     }
     // Remote boards: always when remote is preferred or a target location is 'Remote'.
     if (preferRemote || locations.some(l => /remote/i.test(l))) {
