@@ -69,12 +69,13 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
     // ── Step 1: Real job board APIs ──────────────────────────────────────
     log('Connecting to live job boards...', { step: 2 })
 
-    const { jobs: realJobs, sources } = await fetchRealJobs({
+    const { jobs: realJobs, sources, problems } = await fetchRealJobs({
       roles: roles.slice(0, 3),
       locations: locations.slice(0, 3),
       preferRemote: profile.preferRemote,
     })
 
+    for (const p of problems) log(`⚠️ ${p}`, { step: 2 })
     if (realJobs.length > 0) {
       log(`Live boards: ${realJobs.length} listings from ${sources.join(', ')}`, { step: 2 })
     } else {

@@ -1,6 +1,6 @@
 import type { RawJob } from './jsearch'
 import { searchJSearch } from './jsearch'
-import { searchAdzuna } from './adzuna'
+import { searchAdzuna, BoardError } from './adzuna'
 import { searchRemoteOK } from './remoteok'
 import { searchRemotive, searchJobicy } from './remote-boards'
 
@@ -12,7 +12,7 @@ export interface SearchParams {
   preferRemote: boolean
 }
 
-export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJob[]; sources: string[] }> {
+export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJob[]; sources: string[]; problems: string[] }> {
   const { roles, locations, preferRemote } = params
   const allJobs: RawJob[] = []
   const activeSources: string[] = []
@@ -31,6 +31,9 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
   }
 
   const results = await Promise.allSettled(searchPromises)
+
+  // One message per failing source, e.g. "Adzuna rejected the App ID or App Key…".
+  const problems = [...new Set(results.flatMap(r => (r.status === 'rejected' && r.reason instanceof BoardError ? [r.reason.message] : [])))]
 
   for (const result of results) {
     if (result.status === 'fulfilled' && result.value.length > 0) {
@@ -52,5 +55,5 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
     return true
   })
 
-  return { jobs: deduped, sources: activeSources }
+  return { jobs: deduped, sources: activeSources, problems }
 }

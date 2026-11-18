@@ -1,5 +1,10 @@
 import type { RawJob } from './jsearch'
 
+/** A job source that failed in a way worth telling the user about. */
+export class BoardError extends Error {
+  constructor(public source: string, public reason: string) { super(`${source} ${reason}`) }
+}
+
 const CA = /\b(canada|toronto|vancouver|montr[eé]al|calgary|edmonton|ottawa|waterloo|kitchener|mississauga|markham|brampton|hamilton|london,?\s*on|winnipeg|halifax|qu[eé]bec|victoria|ontario|british columbia|alberta|on|bc|ab|qc|mb|sk|ns|nb|nl|pei)\b/i
 const GB = /\b(uk|united kingdom|england|scotland|wales|london|manchester|edinburgh|bristol|cambridge|oxford)\b/i
 const US = /\b(usa|united states|new york|nyc|san francisco|seattle|austin|boston|chicago|los angeles|denver|atlanta|miami|washington,?\s*dc|[a-z ]+,\s*(ny|wa|tx|ma|il|co|ga|fl|nj|pa|va|nc|or|mi|mn|az))\b/i
@@ -35,7 +40,9 @@ export async function searchAdzuna(role: string, location: string): Promise<RawJ
   })
 
   const res = await fetch(`https://api.adzuna.com/v1/api/jobs/${cc}/search/1?${params}`, { signal: AbortSignal.timeout(12000) }).catch(() => null)
-  if (!res?.ok) return []
+  if (!res) throw new BoardError('Adzuna', 'did not respond')
+  if (res.status === 401 || res.status === 403) throw new BoardError('Adzuna', 'rejected the App ID or App Key. Check both in your Vercel settings: each should be one line with no extra text')
+  if (!res.ok) throw new BoardError('Adzuna', `returned an error (${res.status})`)
 
   const data = await res.json().catch(() => ({})) as { results?: Record<string, unknown>[] }
   const items = data.results ?? []
