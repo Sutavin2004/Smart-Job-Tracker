@@ -20,8 +20,9 @@ export function adzunaCountry(location: string): string {
 }
 
 export async function searchAdzuna(role: string, location: string): Promise<RawJob[]> {
-  const appId = process.env.ADZUNA_APP_ID
-  const appKey = process.env.ADZUNA_APP_KEY
+  // Pasted keys sometimes carry spaces or line breaks; neither is ever part of one.
+  const appId = process.env.ADZUNA_APP_ID?.replace(/\s+/g, '')
+  const appKey = process.env.ADZUNA_APP_KEY?.replace(/\s+/g, '')
   if (!appId || !appKey) return []
 
   const cc = adzunaCountry(location)
@@ -34,7 +35,6 @@ export async function searchAdzuna(role: string, location: string): Promise<RawJ
     results_per_page: '15',
     what: role,
     where,
-    content_type: 'application/json',
     sort_by: 'date',
     max_days_old: '30',
   })
@@ -45,7 +45,9 @@ export async function searchAdzuna(role: string, location: string): Promise<RawJ
   if (res.status === 429) throw new BoardError('Adzuna', 'is limiting requests right now. It will be searched again on the next run')
   if (!res.ok) {
     // Adzuna explains errors as { exception: 'AUTH_FAIL', display: '…' }. Never echo the request (it holds the key).
-    const body = await res.json().catch(() => ({})) as { exception?: string; display?: string }
+    const raw = await res.text().catch(() => '')
+    let body: { exception?: string; display?: string } = {}
+    try { body = JSON.parse(raw) } catch { body = { display: raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() } }
     if (body.exception === 'AUTH_FAIL') throw new BoardError('Adzuna', 'rejected the App ID or App Key. Check both in your Vercel settings: each should be one line with no extra text')
     const why = [body.exception, body.display].filter(Boolean).join(': ').replace(/[a-f0-9]{16,}/gi, '…').slice(0, 140)
     throw new BoardError('Adzuna', `returned an error (${res.status}${why ? `, ${why}` : ''})`)
