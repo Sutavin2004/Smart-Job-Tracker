@@ -35,7 +35,8 @@ test('sign up through the form lands on an empty dashboard', async ({ page }) =>
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Jordan')
-  await expect(page.getByRole('heading', { name: 'Your board is empty' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Get set up in three steps' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Add résumé' })).toHaveAttribute('href', '/profile')
 
   // Signing out ends the session.
   await page.getByRole('button', { name: 'Sign out' }).click()

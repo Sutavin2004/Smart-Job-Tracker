@@ -187,12 +187,12 @@ export default function TasksPage() {
   const overdueCount = tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date()).length
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10 [&>*]:max-w-3xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Tasks</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {pendingCount} to do{overdueCount > 0 && ', '}
+            {pendingCount === 0 && overdueCount === 0 ? 'Follow-ups and reminders for your applications.' : <>{pendingCount} to do</>}{overdueCount > 0 && ', '}
             {overdueCount > 0 && <span className="text-red-700 dark:text-red-400">{overdueCount} overdue</span>}
           </p>
         </div>
@@ -234,7 +234,7 @@ export default function TasksPage() {
           <div className="text-center py-12 text-slate-400">
             <p className="text-sm text-slate-600 dark:text-slate-300">{filter === 'completed' ? 'Nothing finished yet.' : 'Nothing to do.'}</p>
             {filter === 'pending' && (
-              <p className="mt-1 text-[13px] text-slate-500">Add a task above, or from inside a job.</p>
+              <p className="mt-1 text-[13px] text-slate-500">Add one above, like “Follow up with Shopify on Friday”, or from inside a job on your board.</p>
             )}
           </div>
         ) : (

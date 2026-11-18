@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import {
-  Play, CheckCircle, AlertCircle, Clock, Zap, RotateCcw,
-  ExternalLink, ChevronDown, ChevronRight, MapPin, Building2,
-  Sparkles, Briefcase, ArrowUpRight, Loader2, CalendarClock,
+  Play, CheckCircle, Clock, Zap, RotateCcw,
+  ExternalLink, ChevronDown, ChevronRight, MapPin,
+  Briefcase, ArrowUpRight, Loader2, CalendarClock,
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -232,7 +232,7 @@ export default function AgentPage() {
   const [log, setLog] = useState<LogLine[]>([])
   const [step, setStep] = useState(0)
   const [result, setResult] = useState<{ added: number; skipped: number } | null>(null)
-  const terminalRef = useRef<HTMLDivElement>(null)
+  const terminalRef = useRef<HTMLDivElement | HTMLOListElement>(null)
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then(setProfile).catch(() => {})
@@ -323,101 +323,57 @@ export default function AgentPage() {
   }
 
   const profileIncomplete = !profile?.targetRoles || !profile?.skills
-  const STEPS = ['Searching', 'Analyzing', 'Adding Jobs', 'Complete']
+  const STEPS = ['Searching', 'Scoring', 'Adding jobs', 'Done']
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">
-            Job agent
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Searches job boards, scores each listing against your profile and adds the strong matches to your board.
+    <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
+      <header>
+        <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Job agent</h1>
+        <p className="mt-1 max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+          Searches job boards and company career pages for you, scores every job against your profile, and adds the ones that fit to your board.
+        </p>
+      </header>
+
+      {profile && (profileIncomplete ? (
+        <section aria-labelledby="run-heading" className="card p-6">
+          <h2 id="run-heading" className="text-base font-semibold text-slate-900 dark:text-white">Add your résumé first</h2>
+          <p className="mt-1 max-w-xl text-sm text-slate-500">
+            The agent needs to know which roles and skills to look for. Your profile fills those in from your résumé.
           </p>
-        </div>
-        <div className={cn(
-          'flex items-center gap-2 text-[13px] text-slate-600 dark:text-slate-300'
-        )}>
-          <span className={cn('w-2 h-2 rounded-full', running ? 'bg-amber-500 animate-pulse' : result ? 'bg-brand-500' : 'bg-slate-400')} />
-          {running ? 'Running' : result ? 'Finished' : 'Idle'}
-        </div>
-      </div>
-
-      {/* What the agent searches for. Edited on the Profile page, so there's one place for it. */}
-      {profile && (
-        <div className="card flex flex-wrap items-center gap-x-6 gap-y-2 px-5 py-4 text-sm">
-          <dl className="flex min-w-0 flex-1 flex-wrap gap-x-6 gap-y-2">
+          <Link href="/profile" className="btn-primary mt-4">Go to Profile</Link>
+        </section>
+      ) : (
+        <section aria-labelledby="run-heading" className="card p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
-              <dt className="text-[12px] text-slate-500">Searching for</dt>
-              <dd className="truncate text-slate-900 dark:text-white">{profile.targetRoles.split(',').map(r => r.trim()).filter(Boolean).slice(0, 3).join(', ') || 'No roles yet'}</dd>
+              <h2 id="run-heading" className="text-base font-semibold text-slate-900 dark:text-white">{running ? 'Searching…' : 'Find jobs now'}</h2>
+              <p className="mt-1 text-sm text-slate-500">Takes about a minute. You can leave this page; new jobs land on your board.</p>
             </div>
-            <div className="min-w-0">
-              <dt className="text-[12px] text-slate-500">In</dt>
-              <dd className="truncate text-slate-900 dark:text-white">{[profile.targetLocations, profile.preferRemote && !/remote/i.test(profile.targetLocations) ? 'Remote' : ''].filter(Boolean).join(', ') || 'Anywhere'}</dd>
-            </div>
-            <div>
-              <dt className="text-[12px] text-slate-500">Every morning</dt>
-              <dd className="text-slate-900 dark:text-white">{profile.autoDiscover ? 'On' : 'Off'}</dd>
-            </div>
-          </dl>
-          <Link href="/profile" className="btn-secondary py-1.5">Change in Profile</Link>
-        </div>
-      )}
-
-      {/* Agent launch card */}
-      <div className="card p-6">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-          <div className="flex-1 text-center sm:text-left">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {running ? 'Searching…' : 'Run a search now'}
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Checks RemoteOK, Remotive and Jobicy for remote roles, plus Adzuna, JSearch and web search when those are configured. A run takes about a minute.
-            </p>
-            {profile && profile.targetRoles && (
-              <div className="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
-                {profile.targetRoles.split(',').filter(Boolean).slice(0, 3).map(r => (
-                  <span key={r} className="text-xs border border-slate-200 dark:border-[#2A2B2E] text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md">
-                    {r.trim()}
-                  </span>
-                ))}
-                {profile.preferRemote && (
-                  <span className="text-xs border border-slate-200 dark:border-[#2A2B2E] text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md">
-                    Remote
-                  </span>
-                )}
-                {profile.preferHybrid && (
-                  <span className="text-xs border border-slate-200 dark:border-[#2A2B2E] text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md">
-                    Hybrid
-                  </span>
-                )}
-              </div>
-            )}
-            {profileIncomplete && (
-              <p className="mt-3 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                Add roles and skills on your <Link href="/profile" className="underline underline-offset-2">Profile</Link> to run the agent.
-              </p>
-            )}
-          </div>
-          <div className="shrink-0">
-            <button
-              onClick={runAgent}
-              disabled={running || profileIncomplete}
-              className={cn(
-                'btn-primary px-5 py-2.5'
-              )}
-            >
+            <button onClick={runAgent} disabled={running} className="btn-primary px-5">
               {running
-                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Running</>
-                : <><Play className="h-4 w-4" aria-hidden="true" /> Run agent</>
-              }
+                ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Searching</>
+                : <><Play className="h-4 w-4" aria-hidden="true" /> Find jobs</>}
             </button>
           </div>
-        </div>
-      </div>
+          <div className="mt-5 flex flex-wrap items-end gap-x-8 gap-y-3 border-t border-slate-200 pt-4 text-sm dark:border-[#2A2B2E]">
+            <dl className="flex min-w-0 flex-1 flex-wrap gap-x-8 gap-y-3">
+              <div className="min-w-0">
+                <dt className="text-[12px] text-slate-500">Looking for</dt>
+                <dd className="truncate text-slate-900 dark:text-white">{profile.targetRoles.split(',').map(r => r.trim()).filter(Boolean).slice(0, 3).join(', ')}</dd>
+              </div>
+              <div className="min-w-0">
+                <dt className="text-[12px] text-slate-500">Where</dt>
+                <dd className="truncate text-slate-900 dark:text-white">{[profile.targetLocations, profile.preferRemote && !/remote/i.test(profile.targetLocations) ? 'Remote' : ''].filter(Boolean).join(', ') || 'Anywhere'}</dd>
+              </div>
+              <div>
+                <dt className="text-[12px] text-slate-500">Every morning</dt>
+                <dd className="text-slate-900 dark:text-white">{profile.autoDiscover ? 'On' : 'Off'}</dd>
+              </div>
+            </dl>
+            <Link href="/profile" className="text-[13px] font-medium text-brand-700 underline underline-offset-4 dark:text-brand-400">Change what it looks for</Link>
+          </div>
+        </section>
+      ))}
 
       {/* Progress steps */}
       {(running || result) && (
@@ -447,28 +403,25 @@ export default function AgentPage() {
         </div>
       )}
 
-      {/* Live terminal */}
+      {/* What the agent is doing, in plain words */}
       {log.length > 0 && (
-        <div className="card overflow-hidden">
-          <div className="flex items-center gap-2 px-4 py-2.5 bg-[#121314] border-b border-white/5">
-            <span className="text-xs text-slate-400">Run log</span>
-          </div>
-          <div ref={terminalRef} className="bg-[#121314] font-mono text-xs p-4 h-56 overflow-y-auto space-y-1">
+        <section aria-labelledby="progress-heading" className="card overflow-hidden">
+          <h2 id="progress-heading" className="border-b border-slate-200 px-5 py-3 text-sm font-semibold text-slate-900 dark:border-[#2A2B2E] dark:text-white">
+            {running ? 'What it’s doing' : 'What it did'}
+          </h2>
+          <ol ref={terminalRef as React.RefObject<HTMLOListElement>} aria-live="polite" className="max-h-72 space-y-1.5 overflow-y-auto px-5 py-4 text-[13px] leading-relaxed">
             {log.map((line, i) => (
-              <div key={i} className={cn(
-                'leading-relaxed',
-                line.type === 'error' ? 'text-red-400'
-                  : line.type === 'job_added' ? 'text-emerald-400'
-                  : line.type === 'complete' ? 'text-brand-400 font-semibold'
-                  : 'text-slate-300'
+              <li key={i} className={cn(
+                line.type === 'error' ? 'text-red-700 dark:text-red-400'
+                  : line.type === 'job_added' ? 'font-medium text-slate-900 dark:text-white'
+                  : 'text-slate-600 dark:text-slate-400'
               )}>
-                <span className="text-slate-600 mr-2">{new Date(line.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
                 {line.message}
-              </div>
+              </li>
             ))}
-            {running && <div className="text-slate-500 animate-pulse">█</div>}
-          </div>
-        </div>
+            {running && <li className="flex items-center gap-2 text-slate-500"><Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" /> Working…</li>}
+          </ol>
+        </section>
       )}
 
       {/* Result card */}
@@ -501,16 +454,15 @@ export default function AgentPage() {
         )}
       </AnimatePresence>
 
-      {/* Past sessions */}
+      {/* Past searches */}
       {sessions.length > 0 && (
         <div className="card overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-200 dark:border-[#2A2B2E] flex items-center justify-between">
             <div>
-              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past sessions</h2>
-              <p className="text-xs text-slate-400 mt-0.5">Click a session to see which jobs it found</p>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-white">Past searches</h2>
+              <p className="text-xs text-slate-500 mt-0.5">Open one to see the jobs it added</p>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-slate-400">
-              <Sparkles className="w-3.5 h-3.5 text-brand-400" />
               <span>{sessions.reduce((a, s) => a + (s.jobsAdded ?? 0), 0)} total added</span>
             </div>
           </div>
@@ -524,9 +476,8 @@ export default function AgentPage() {
 
       {sessions.length === 0 && !running && (
         <div className="card p-10 text-center">
-          <Building2 className="w-10 h-10 text-slate-300 dark:text-slate-400 mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No sessions yet</p>
-          <p className="text-xs text-slate-400 mt-1">Run the agent to start discovering jobs automatically</p>
+          <p className="text-sm font-medium text-slate-700 dark:text-slate-300">No searches yet</p>
+          <p className="text-[13px] text-slate-500 mt-1">Each search shows up here with the jobs it added.</p>
         </div>
       )}
     </div>

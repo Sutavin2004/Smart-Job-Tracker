@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import {
-  X, Sparkles, FileText, Calendar, Clock, Trash2, Save,
+  X, FileText, Calendar, Clock, Trash2, Save,
   BookOpen, ChevronDown, ChevronUp, Plus, CheckCircle, XCircle,
   MinusCircle, Loader2, DollarSign, AlertCircle, Target,
   CheckSquare, Square, Mail, Flag, ArrowUpRight, Briefcase,
@@ -270,7 +270,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
   const pendingTasks = tasks.filter(t => !t.completed).length
   const TABS: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: 'overview', label: 'Overview', icon: <BookOpen className="w-3.5 h-3.5" /> },
-    { id: 'ai', label: 'AI help', icon: <Sparkles className="w-3.5 h-3.5" /> },
+    { id: 'ai', label: 'Fit and prep', icon: <Target className="w-3.5 h-3.5" /> },
     { id: 'materials', label: 'Materials', icon: <FileText className="w-3.5 h-3.5" /> },
     { id: 'tasks', label: 'Tasks', icon: <CheckSquare className="w-3.5 h-3.5" />, badge: pendingTasks || undefined },
     { id: 'interviews', label: 'Interviews', icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -463,19 +463,19 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 </div>
               ) : (
                 <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-[#26272A] flex items-center justify-center shrink-0">
-                  <Sparkles className="w-6 h-6 text-slate-400" />
+                  <Target className="w-6 h-6 text-slate-400" />
                 </div>
               )}
               <div className="flex-1">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                  {aiData.score !== null ? `${aiData.score >= 75 ? 'Strong' : aiData.score >= 55 ? 'Moderate' : 'Weak'} fit` : 'Not analyzed yet'}
+                  {aiData.score !== null ? `${aiData.score >= 75 ? 'Strong' : aiData.score >= 55 ? 'Moderate' : 'Weak'} fit` : 'Not checked yet'}
                 </p>
                 {aiData.suggestion && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">{aiData.suggestion}</p>}
                 {job.aiLastAnalyzed && <p className="text-[11px] text-slate-400 mt-1">Last analyzed {formatRelative(job.aiLastAnalyzed)}</p>}
               </div>
               <button onClick={handleAnalyze} disabled={analyzing} className="btn-primary shrink-0 text-xs py-1.5 px-3">
-                {analyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                {analyzing ? 'Analyzing…' : aiData.score !== null ? 'Re-analyze' : 'Analyze'}
+                {analyzing && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+                {analyzing ? 'Checking…' : aiData.score !== null ? 'Check again' : 'Check my fit'}
               </button>
             </div>
 
@@ -518,13 +518,13 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {aiData.keySkills && (aiData.keySkills.have?.length || aiData.keySkills.missing?.length) ? (
               <div>
-                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Target className="w-3 h-3" /> Key Skills</p>
+                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1"><Target className="w-3 h-3" /> Key skills</p>
                 <div className="flex flex-wrap gap-1.5">
                   {(aiData.keySkills.have ?? []).map(s => (
                     <span key={s} className="text-[11px] bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">{s}</span>
                   ))}
                   {(aiData.keySkills.missing ?? []).map(s => (
-                    <span key={s} className="text-[11px] bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">{s} ✗</span>
+                    <span key={s} className="text-[11px] bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">{s}</span>
                   ))}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1">Green = you have it · Red = missing</p>
@@ -533,14 +533,14 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {aiData.salaryInsight && (
               <div className="bg-slate-50 dark:bg-white/[0.06] rounded-xl p-3">
-                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Salary Insight</p>
+                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><DollarSign className="w-3 h-3" /> Salary</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{aiData.salaryInsight}</p>
               </div>
             )}
 
             {aiData.cultureFit && (
               <div className="bg-slate-50 dark:bg-white/[0.06] rounded-xl p-3">
-                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><Star className="w-3 h-3" /> Culture Fit</p>
+                <p className="text-xs font-semibold text-slate-500 mb-1 flex items-center gap-1"><Star className="w-3 h-3" /> Culture fit</p>
                 <p className="text-xs text-slate-600 dark:text-slate-300">{aiData.cultureFit}</p>
               </div>
             )}
@@ -548,7 +548,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             {/* Salary Advice */}
             <div className="border-t border-slate-200 dark:border-[#2A2B2E] pt-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-slate-500" /> Salary Advice</p>
+                <p className="text-sm font-semibold flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-slate-500" /> Salary advice</p>
                 <button onClick={handleSalaryAdvice} disabled={loadingSalary} className="btn-secondary text-xs py-1 px-2.5">
                   {loadingSalary ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Get advice'}
                 </button>
@@ -558,14 +558,15 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {/* Interview Prep */}
             <div className="border-t border-slate-200 dark:border-[#2A2B2E] pt-4">
-              <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Shield className="w-4 h-4 text-slate-500" /> Interview Prep</p>
+              <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Shield className="w-4 h-4 text-slate-500" /> Interview prep</p>
               <div className="flex gap-2">
                 <select value={prepType} onChange={e => setPrepType(e.target.value)} className="input flex-1 text-xs">
                   {INTERVIEW_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                   <option value="general">General</option>
                 </select>
                 <button onClick={handleInterviewPrep} disabled={generatingPrep} className="btn-primary shrink-0 text-xs px-3">
-                  {generatingPrep ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                  {generatingPrep && <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />}
+                  {generatingPrep ? 'Writing…' : 'Get questions'}
                 </button>
               </div>
               {prep && (
@@ -583,10 +584,10 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             {/* Cover Letter */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold flex items-center gap-1.5"><FileText className="w-4 h-4 text-slate-500" /> Cover Letter</p>
+                <p className="text-sm font-semibold flex items-center gap-1.5"><FileText className="w-4 h-4 text-slate-500" /> Cover letter</p>
                 <button onClick={handleCoverLetter} disabled={generatingCL} className="btn-primary text-xs py-1 px-2.5">
-                  {generatingCL ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                  {generatingCL ? 'Generating…' : coverLetter ? 'Regenerate' : 'Generate'}
+                  {generatingCL && <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" />}
+                  {generatingCL ? 'Writing…' : coverLetter ? 'Write again' : 'Write it'}
                 </button>
               </div>
               <input value={background} onChange={e => setBackground(e.target.value)} placeholder="Your background context (optional)..." className="input text-xs mb-2" />
@@ -594,7 +595,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 <div className="bg-slate-50 dark:bg-white/[0.06] rounded-xl p-4">
                   <div className="flex justify-between items-center mb-2">
                     <p className="text-xs font-semibold text-slate-500">Cover letter</p>
-                    <button onClick={() => { navigator.clipboard.writeText(coverLetter); toast.success('Copied!') }} className="text-xs text-brand-600 hover:underline">Copy</button>
+                    <button onClick={() => { navigator.clipboard.writeText(coverLetter); toast.success('Copied') }} className="text-xs text-brand-600 hover:underline">Copy</button>
                   </div>
                   <p className="text-xs text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{coverLetter}</p>
                 </div>
@@ -604,7 +605,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
             {/* Resume Tailor */}
             <div className="border-t border-slate-200 dark:border-[#2A2B2E] pt-4">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold flex items-center gap-1.5"><Target className="w-4 h-4 text-slate-500" /> Resume Tailor</p>
+                <p className="text-sm font-semibold flex items-center gap-1.5"><Target className="w-4 h-4 text-slate-500" /> Tailored résumé</p>
                 <button onClick={handleTailor} disabled={tailoring || !job.jobDescription} className="btn-primary text-xs py-1 px-2.5" title={!job.jobDescription ? 'Add a job description first' : ''}>
                   {tailoring ? <Loader2 className="w-3 h-3 animate-spin" /> : <Target className="w-3 h-3" />}
                   {tailoring ? 'Tailoring…' : 'Tailor'}
@@ -638,7 +639,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
 
             {/* Email Generator */}
             <div className="border-t border-slate-200 dark:border-[#2A2B2E] pt-4">
-              <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Mail className="w-4 h-4 text-slate-500" /> Email Generator</p>
+              <p className="text-sm font-semibold mb-2 flex items-center gap-1.5"><Mail className="w-4 h-4 text-slate-500" /> Draft an email</p>
               <div className="flex gap-2">
                 <select value={emailType} onChange={e => setEmailType(e.target.value)} className="input flex-1 text-xs">
                   {[['follow_up','Follow-up'],['thank_you','Thank-you'],['withdraw','Withdraw'],['counter_offer','Counter-offer'],['networking','Networking'],['cold_outreach','Cold outreach']].map(([v,l]) => (
@@ -653,7 +654,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                 <div className="mt-2 bg-slate-50 dark:bg-white/[0.06] rounded-xl p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-[11px] font-semibold text-slate-500">Subject: {emailResult.subject}</p>
-                    <button onClick={() => { navigator.clipboard.writeText(`Subject: ${emailResult.subject}\n\n${emailResult.body}`); toast.success('Copied!') }} className="text-[11px] text-brand-600 hover:underline">Copy all</button>
+                    <button onClick={() => { navigator.clipboard.writeText(`Subject: ${emailResult.subject}\n\n${emailResult.body}`); toast.success('Copied') }} className="text-[11px] text-brand-600 hover:underline">Copy all</button>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">{emailResult.body}</p>
                 </div>
@@ -671,7 +672,7 @@ export function JobDetailPanel({ job, onClose, onUpdated, onDeleted }: Props) {
                         <p className="text-xs font-medium text-slate-800 dark:text-slate-200 truncate">{doc.name}</p>
                         <p className="text-[11px] text-slate-400">{doc.type} · {formatRelative(doc.createdAt)}</p>
                       </div>
-                      <button onClick={() => { navigator.clipboard.writeText(doc.content); toast.success('Copied!') }} className="text-[11px] text-brand-600 hover:underline shrink-0">Copy</button>
+                      <button onClick={() => { navigator.clipboard.writeText(doc.content); toast.success('Copied') }} className="text-[11px] text-brand-600 hover:underline shrink-0">Copy</button>
                     </div>
                   ))}
                 </div>

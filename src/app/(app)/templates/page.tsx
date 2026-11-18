@@ -44,7 +44,7 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Email templates</h1>
@@ -65,7 +65,7 @@ export default function TemplatesPage() {
           <p className="text-sm">No templates yet.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {templates.map(tpl => (
             editingId === tpl.id
               ? <TemplateEditor

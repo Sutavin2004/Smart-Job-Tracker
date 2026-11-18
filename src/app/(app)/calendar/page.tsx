@@ -88,10 +88,10 @@ export default function CalendarPage() {
   const selectedEvents = selectedDate ? getEventsForDay(selectedDate) : null
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Calendar</h1>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Interviews and application deadlines</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Interviews and application deadlines. Add them from a job on your board and they show up here.</p>
       </div>
 
       {loading ? (
@@ -188,7 +188,7 @@ export default function CalendarPage() {
                 <h2 className="text-sm font-semibold">Upcoming interviews</h2>
               </div>
               {upcomingInterviews.length === 0 ? (
-                <p className="text-xs text-slate-400">None scheduled.</p>
+                <p className="text-[13px] text-slate-500">None scheduled. Open a job on your board to add an interview.</p>
               ) : (
                 <div className="space-y-2.5">
                   {upcomingInterviews.map(iv => (
@@ -207,7 +207,7 @@ export default function CalendarPage() {
                 <h2 className="text-sm font-semibold">Deadlines</h2>
               </div>
               {upcomingDeadlines.length === 0 ? (
-                <p className="text-xs text-slate-400">No deadlines.</p>
+                <p className="text-[13px] text-slate-500">No deadlines. Add one to a job when the posting has a closing date.</p>
               ) : (
                 <div className="space-y-2.5">
                   {upcomingDeadlines.map(d => (

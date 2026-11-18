@@ -45,7 +45,7 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [analytics, setAnalytics] = useState<Analytics | null>(null)
   const [lastSession, setLastSession] = useState<AgentSession | null>(null)
-  const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number; targetRoles?: string; skills?: string } | null>(null)
+  const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number; targetRoles?: string; skills?: string; masterResume?: string } | null>(null)
   const [weeklyCount, setWeeklyCount] = useState(0)
   const [loading, setLoading] = useState(true)
   // Depends on the viewer's clock and timezone, so compute it in the browser only;
@@ -93,7 +93,9 @@ export default function DashboardPage() {
   const firstName = profile?.name?.split(' ')[0] || ''
   const inProgress = (analytics?.statusCounts?.applied ?? 0) + (analytics?.statusCounts?.interviewing ?? 0)
 
-  let summary = 'Add a job you have applied to, or let the agent find some for you.'
+  const isNew = !loading && (analytics?.total ?? 0) === 0
+  const hasResume = Boolean(profile?.masterResume?.trim())
+  let summary = hasResume ? 'Your profile is ready. Find your first matches next.' : 'Welcome. Here is how to get started.'
   if (analytics && analytics.total > 0) {
     const parts = [`${plural(inProgress, 'application')} in progress`]
     if (analytics.upcomingInterviews) parts.push(`${plural(analytics.upcomingInterviews, 'interview')} coming up`)
@@ -118,25 +120,28 @@ export default function DashboardPage() {
           </h1>
           <p className="mt-1 text-sm text-slate-500">{loading ? ' ' : summary}</p>
         </div>
-        <div className="flex gap-2">
-          <Link href="/agent" className="btn-secondary">Run the agent</Link>
-          <button onClick={() => setShowAdd(true)} className="btn-primary">
-            <Plus className="h-4 w-4" aria-hidden="true" /> Add job
-          </button>
-        </div>
+        {!isNew && !loading && (
+          <div className="flex gap-2">
+            <Link href="/agent" className="btn-secondary">Find jobs</Link>
+            <button onClick={() => setShowAdd(true)} className="btn-primary">
+              <Plus className="h-4 w-4" aria-hidden="true" /> Add job
+            </button>
+          </div>
+        )}
       </header>
 
       {!loading && (
         <GettingStarted
-          hasProfile={Boolean(profile?.targetRoles?.trim() && profile?.skills?.trim())}
+          prominent={isNew}
+          hasResume={hasResume || Boolean(profile?.targetRoles?.trim() && profile?.skills?.trim())}
           hasRunAgent={Boolean(lastSession)}
           hasApplied={(analytics?.applied ?? 0) > 0}
           onAddJob={() => setShowAdd(true)}
         />
       )}
 
-      {/* Stats: one strip, divided, rather than a row of separate tiles */}
-      <section aria-label="Summary" className="card grid grid-cols-2 divide-slate-200 dark:divide-[#2A2B2E] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x">
+      {/* Stats: one strip, divided, rather than a row of separate tiles. Hidden until there is something to count. */}
+      {!isNew && <section aria-label="Summary" className="card grid grid-cols-2 divide-slate-200 dark:divide-[#2A2B2E] sm:grid-cols-3 lg:grid-cols-6 lg:divide-x">
         {STATS.map(({ label, value }) => (
           <div key={label} className="px-5 py-4">
             <p className="text-[13px] text-slate-500">{label}</p>
@@ -155,20 +160,9 @@ export default function DashboardPage() {
             <div className="h-full rounded-full bg-brand-600 transition-[width] duration-500 dark:bg-brand-400" style={{ width: `${goalPct}%` }} />
           </div>
         </div>
-      </section>
+      </section>}
 
-      {!loading && analytics?.total === 0 ? (
-        <section className="card px-6 py-14 text-center">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Your board is empty</h2>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">
-            Add a job you are tracking, or tell the agent what you are looking for and it will search job boards for you.
-          </p>
-          <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
-            <button onClick={() => setShowAdd(true)} className="btn-primary justify-center"><Plus className="h-4 w-4" aria-hidden="true" /> Add job</button>
-            <Link href="/agent" className="btn-secondary justify-center">Set up the agent</Link>
-          </div>
-        </section>
-      ) : (
+      {loading || isNew ? null : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
             <section className="card overflow-hidden" aria-labelledby="recent-heading">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useId, FormEvent } from 'react'
-import { X, Link2, Loader2, Sparkles, CheckCircle2 } from 'lucide-react'
+import { X, Link2, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { JOB_STATUSES, JOB_PRIORITIES, STATUS_CONFIG, PRIORITY_CONFIG, type JobStatus, type JobPriority } from '@/lib/types'
@@ -119,7 +119,7 @@ export function AddJobModal({ onClose, onCreated }: Props) {
         {/* Import from link */}
         <div className="px-6 pt-5">
           <label htmlFor={`${id}-import`} className={label}>
-            <span className="inline-flex items-center gap-1"><Sparkles className="w-3 h-3 text-brand-500" /> Paste a job posting link to fill this in</span>
+            <span className="inline-flex items-center gap-1"><Link2 className="w-3 h-3 text-slate-400" aria-hidden="true" /> Paste a job posting link to fill this in</span>
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">

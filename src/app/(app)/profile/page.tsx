@@ -206,7 +206,7 @@ export default function ProfilePage() {
   const words = saved?.masterResume?.split(/\s+/).filter(Boolean).length ?? 0
 
   return (
-    <div className="mx-auto max-w-5xl px-5 pb-32 pt-8 sm:px-8 sm:pt-10">
+    <div className="mx-auto max-w-6xl px-5 pb-32 pt-8 sm:px-8 sm:pt-10">
       <header className="relative">
         <Link href="/settings" className="absolute right-0 top-1 text-[13px] text-slate-500 hover:text-slate-900 hover:underline dark:hover:text-white">Account settings</Link>
         <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Profile</h1>

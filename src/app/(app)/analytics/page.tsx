@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { STATUS_CONFIG } from '@/lib/types'
 
@@ -44,8 +45,8 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="p-6 space-y-4">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className="mx-auto max-w-6xl space-y-4 px-5 py-8 sm:px-8 sm:py-10">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="card h-32 animate-pulse bg-slate-100 dark:bg-[#1A1B1D]" />
         ))}
       </div>
@@ -53,6 +54,25 @@ export default function AnalyticsPage() {
   }
 
   if (!data) return null
+
+  // Charts of zeros say nothing. Until there's something to measure, explain what will appear.
+  if (data.total === 0) {
+    return (
+      <div className="mx-auto max-w-6xl space-y-6 px-5 py-8 sm:px-8 sm:py-10">
+        <header>
+          <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Analytics</h1>
+          <p className="mt-1 text-sm text-slate-500">How your applications are moving. Rates count only jobs you have applied to.</p>
+        </header>
+        <section className="card px-6 py-14 text-center">
+          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Nothing to measure yet</h2>
+          <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">
+            Once you start applying, this shows how many applications you send each week, how often companies reply, and which job sources lead to interviews.
+          </p>
+          <Link href="/" className="btn-secondary mt-6">Back to the dashboard</Link>
+        </section>
+      </div>
+    )
+  }
 
   const statusPie = Object.entries(data.statusCounts)
     .filter(([, count]) => count > 0)

@@ -115,14 +115,14 @@ export default function ApplyPage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Ready to apply</h1>
         <p className="mt-1 max-w-2xl text-sm text-slate-500">
-          Your saved jobs, best fit first. Each one can get a résumé and cover letter tailored to the posting. Open the posting, upload the files, then mark it applied.
+          Your saved jobs, best fit first. Each one gets a résumé and cover letter written for that job. Open the posting, attach the files, then mark it applied.
         </p>
       </header>
 
       {auto?.demo && (
         <p className="mt-5 rounded-md bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:bg-[#1A1B1D] dark:text-slate-300">In the demo, AI writing is off. The Notion job has a sample prepared application so you can see what one looks like.</p>
       )}
-      {auto?.aiEnabled && !auto.hasResume && !auto.demo && (
+      {auto?.aiEnabled && !auto.hasResume && !auto.demo && jobs.length > 0 && (
         <p className="mt-5 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
           Add your full résumé first. Every tailored version is built from it. <Link href="/profile" className="font-medium underline underline-offset-4">Go to Profile</Link>
         </p>
@@ -136,11 +136,19 @@ export default function ApplyPage() {
       {loading ? (
         <div className="mt-8 flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading…</div>
       ) : jobs.length === 0 ? (
-        <section className="card mt-8 px-6 py-14 text-center">
-          <h2 className="text-base font-semibold text-slate-900 dark:text-white">Nothing waiting</h2>
-          <p className="mx-auto mt-1.5 max-w-sm text-sm text-slate-500">Jobs in the Saved column show up here. Run the job agent to find new ones.</p>
-          <Link href="/agent" className="btn-primary mt-6">Open the job agent</Link>
-        </section>
+        auto && !auto.hasResume && !auto.demo ? (
+          <section className="card mt-8 px-6 py-14 text-center">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">Add your résumé to get started</h2>
+            <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">Every application here is written from your résumé, so that comes first. Then the job agent finds jobs and the best ones show up here.</p>
+            <Link href="/profile" className="btn-primary mt-6">Add résumé</Link>
+          </section>
+        ) : (
+          <section className="card mt-8 px-6 py-14 text-center">
+            <h2 className="text-base font-semibold text-slate-900 dark:text-white">No matches yet</h2>
+            <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">Jobs you save, or that the job agent finds for you, show up here with an application ready to send.</p>
+            <Link href="/agent?run=1" className="btn-primary mt-6">Find jobs</Link>
+          </section>
+        )
       ) : (
         <div className="mt-6 grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <section aria-label="Saved jobs" className="card self-start overflow-hidden">

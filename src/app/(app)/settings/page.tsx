@@ -30,6 +30,15 @@ const SHORTCUTS: [string, string][] = [
   ['S', 'Go to settings'],
 ]
 
+const FAQ: [string, string][] = [
+  ['Does it apply to jobs for me?', 'No. It finds jobs, scores them and writes a résumé and cover letter for each one, but you open the posting and send the application yourself. Then mark it applied, or let the Chrome extension or a forwarded confirmation email do that for you.'],
+  ['Where do the jobs come from?', 'Job boards such as Adzuna, Remotive and Jobicy, plus a web search of company career pages, LinkedIn and Indeed. Every job links to a real posting.'],
+  ['How is the fit score worked out?', 'Out of 100, from how many of your skills the posting asks for, whether the title matches the roles you want, the location, the salary, and whether the experience level suits you. Only jobs scoring 55 or more are added.'],
+  ['Will it make things up on my résumé?', 'No. Tailored résumés and cover letters use only what is on your saved résumé. When a posting asks for something you don’t show, it is listed under “Check before you send” instead of being added.'],
+  ['What are AI actions?', 'Each cover letter, tailored résumé, fit check or set of interview questions uses one. You get 40 a day, and the count resets at midnight UTC.'],
+  ['Who can see my information?', 'Only you. Your board, notes and résumé are private to your account, and you can delete all of it from the Account tab.'],
+]
+
 interface Me {
   user: { name: string; email: string; createdAt: string; emailVerified: boolean; hasPassword: boolean; google: boolean }
   usage: { ai: { used: number; limit: number }; agent: { used: number; limit: number } }
@@ -97,7 +106,7 @@ export default function SettingsPage() {
   }, [])
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Settings</h1>
@@ -166,6 +175,18 @@ export default function SettingsPage() {
             <p className="mt-4 text-[13px] text-slate-500">
               It also notices when you submit an application on LinkedIn or Indeed and adds the job as Applied, without a click. It reads a page only when you click it, or when you are on a LinkedIn or Indeed application page.
             </p>
+          </Section>
+        )}
+        {tab === 'help' && (
+          <Section title="How it works" description="Short answers to the questions people ask first.">
+            <dl className="max-w-2xl space-y-5 text-sm">
+              {FAQ.map(([q, a]) => (
+                <div key={q}>
+                  <dt className="font-medium text-slate-900 dark:text-white">{q}</dt>
+                  <dd className="mt-1 leading-relaxed text-slate-600 dark:text-slate-300">{a}</dd>
+                </div>
+              ))}
+            </dl>
           </Section>
         )}
         {tab === 'help' && (

@@ -53,8 +53,8 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
     const hasAnthropic = !!process.env.ANTHROPIC_API_KEY
 
     log('Starting', { step: 1 })
-    log(`Searching for: ${roles.slice(0, 3).join(', ')}`, { step: 2 })
-    log(`Locations: ${locations.join(', ')}${profile.preferRemote && !locations.some(l => /remote/i.test(l)) ? ' + Remote' : ''}`, { step: 2 })
+    log(`Looking for: ${roles.slice(0, 3).join(', ')}`, { step: 2 })
+    log(`Where: ${locations.join(', ')}${profile.preferRemote && !locations.some(l => /remote/i.test(l)) ? ' + Remote' : ''}`, { step: 2 })
 
     const boardLabels: string[] = []
     if (hasRapidApi) boardLabels.push('LinkedIn · Indeed · Glassdoor (JSearch)')
@@ -71,7 +71,7 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
     })
 
     // ── Step 1: Real job board APIs ──────────────────────────────────────
-    log('Connecting to live job boards...', { step: 2 })
+    log('Searching job boards…', { step: 2 })
 
     const { jobs: realJobs, sources, problems } = await fetchRealJobs({
       roles: roles.slice(0, 3),
@@ -79,11 +79,11 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
       preferRemote: profile.preferRemote,
     })
 
-    for (const p of problems) log(`⚠️ ${p}`, { step: 2 })
+    for (const p of problems) log(`Note: ${p}.`, { step: 2 })
     if (realJobs.length > 0) {
-      log(`Live boards: ${realJobs.length} listings from ${sources.join(', ')}`, { step: 2 })
+      log(`Found ${realJobs.length} listings on ${sources.join(', ')}`, { step: 2 })
     } else {
-      log('Live boards returned no results, so trying AI search', { step: 2 })
+      log('No listings on the job boards this time.', { step: 2 })
     }
 
     // ── Step 2: AI-powered discovery (always runs if Anthropic key set) ──
@@ -97,7 +97,7 @@ export async function runDiscovery({ db, userId, trigger = 'manual', emit = () =
       const needed = Math.max(6, 12 - realJobs.length)
 
       if (needed > 0) {
-        log(`AI searching for ${needed} more matches...`, { step: 2 })
+        log('Searching company career pages and other job sites…', { step: 2 })
 
         // Step 2a: Discovery via live web search only.
         // Every AI-sourced listing must link to a page the search actually
@@ -139,14 +139,15 @@ Prefer the employer's own careers page or its applicant system (Greenhouse, Leve
             .filter(b => b.type === 'text')
             .map(b => b.text as string)
             .join('\n')
-          log(`Web search complete (${searchedUrls.size} pages checked)`, { step: 2 })
+          log(`Checked ${searchedUrls.size} pages`, { step: 2 })
         } catch (err) {
-          log(`ℹ️ Web search unavailable (${err instanceof Error ? err.message : 'unknown error'}) — skipping AI discovery`, { step: 2 })
+          log(`Web search was unavailable this time, so only job boards were searched.`, { step: 2 })
+          console.error('web search', err)
         }
 
         // Step 2b: Parse into structured JSON
         if (rawJobsText.trim()) try {
-          log('Structuring AI results...', { step: 3 })
+          log('Reading the results…', { step: 3 })
           const parseRes = await anthropic.messages.create({
             model: AI_MODELS.fast,
             max_tokens: 3000,
@@ -209,20 +210,21 @@ ${rawJobsText}`,
               typeof j?.jobUrl === 'string' && searchedUrls.has(normalizeUrl(j.jobUrl)))
             aiJobs = verified.map(j => ({ ...j, source: j.source || 'Web search' }))
             const dropped = parsed.length - verified.length
-            log(`AI found ${aiJobs.length} verified listings` +
-              (dropped ? ` (dropped ${dropped} without a confirmed posting URL)` : ''), { step: 3 })
+            log(`Found ${aiJobs.length} more ${aiJobs.length === 1 ? 'listing' : 'listings'} with a working link` +
+              (dropped ? ` (left out ${dropped} that couldn't be confirmed)` : ''), { step: 3 })
           } else {
-            log('Could not parse AI results', { step: 3 })
+            log('Some search results could not be read, so they were skipped.', { step: 3 })
           }
         } catch (parseErr) {
-          log(`AI parsing error: ${parseErr instanceof Error ? parseErr.message : 'unknown'}`, { step: 3 })
+          log('Some search results could not be read, so they were skipped.', { step: 3 })
+          console.error('agent parse', parseErr)
         }
       }
     }
 
     // ── Step 3: Merge, score, rank ────────────────────────────────────────
     const allRaw = [...realJobs, ...aiJobs]
-    log(`Scoring ${allRaw.length} total listings...`, { step: 3 })
+    log(`Scoring ${allRaw.length} jobs against your profile…`, { step: 3 })
 
     const scored = scoreAndRankJobs(allRaw, {
       targetRoles: profile.targetRoles,
@@ -246,7 +248,7 @@ ${rawJobsText}`,
       return true
     })
     const qualified = strong.slice(0, MAX_ADDED_PER_RUN)
-    log(`${strong.length} ${strong.length === 1 ? 'job' : 'jobs'} scored ${MIN_FIT} or more${strong.length > qualified.length ? `; adding the best ${qualified.length}` : ''}`, { step: 3 })
+    log(`${strong.length} ${strong.length === 1 ? 'job fits' : 'jobs fit'} you well${strong.length > qualified.length ? `; adding the best ${qualified.length}` : ''}`, { step: 3 })
     emit({ type: 'found', count: qualified.length })
 
     // Jobs already on the board, compared the same forgiving way.
@@ -271,7 +273,7 @@ ${rawJobsText}`,
 
       if (existing) {
         skipped++
-        log(`⏭️ Skipped (already tracked): ${company} — ${role}`, { step: 4 })
+        log(`Already on your board: ${company}, ${role}`, { step: 4 })
         continue
       }
 
@@ -312,7 +314,7 @@ ${rawJobsText}`,
       })
 
       added++
-      log(`Added: ${company} — ${role} (${job.fitScore}/100 · ${job.source ?? 'AI'})`, {
+      log(`Added ${company}, ${role} (fit ${job.fitScore}, from ${job.source ?? 'the web'})`, {
         step: 4,
         type: 'job_added',
         job: { company, role, score: job.fitScore, source: job.source },

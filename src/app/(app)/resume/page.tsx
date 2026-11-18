@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import {
-  Zap, CheckCircle, ArrowUpRight,
+  CheckCircle, ArrowUpRight,
   Copy, Loader2,
-  XCircle, Sparkles, RefreshCw,
+  XCircle, RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -54,7 +54,7 @@ function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) 
   return (
     <button onClick={copy} className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-brand-600 transition-colors">
       {copied ? <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-      {copied ? 'Copied!' : label}
+      {copied ? 'Copied' : label}
     </button>
   )
 }
@@ -96,7 +96,7 @@ export default function ResumeCheckPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
       <header>
         <p className="text-[13px] text-slate-500"><Link href="/profile" className="hover:underline">Profile</Link> / Résumé check</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Résumé check</h1>
@@ -156,7 +156,7 @@ export default function ResumeCheckPage() {
                       >
                         {analyzing
                           ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking…</>
-                          : <><Zap className="w-4 h-4" /> Check résumé</>
+                          : 'Check résumé'
                         }
                       </button>
                     </div>
@@ -251,7 +251,7 @@ export default function ResumeCheckPage() {
                           <h3 className="text-xs font-semibold text-slate-500 mb-3">Keywords</h3>
                           {analysis.presentKeywords.length > 0 && (
                             <div className="mb-3">
-                              <p className="text-[11px] font-semibold text-emerald-600 mb-1.5">Present ✓</p>
+                              <p className="text-[11px] font-semibold text-emerald-600 mb-1.5">On your résumé</p>
                               <div className="flex flex-wrap gap-1.5">
                                 {analysis.presentKeywords.map(k => (
                                   <span key={k} className="text-[11px] bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">{k}</span>
@@ -261,7 +261,7 @@ export default function ResumeCheckPage() {
                           )}
                           {analysis.missingKeywords.length > 0 && (
                             <div>
-                              <p className="text-[11px] font-semibold text-red-600 mb-1.5">Missing ✗</p>
+                              <p className="text-[11px] font-semibold text-red-600 mb-1.5">Not on your résumé</p>
                               <div className="flex flex-wrap gap-1.5">
                                 {analysis.missingKeywords.map(k => (
                                   <span key={k} className="text-[11px] bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 px-2 py-0.5 rounded-full">{k}</span>
@@ -277,7 +277,7 @@ export default function ResumeCheckPage() {
                     {analysis.rewrittenBullets?.length > 0 && (
                       <div className="card p-5">
                         <h3 className="text-xs font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-slate-500" /> AI-Improved Bullet Points
+                          Suggested rewrites
                         </h3>
                         <div className="space-y-4">
                           {analysis.rewrittenBullets.slice(0, 5).map((b, i) => (

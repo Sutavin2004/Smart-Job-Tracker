@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { DragDropContext, Droppable, Draggable, type DropResult, type DraggableProvidedDragHandleProps } from '@hello-pangea/dnd'
 import { toast } from 'sonner'
-import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot, Briefcase, Sparkles } from 'lucide-react'
+import { Plus, LayoutGrid, List, Search, X, ExternalLink, Bot } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type Job, type JobStatus, JOB_STATUSES, STATUS_CONFIG } from '@/lib/types'
 import { apiClient } from '@/lib/api-client'
@@ -97,9 +97,9 @@ function JobsPageInner() {
     <div className={cn('flex h-full', selectedJob ? 'overflow-hidden' : '')}>
       <div className={cn('flex flex-col flex-1 min-w-0 overflow-y-auto', selectedJob ? 'w-0 md:w-auto' : '')}>
         {/* Toolbar */}
-        <h1 className="sr-only">Jobs board</h1>
         <div className="sticky top-0 z-10 bg-slate-50 dark:bg-[#121314] border-b border-slate-200 dark:border-[#2A2B2E] px-6 py-3.5">
           <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="mr-2 text-lg font-semibold tracking-[-0.01em] text-slate-900 dark:text-white">Board</h1>
             <div className="flex-1 min-w-[200px]">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -202,17 +202,14 @@ function EmptyState({ filtered, onAdd, onClear }: { filtered: boolean; onAdd: ()
     )
   }
   return (
-    <div className="max-w-md mx-auto text-center py-16">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 dark:bg-brand-900/30">
-        <Briefcase className="h-7 w-7 text-brand-600" />
-      </div>
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Your board is empty</h2>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        Add a job you&apos;re interested in, or let the AI agent find matches for you.
+    <div className="card mx-6 mt-6 px-6 py-14 text-center">
+      <h2 className="text-base font-semibold text-slate-900 dark:text-white">No jobs on your board yet</h2>
+      <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-500">
+        Every job you track lives here, sorted by stage: saved, applied, interviewing and offer. Drag a card when something changes.
       </p>
-      <div className="mt-5 flex flex-wrap justify-center gap-2">
-        <button onClick={onAdd} className="btn-primary text-sm"><Plus className="w-4 h-4" /> Add a job</button>
-        <Link href="/agent" className="btn-secondary text-sm"><Sparkles className="w-4 h-4" /> Find jobs with AI</Link>
+      <div className="mt-6 flex flex-wrap justify-center gap-2">
+        <Link href="/agent?run=1" className="btn-primary">Find jobs for me</Link>
+        <button onClick={onAdd} className="btn-secondary"><Plus className="h-4 w-4" aria-hidden="true" /> Add a job myself</button>
       </div>
     </div>
   )

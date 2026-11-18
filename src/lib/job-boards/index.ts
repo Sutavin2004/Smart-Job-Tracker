@@ -46,7 +46,12 @@ export async function fetchRealJobs(params: SearchParams): Promise<{ jobs: RawJo
   const results = await Promise.allSettled(searchPromises)
 
   // One message per failing source, e.g. "Adzuna rejected the App ID or App Key…".
-  const problems = [...new Set(results.flatMap(r => (r.status === 'rejected' && r.reason instanceof BoardError ? [r.reason.message] : [])))]
+  // Users see a plain note; the exact reason (for whoever runs the site) goes to the server log.
+  const problems = [...new Set(results.flatMap(r => {
+    if (r.status !== 'rejected' || !(r.reason instanceof BoardError)) return []
+    console.error('job board', r.reason.message)
+    return [`${r.reason.source} couldn't be searched this time`]
+  }))]
 
   for (const result of results) {
     if (result.status === 'fulfilled' && result.value.length > 0) {

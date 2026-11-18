@@ -68,7 +68,8 @@ export function WelcomeTour({ offer }: { offer: boolean }) {
       const q = params.toString()
       window.history.replaceState(null, '', pathname + (q ? `?${q}` : ''))
       setState(0)
-    } else if (offer && !offered.current) {
+    } else if (offer && !offered.current && pathname === '/') {
+      // Only on the dashboard, so it doesn't follow people around the app.
       // Once per visit: the layout doesn't re-render on client navigation, so `offer` stays stale.
       offered.current = true
       setState(s => (s === 'hidden' ? 'offer' : s))
