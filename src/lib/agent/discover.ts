@@ -2,8 +2,12 @@ import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ScopedDb } from '@/lib/scoped-db'
 import { fetchRealJobs } from '@/lib/job-boards'
-import { scoreAndRankJobs } from '@/lib/scoring'
+import { jobKey, scoreAndRankJobs } from '@/lib/scoring'
 import { normalizeUrl } from '@/lib/url'
+
+/** A job needs at least this fit score to be added, and a run adds at most this many. */
+export const MIN_FIT = 55
+export const MAX_ADDED_PER_RUN = 10
 
 export type DiscoveryEvent = { type: string; message?: string; [k: string]: unknown }
 
@@ -232,10 +236,21 @@ ${rawJobsText}`,
       excludeKeywords: profile.excludeKeywords,
     })
 
-    // Keep reasonable matches; irrelevant titles were already scored 0.
-    const qualified = scored.filter(j => j.fitScore >= 30)
-    log(`${qualified.length} jobs matched your profile`, { step: 3 })
+    // Only jobs worth your time, best first, and no more than a day's reading.
+    // (scoreAndRankJobs already sorted by score and dropped irrelevant or senior titles.)
+    const seenKeys = new Set<string>()
+    const strong = scored.filter(j => {
+      const key = jobKey(String(j.company ?? ''), String(j.role ?? ''))
+      if (j.fitScore < MIN_FIT || seenKeys.has(key)) return false
+      seenKeys.add(key)
+      return true
+    })
+    const qualified = strong.slice(0, MAX_ADDED_PER_RUN)
+    log(`${strong.length} ${strong.length === 1 ? 'job' : 'jobs'} scored ${MIN_FIT} or more${strong.length > qualified.length ? `; adding the best ${qualified.length}` : ''}`, { step: 3 })
     emit({ type: 'found', count: qualified.length })
+
+    // Jobs already on the board, compared the same forgiving way.
+    const onBoard = new Set((await db.job.findMany({ select: { company: true, role: true } })).map(j => jobKey(j.company, j.role)))
 
     // ── Step 4: Save to database ─────────────────────────────────────────
     let added = 0
@@ -245,7 +260,7 @@ ${rawJobsText}`,
       const company = String(job.company ?? 'Unknown')
       const role = String(job.role ?? 'Unknown')
 
-      const existing = await db.job.findFirst({
+      const existing = onBoard.has(jobKey(company, role)) || await db.job.findFirst({
         where: {
           OR: [
             { company: { equals: company, mode: 'insensitive' }, role: { equals: role, mode: 'insensitive' } },

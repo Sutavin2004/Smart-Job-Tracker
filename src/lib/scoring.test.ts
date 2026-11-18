@@ -140,3 +140,21 @@ describe('scoring for early-career candidates', () => {
     expect(experienceScore('Requires 5+ years of experience', 1, 'Software Engineer')).toBe(0.1)
   })
 })
+
+import { aboveLevel, jobKey } from './scoring'
+
+describe('level and duplicates', () => {
+  it('filters senior titles for early-career candidates only', () => {
+    expect(aboveLevel('Global Head of Cloud Platform Engineering', 1)).toBe(true)
+    expect(aboveLevel('Distinguished Engineer', 1)).toBe(true)
+    expect(aboveLevel('Senior DevOps Engineer', 2)).toBe(true)
+    expect(aboveLevel('Junior DevOps Engineer', 1)).toBe(false)
+    expect(aboveLevel('Associate Cloud Engineer', 1)).toBe(false)
+    expect(aboveLevel('Senior DevOps Engineer', 6)).toBe(false)
+  })
+  it('treats the same employer under different legal names as one', () => {
+    expect(jobKey('Synechron Canada ULC CANADA Company', 'Cube Developer')).toBe(jobKey('Synechron Technologies Pvt. Ltd. INDIA Company', 'Cube Developer'))
+    expect(jobKey('SOTI Inc.', 'Software Developer')).toBe(jobKey('SOTI', 'Software Developer'))
+    expect(jobKey('SOTI', 'Software Developer')).not.toBe(jobKey('SOTI', 'Software Developer in Test'))
+  })
+})

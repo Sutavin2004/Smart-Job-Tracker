@@ -140,7 +140,29 @@ function salaryScore(jobMin: number | null, jobMax: number | null, profileMin: n
   return 0.1
 }
 
+// Titles that signal a senior role, however the rest of the posting reads.
+const SENIOR_TITLE = /\b(head|distinguished|principal|staff|director|vp|vice[\s-]president|chief|architect|senior|sr\.?|lead|manager|iii|iv|émérite)\b/i
+
+/** True for senior titles when the candidate is early in their career (3 years or less). */
+export function aboveLevel(role: string, yearsExperience: number): boolean {
+  return yearsExperience <= 3 && SENIOR_TITLE.test(role)
+}
+
+/** "Synechron Canada ULC CANADA Company" and "Synechron" are the same employer. */
+export function normalizeCompany(name: string): string {
+  return name.toLowerCase()
+    .replace(/[.,()]/g, ' ')
+    .replace(/\b(inc|ltd|llc|ulc|corp|corporation|co|company|limited|group|holdings?|holdco|unlimited|liability|pvt|technologies|technology|canada|india|usa|us|global)\b/g, ' ')
+    .replace(/\s+/g, ' ').trim()
+}
+
+/** Same employer and same role, ignoring case, punctuation and company suffixes. */
+export function jobKey(company: string, role: string): string {
+  return `${normalizeCompany(company)}|${role.toLowerCase().replace(/[^a-z0-9+#]+/g, ' ').trim()}`
+}
+
 const ENTRY_LEVEL = /\b(junior|jr\.?|entry[\s-]level|new grad(uate)?|graduate|early[\s-]career|associate|intern(ship)?|co-?op)\b/i
+const MID_LEVEL = /\b(intermediate|ii|mid[\s-]level)\b/i
 
 /** Lowest number of years the posting asks for, or null. */
 export function requiredYears(text: string): number | null {
@@ -152,7 +174,11 @@ export function requiredYears(text: string): number | null {
 export function experienceScore(jobDescription: string, yearsExperience: number, role = ''): number {
   const required = requiredYears(jobDescription)
   const entry = ENTRY_LEVEL.test(role) || (required === null && ENTRY_LEVEL.test(jobDescription.slice(0, 600)))
-  if (required === null) return entry && yearsExperience <= 3 ? 1 : 0.6
+  if (required === null) {
+    if (entry && yearsExperience <= 3) return 1
+    if (MID_LEVEL.test(role) && yearsExperience < 2) return 0.4
+    return 0.6
+  }
   if (yearsExperience >= required) return 1
   if (yearsExperience >= required - 1) return entry ? 0.7 : 0.5
   if (yearsExperience >= required - 2) return 0.3
@@ -169,6 +195,9 @@ function excludeCheck(jobDescription: string, role: string, excludeKeywords: str
 export function scoreJob(job: RawJob, profile: UserProfile): ScoredJob {
   if (!excludeCheck(job.jobDescription, job.role, profile.excludeKeywords)) {
     return { ...job, fitScore: 0, fitReason: 'Contains excluded keywords', excitement: 1 }
+  }
+  if (aboveLevel(job.role, profile.yearsExperience)) {
+    return { ...job, fitScore: 0, fitReason: 'Senior role, above your experience level', excitement: 1 }
   }
   if (!titleRelevant(job.role, profile.targetRoles)) {
     return { ...job, fitScore: 0, fitReason: "Title doesn't match your target roles", excitement: 1 }
