@@ -250,3 +250,38 @@ Software Developer Intern, Northwind (2025)
   const profile = await (await page.request.get('/api/profile')).json()
   expect(profile).toMatchObject({ targetRoles: 'Software Engineer', skills: 'React, TypeScript', phone: '+1 (416) 555-0100' })
 })
+
+test('outcomes teach the app what works, and quiet applications get a check-in', async ({ page }) => {
+  await signUp(page.request, unique(), 'Learner')
+  await page.request.put('/api/profile', { data: { tourSeen: true, targetRoles: 'Software Engineer', skills: 'React', masterResume: 'x'.repeat(200) } })
+  const day = 86400000
+  const add = (company: string, status: string, source: string, jobUrl: string, ago: number) =>
+    page.request.post('/api/jobs', { data: { company, role: 'Software Engineer', status, source, jobUrl, dateApplied: new Date(Date.now() - ago * day).toISOString() } })
+
+  // Not enough yet: progress, no claims.
+  await add('Early', 'rejected', 'Company Site', 'https://jobs.lever.co/early/1', 30)
+  let data = await (await page.request.get('/api/insights')).json()
+  expect(data).toMatchObject({ ready: false, resolved: 1, insights: [] })
+
+  // Company career pages reply; job boards don't.
+  for (let i = 0; i < 5; i++) await add(`Career${i}`, i < 4 ? 'rejected' : 'ghosted', 'Company Site', `https://boards.greenhouse.io/c${i}/jobs/1`, 30 + i)
+  for (let i = 0; i < 7; i++) await add(`Board${i}`, i === 0 ? 'interviewing' : 'ghosted', 'Adzuna', `https://www.adzuna.ca/details/${i}`, 30 + i)
+  // Sent 15 days ago with no news: should ask.
+  const quiet = await (await add('Quietco', 'applied', 'LinkedIn', 'https://www.linkedin.com/jobs/view/1', 15)).json()
+
+  data = await (await page.request.get('/api/insights')).json()
+  expect(data.ready).toBe(true)
+  expect(data.insights[0]).toMatchObject({ dim: 'source', group: 'Company career pages', direction: 'better' })
+  expect(data.checkIns.map((c: { company: string }) => c.company)).toEqual(['Quietco'])
+
+  // The dashboard shows both, and one click records the outcome.
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'What’s working' })).toBeVisible()
+  await expect(page.getByText('Jobs from company career pages get replies')).toBeVisible()
+  await page.getByRole('group', { name: 'What happened with Quietco?' }).getByRole('button', { name: 'No reply' }).click()
+  await expect(page.getByText('Marked as no reply')).toBeVisible()
+  const job = await (await page.request.get(`/api/jobs/${quiet.id}`)).json()
+  expect(job.status).toBe('ghosted')
+  data = await (await page.request.get('/api/insights')).json()
+  expect(data.checkIns).toEqual([])
+})

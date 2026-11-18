@@ -9,6 +9,7 @@ export interface InboundMessage { from: string; subject: string; text: string; h
 export type Parsed =
   | { kind: 'application'; source: string; company: string; role: string | null; location: string | null; jobUrl: string | null }
   | { kind: 'gmail-confirmation'; code: string | null; link: string | null }
+  | { kind: 'reply'; outcome: 'rejected' | 'interview'; company: string; role: string | null }
   | { kind: 'unknown' }
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').replace(/^[\s"'“”]+|[\s"'“”.!,]+$/g, '').trim()
@@ -46,6 +47,10 @@ export function parseInbound(msg: InboundMessage): Parsed {
     const link = body.match(/https:\/\/mail(?:-settings)?\.google\.com\/mail\/[^\s<>"]+/)?.[0] ?? null
     return { kind: 'gmail-confirmation', code, link }
   }
+
+  // Replies from employers come first: rejections often also say "thank you for applying".
+  const reply = parseReply(msg, subject, body, from)
+  if (reply) return reply
 
   // LinkedIn: "Jordan, your application was sent to Shopify"
   const li = subject.match(/your application was sent to (.+)$/i) ?? body.match(/Your application was sent to ([^\n]+)/i)
@@ -86,6 +91,57 @@ export function parseInbound(msg: InboundMessage): Parsed {
   }
   return { kind: 'unknown' }
 }
+
+// ── Replies: rejections and interview invitations ─────────────────────────────
+
+const REJECTION = [
+  /(?:decided|chosen|elected) (?:not to|to not) (?:move|proceed|pursue|progress|continue)/i,
+  /(?:move|moving|proceed|proceeding) forward with (?:other|another|a different) (?:candidate|applicant)/i,
+  /(?:not|won['’]t) (?:be )?(?:moving|proceeding|progressing) (?:forward )?with your (?:application|candidacy)/i,
+  /will not be (?:moving|proceeding|progressing) (?:forward|further)/i,
+  /we regret to inform/i,
+  /(?:position|role) has (?:now )?been filled/i,
+  /(?:pursue|pursuing) other candidates/i,
+  /unfortunately,? (?:we|after careful|at this time|your application)/i,
+]
+const INTERVIEW = [
+  /(?:schedule|book|set up|arrange) (?:an?|your|a time for an?)? ?(?:interview|phone screen|screening call|video call|chat with)/i,
+  /invite you to (?:an? |our )?(?:interview|phone screen|screening|technical|virtual|video|onsite|on-site)/i,
+  /(?:next step|next round|next stage)[^.\n]{0,80}(?:interview|phone screen|call with)/i,
+  /(?:your )?availability for (?:an? )?(?:interview|call|chat|phone screen)/i,
+  /(?:would like|like to|love to) (?:invite you|speak with you|chat with you|move you forward)/i,
+]
+const ATS_SENDERS = /greenhouse|lever|workday|myworkday|ashby|smartrecruiters|icims|jobvite|bamboohr|recruitee|workable|taleo|successfactors|gmail|outlook|hotmail|yahoo|linkedin|indeed|noreply|no-reply|mail|notifications?/i
+
+function replyCompany(msg: InboundMessage, subject: string, body: string, from: string): string | null {
+  const text = `${subject}\n${body.slice(0, 1500)}`
+  const named =
+    text.match(/(?:application|candidacy|interest|applying) (?:to|at|with|for)(?: the)? (?:[^\n]{2,60}? (?:position|role) (?:at|with) )?([A-Z][\w&.'’ -]{1,40}?)(?=[\n.,!:|]| team| and | -|$)/)?.[1]
+    ?? subject.match(/^([A-Z][\w&.'’ -]{1,40}?)\s*[|:–-]\s/)?.[1]
+  if (named) return clean(named)
+  // Display name, e.g. "Shopify Recruiting <no-reply@greenhouse.io>"
+  const display = msg.from.match(/^\s*"?([^"<@]+?)"?\s*</)?.[1]
+  const fromName = display ? clean(display.replace(/\b(recruiting|recruitment|careers?|talent( acquisition)?|hiring( team)?|team|jobs|people|hr)\b/gi, '')) : ''
+  if (fromName && !ATS_SENDERS.test(fromName)) return fromName
+  // Sender's own domain, e.g. careers@manulife.com
+  const domain = from.split('@')[1]?.split('.').slice(-2, -1)[0]
+  if (domain && !ATS_SENDERS.test(domain)) return domain.charAt(0).toUpperCase() + domain.slice(1)
+  return null
+}
+
+function parseReply(msg: InboundMessage, subject: string, body: string, from: string): Parsed | null {
+  const text = `${subject}\n${body.slice(0, 4000)}`
+  const outcome = REJECTION.some(r => r.test(text)) ? 'rejected' : INTERVIEW.some(r => r.test(text)) ? 'interview' : null
+  if (!outcome) return null
+  const company = replyCompany(msg, subject, body, from)
+  if (!company) return null
+  const role = text.match(/(?:for|to) the ([^\n]{2,60}?) (?:position|role)/i)?.[1]
+  return { kind: 'reply', outcome, company, role: role ? clean(role) : null }
+}
+
+/** Does this look like an employer's reply worth asking the AI about? */
+export const looksLikeReply = (msg: InboundMessage) =>
+  /interview|unfortunately|regret|next steps?|other candidates|your application|candidacy/i.test(msg.subject + ' ' + (msg.text ?? '').slice(0, 2000))
 
 /** Does this look like an application confirmation worth asking the AI about? */
 export const looksLikeApplication = (msg: InboundMessage) =>

@@ -1,5 +1,7 @@
 import type { ScopedDb } from '@/lib/scoped-db'
 import { scoreJob } from '@/lib/scoring'
+import { loadLearnings } from '@/lib/insights/load'
+import { personalize } from '@/lib/insights/learn'
 
 /**
  * Re-score saved jobs against the current profile. No AI involved, so it's cheap
@@ -9,13 +11,16 @@ export async function rescoreSaved(db: ScopedDb): Promise<number> {
   const profile = await db.userProfile.findFirst()
   if (!profile) return 0
   const jobs = await db.job.findMany({ where: { status: 'saved', archived: false, aiScore: { not: null } } })
+  const learnings = await loadLearnings(db, profile.targetRoles)
   let changed = 0
   for (const j of jobs) {
-    const s = scoreJob({
+    const base = scoreJob({
       company: j.company, role: j.role, location: j.location ?? '', remote: j.remote, hybrid: j.hybrid,
       salaryRaw: j.salaryRaw, salaryMin: j.salaryMin, salaryMax: j.salaryMax, jobUrl: j.jobUrl,
       jobDescription: j.jobDescription ?? '', source: j.source ?? '', industry: null, techStack: j.techStack,
     }, profile)
+    const p = personalize(j, base.fitScore, learnings, profile.targetRoles)
+    const s = p.note ? { fitScore: p.score, fitReason: `${base.fitReason} ${p.note}` } : base
     if (s.fitScore !== j.aiScore || s.fitReason !== j.aiSuggestion) {
       await db.job.update({ where: { id: j.id }, data: { aiScore: s.fitScore, aiSuggestion: s.fitReason } })
       changed++

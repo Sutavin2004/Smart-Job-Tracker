@@ -21,3 +21,16 @@ describe('remote board mappers', () => {
     expect(j).toMatchObject({ role: 'Data Engineer', location: 'Remote · USA', salaryMin: 120, salaryMax: 150, jobDescription: 'SQL & Python', source: 'Jobicy' })
   })
 })
+
+import { isoDate } from './jsearch'
+describe('isoDate', () => {
+  it('reads the formats boards use and rejects nonsense', () => {
+    expect(isoDate('2026-11-10T14:00:00Z')).toBe('2026-11-10T14:00:00.000Z')
+    expect(isoDate('2026-11-10 14:00:00')).toBe('2026-11-10T14:00:00.000Z')
+    expect(isoDate(1794000000000)).toMatch(/^2026-/)
+    expect(isoDate('')).toBeNull()
+    expect(isoDate('not a date')).toBeNull()
+    expect(isoDate('1970-01-01')).toBeNull()
+    expect(isoDate(Date.now() + 5 * 86400000)).toBeNull()
+  })
+})

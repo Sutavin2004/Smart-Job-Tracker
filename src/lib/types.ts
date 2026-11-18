@@ -10,6 +10,10 @@ export type EmailTemplateType = 'follow_up' | 'thank_you' | 'withdraw' | 'counte
 export interface Job {
   id: string
   applicationPreparedAt?: string | null
+  postedAt?: string | null
+  appliedWith?: string | null
+  respondedAt?: string | null
+  interviewAt?: string | null
   company: string
   role: string
   status: JobStatus

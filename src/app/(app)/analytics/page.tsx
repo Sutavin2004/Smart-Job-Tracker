@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { WhatsWorking } from '@/components/insights/WhatsWorking'
+import { Breakdown } from '@/components/insights/Breakdown'
+import type { InsightsData } from '@/components/insights/types'
 import { BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { STATUS_CONFIG } from '@/lib/types'
 
@@ -31,6 +34,7 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AnalyticsPage() {
   const [data, setData] = useState<Analytics | null>(null)
   const [heatmap, setHeatmap] = useState<Record<string, number>>({})
+  const [insights, setInsights] = useState<InsightsData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,6 +45,7 @@ export default function AnalyticsPage() {
       setData(analytics)
       setHeatmap(hm)
     }).finally(() => setLoading(false))
+    fetch('/api/insights').then(r => (r.ok ? r.json() : null)).then(setInsights).catch(() => {})
   }, [])
 
   if (loading) {
@@ -132,6 +137,9 @@ export default function AnalyticsPage() {
           </div>
         ))}
       </section>
+
+      <WhatsWorking data={insights} limit={6} showLink={false} />
+      {insights?.ready && <Breakdown data={insights} />}
 
       <section className="card p-5" aria-labelledby="weekly-heading">
         <div className="flex items-baseline justify-between">

@@ -72,3 +72,25 @@ describe('verifySvix', () => {
     expect(await verifySvix(secret, { id: null, timestamp: ts, signature: 'v1,x' }, body, now)).toBe(false)
   })
 })
+
+describe('employer replies', () => {
+  const msg = (from: string, subject: string, text: string) => ({ from, subject, text })
+  it('recognises rejections, including ones that also thank you for applying', () => {
+    expect(parseInbound(msg('Shopify Recruiting <no-reply@us.greenhouse-mail.io>', 'Your application to Shopify',
+      'Hi Jordan,\nThank you for applying to the Frontend Engineer position at Shopify. After careful review, we have decided not to move forward with your application at this time.')))
+      .toEqual({ kind: 'reply', outcome: 'rejected', company: 'Shopify', role: 'Frontend Engineer' })
+    expect(parseInbound(msg('careers@manulife.com', 'Update on your candidacy', 'Unfortunately, we will be moving forward with other candidates whose experience more closely matches the role.')))
+      .toMatchObject({ kind: 'reply', outcome: 'rejected', company: 'Manulife' })
+  })
+  it('recognises interview invitations', () => {
+    expect(parseInbound(msg('Talent Team <jobs@wealthsimple.com>', 'Wealthsimple | Next steps',
+      'Hi Jordan, thanks for applying! We would like to invite you to a 30-minute phone screen with our recruiter. Please share your availability for a call next week.')))
+      .toMatchObject({ kind: 'reply', outcome: 'interview', company: 'Wealthsimple' })
+  })
+  it('still treats plain confirmations as applications', () => {
+    expect(parseInbound(msg('no-reply@lever.co', 'Thank you for applying', 'Thank you for applying to the Data Analyst role at Ada. We will review your application.')).kind).toBe('application')
+  })
+  it('ignores replies when it cannot tell which company they are from', () => {
+    expect(parseInbound(msg('no-reply@greenhouse.io', 'Update', 'Unfortunately, we have decided not to move forward.')).kind).toBe('unknown')
+  })
+})

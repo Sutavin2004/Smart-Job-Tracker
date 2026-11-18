@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
+import { outcomeStamps } from '@/lib/insights/stamps'
 
 export const GET = withAuth(async (request: NextRequest, _ctx: unknown, { db }: Auth) => {
   const { searchParams } = new URL(request.url)
@@ -66,12 +67,17 @@ export const POST = withAuth(async (request: NextRequest, _ctx: unknown, { db, u
     return NextResponse.json({ error: 'Company and role are required' }, { status: 400 })
   }
 
+  const status: string = body.status ?? 'saved'
   const job = await db.job.create({
     data: {
       userId: user.id,
       company,
       role,
-      status: body.status ?? 'saved',
+      status,
+      // A job added straight into a later stage records its outcome like any other move.
+      ...outcomeStamps({ status: 'saved' }, status),
+      ...(body.dateApplied ? { dateApplied: new Date(body.dateApplied) } : {}),
+      postedAt: body.postedAt ? new Date(body.postedAt) : null,
       priority: body.priority ?? 'medium',
       excitement: body.excitement ?? null,
       jobUrl: body.jobUrl ?? null,

@@ -1,4 +1,4 @@
-import type { RawJob } from './jsearch'
+import { isoDate, type RawJob } from './jsearch'
 
 /** A job source that failed in a way worth telling the user about. */
 export class BoardError extends Error {
@@ -76,6 +76,7 @@ export async function searchAdzuna(role: string, location: string): Promise<RawJ
       source: 'Adzuna',
       industry: j.category ? String((j.category as Record<string, unknown>)?.label ?? null) : null,
       techStack: null,
+      postedAt: isoDate(j.created),
     }
   })
 }

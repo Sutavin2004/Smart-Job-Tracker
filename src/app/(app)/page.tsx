@@ -9,6 +9,9 @@ import { type Job, type Activity, STATUS_CONFIG } from '@/lib/types'
 import { StatusBadge } from '@/components/StatusBadge'
 import { AddJobModal } from '@/components/AddJobModal'
 import { RemindersWidget } from '@/components/RemindersWidget'
+import { WhatsWorking } from '@/components/insights/WhatsWorking'
+import { CheckIns } from '@/components/insights/CheckIns'
+import type { InsightsData } from '@/components/insights/types'
 import { GettingStarted } from '@/components/dashboard/GettingStarted'
 
 interface Analytics {
@@ -47,6 +50,7 @@ export default function DashboardPage() {
   const [lastSession, setLastSession] = useState<AgentSession | null>(null)
   const [profile, setProfile] = useState<{ name?: string; weeklyGoal?: number; targetRoles?: string; skills?: string; masterResume?: string } | null>(null)
   const [weeklyCount, setWeeklyCount] = useState(0)
+  const [insights, setInsights] = useState<InsightsData | null>(null)
   const [loading, setLoading] = useState(true)
   // Depends on the viewer's clock and timezone, so compute it in the browser only;
   // rendering it on the server caused a hydration mismatch (React #418).
@@ -72,6 +76,8 @@ export default function DashboardPage() {
         fetch('/api/agent/sessions').then(r => r.json()),
         fetch('/api/profile').then(r => r.json()),
       ])
+      // Separate, so a slow or failed insights call never holds up the dashboard.
+      fetch('/api/insights').then(r => (r.ok ? r.json() : null)).then(setInsights).catch(() => {})
 
       setRecentJobs(Array.isArray(jobsData) ? jobsData.slice(0, 6) : [])
       setAnalytics(analyticsData)
@@ -165,6 +171,7 @@ export default function DashboardPage() {
       {loading || isNew ? null : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2">
+            <WhatsWorking data={insights} />
             <section className="card overflow-hidden" aria-labelledby="recent-heading">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 dark:border-[#2A2B2E]">
                 <h2 id="recent-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Recently updated</h2>
@@ -225,6 +232,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-6">
+            {insights && <CheckIns items={insights.checkIns} onChange={loadData} />}
             <section className="card p-5" aria-labelledby="agent-heading">
               <h2 id="agent-heading" className="text-sm font-semibold text-slate-900 dark:text-white">Job agent</h2>
               <p className="mt-1.5 text-[13px] leading-relaxed text-slate-500">

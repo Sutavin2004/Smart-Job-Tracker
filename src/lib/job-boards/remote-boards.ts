@@ -1,4 +1,4 @@
-import type { RawJob } from './jsearch'
+import { isoDate, type RawJob } from './jsearch'
 import { htmlToText } from '../html'
 
 /* Keyless remote-job APIs. Both ask for light usage; the agent calls each once per role. */
@@ -35,6 +35,7 @@ export function mapRemotive(j: J): RawJob {
     source: 'Remotive',
     industry: j.category ? String(j.category) : null,
     techStack: Array.isArray(j.tags) ? j.tags.slice(0, 12).join(', ') : null,
+    postedAt: isoDate(j.publication_date),
   }
 }
 
@@ -55,6 +56,7 @@ export function mapJobicy(j: J): RawJob {
     source: 'Jobicy',
     industry: Array.isArray(j.jobIndustry) ? htmlToText(String(j.jobIndustry[0] ?? '')) || null : null,
     techStack: null,
+    postedAt: isoDate(j.pubDate),
   }
 }
 

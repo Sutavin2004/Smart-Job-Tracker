@@ -1,5 +1,5 @@
 import { htmlToText } from '../html'
-import type { RawJob } from './jsearch'
+import { isoDate, type RawJob } from './jsearch'
 
 export async function searchRemoteOK(role: string): Promise<RawJob[]> {
   const tag = role.toLowerCase().replace(/\s+/g, '-')
@@ -35,6 +35,7 @@ export async function searchRemoteOK(role: string): Promise<RawJob[]> {
       source: 'RemoteOK',
       industry: null,
       techStack: tags,
+      postedAt: isoDate(j.date ?? (j.epoch ? Number(j.epoch) * 1000 : null)),
     }
   })
 }

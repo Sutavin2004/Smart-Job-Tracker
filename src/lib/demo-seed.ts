@@ -255,6 +255,49 @@ export async function seedDemoData(prisma: PrismaClient) {
     },
   ]
 
+  // Older applications, archived, so "What's working" has real outcomes to learn from.
+  // Pattern on purpose: company career pages and tailored applications get replies; job boards rarely do.
+  const D = 24 * 3600 * 1000
+  const HISTORY: [string, string, 'company' | 'linkedin' | 'board', boolean, 'interview' | 'rejected' | 'none', number][] = [
+    ['Fieldnote', 'Frontend Engineer', 'company', true, 'interview', 62],
+    ['Copperline', 'Software Engineer', 'company', true, 'rejected', 58],
+    ['Ordinal Health', 'Full Stack Developer', 'company', true, 'interview', 55],
+    ['Harbor & Pine', 'Junior Developer', 'company', true, 'rejected', 51],
+    ['Lumen Analytics', 'Software Engineer', 'company', false, 'rejected', 47],
+    ['Kestrel', 'Frontend Developer', 'company', true, 'none', 44],
+    ['Tidewater', 'Software Engineer', 'linkedin', false, 'rejected', 60],
+    ['Brightpath', 'Full Stack Developer', 'linkedin', false, 'none', 57],
+    ['Pinecrest', 'Frontend Developer', 'linkedin', false, 'none', 52],
+    ['Larkspur', 'Junior Developer', 'linkedin', true, 'none', 49],
+    ['Quarry', 'Software Engineer', 'linkedin', false, 'none', 45],
+    ['Meridian Labs', 'Full Stack Developer', 'board', false, 'none', 63],
+    ['Basalt Systems', 'Software Engineer', 'board', false, 'none', 59],
+    ['Northwind Labs', 'Frontend Developer', 'board', false, 'none', 54],
+    ['Granite Cloud', 'Junior Developer', 'board', false, 'none', 48],
+  ]
+  for (const [company, role, from, tailored, result, ago] of HISTORY) {
+    const applied = new Date(Date.now() - ago * D)
+    const slug = company.toLowerCase().replace(/[^a-z]/g, '')
+    await prisma.job.create({
+      data: {
+        userId: user.id,
+        company,
+        role,
+        archived: true,
+        status: result === 'interview' ? 'rejected' : result === 'rejected' ? 'rejected' : 'ghosted',
+        source: from === 'company' ? 'Company Site' : from === 'linkedin' ? 'LinkedIn' : 'Adzuna',
+        jobUrl: from === 'company' ? `https://boards.greenhouse.io/${slug}/jobs/1` : from === 'linkedin' ? `https://www.linkedin.com/jobs/view/${ago}000` : `https://www.adzuna.ca/details/${ago}000`,
+        location: 'Toronto, ON',
+        aiScore: 60 + (ago % 25),
+        dateApplied: applied,
+        appliedWith: tailored ? 'tailored' : 'master',
+        respondedAt: result === 'none' ? null : new Date(applied.getTime() + (4 + (ago % 6)) * D),
+        interviewAt: result === 'interview' ? new Date(applied.getTime() + (6 + (ago % 4)) * D) : null,
+        currency: 'CAD',
+      },
+    })
+  }
+
   for (const jobData of jobs) {
     const { dateApplied, followUpDate, offerDeadline, ...rest } = jobData as Record<string, unknown>
     const job = await prisma.job.create({

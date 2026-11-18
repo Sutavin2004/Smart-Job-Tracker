@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
+import { interviewStamps } from '@/lib/insights/stamps'
 
 export const POST = withAuth(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
@@ -22,6 +23,10 @@ export const POST = withAuth(async (request: NextRequest, { params }: { params: 
       outcome: 'pending',
     },
   })
+
+  // An interview is the clearest outcome there is; record it even if the stage wasn't moved.
+  const stamps = interviewStamps(job)
+  if (Object.keys(stamps).length) await db.job.update({ where: { id }, data: stamps })
 
   await db.activity.create({
     data: {

@@ -12,6 +12,8 @@ export interface RawJob {
   source: string
   industry: string | null
   techStack: string | null
+  /** When the employer posted it (ISO date), if the source says. */
+  postedAt?: string | null
 }
 
 export async function searchJSearch(query: string, location: string, remote: boolean): Promise<RawJob[]> {
@@ -70,6 +72,16 @@ export async function searchJSearch(query: string, location: string, remote: boo
       source: String(j.job_publisher ?? 'LinkedIn/Indeed'),
       industry: j.employer_company_type ? String(j.employer_company_type) : null,
       techStack: null,
+      postedAt: isoDate(j.job_posted_at_datetime_utc),
     }
   })
+}
+
+/** A board's date (ISO string, epoch ms or "2026-11-18 10:00:00") as an ISO date, or null if unusable. */
+export function isoDate(v: unknown): string | null {
+  if (v === null || v === undefined || v === '') return null
+  const d = new Date(typeof v === 'string' && /^\d{4}-\d\d-\d\d \d/.test(v) ? v.replace(' ', 'T') + 'Z' : (v as string | number))
+  const t = d.getTime()
+  // Ignore nonsense: before 2000 or more than a day in the future.
+  return Number.isFinite(t) && t > 946684800000 && t < Date.now() + 86400000 ? d.toISOString() : null
 }

@@ -399,7 +399,7 @@ function EmailTrackingSection() {
   if (!state) return <Section title="Track applications from email"><Loading /></Section>
   if (!state.enabled) {
     return (
-      <Section title="Track applications from email" description="Jobs you apply to on LinkedIn, Indeed and company sites are added from their confirmation emails.">
+      <Section title="Track applications from email" description="Confirmation emails add jobs as Applied, and rejections or interview invitations move them along, so your board keeps itself up to date.">
         <p className="text-[13px] text-slate-500">Email tracking is not set up on this site yet.</p>
       </Section>
     )
@@ -407,7 +407,7 @@ function EmailTrackingSection() {
 
   const confirmation = state.recent.find(r => r.outcome.startsWith('Gmail forwarding confirmation'))
   return (
-    <Section title="Track applications from email" description="When you apply on LinkedIn, Indeed or a company site, its confirmation email is forwarded here and the job is added to your board as Applied.">
+    <Section title="Track applications from email" description="Forward job emails here and your board keeps itself up to date: confirmations add the job as Applied, and rejections or interview invitations move it along. Those replies are also what JobTrack learns from.">
       <div className="max-w-xl space-y-5">
         <div>
           <p className="text-[13px] font-medium text-slate-700 dark:text-slate-300">Your private forwarding address</p>
@@ -423,10 +423,10 @@ function EmailTrackingSection() {
           <ol className="mt-2 list-decimal space-y-2 pl-5 text-[13px] leading-relaxed text-slate-700 marker:text-slate-400 dark:text-slate-300">
             <li>In Gmail, open <a className="underline underline-offset-2" href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" rel="noreferrer">Settings → Forwarding and POP/IMAP</a> and click <span className="font-medium">Add a forwarding address</span>. Paste the address above.</li>
             <li>Gmail sends a confirmation to that address. It shows up below within a minute, with a link and a code. Open the link (or enter the code in Gmail) to confirm. Leave forwarding itself <span className="font-medium">disabled</span>; the filter in the next step does the forwarding.</li>
-            <li>Create a filter: in the Gmail search box, click the filter icon, and in <span className="font-medium">From</span> paste<br /><code className="text-[12px]">jobs-noreply@linkedin.com OR indeedapply@indeed.com OR no-reply@us.greenhouse-mail.io OR no-reply@hire.lever.co</code></li>
+            <li>Create a filter: in the Gmail search box, click the filter icon, and in <span className="font-medium">Has the words</span> paste<br /><code className="text-[12px] break-all">{'{"your application" "thank you for applying" "thanks for applying" "your candidacy" interview "next steps"}'}</code></li>
             <li>Click <span className="font-medium">Create filter</span>, tick <span className="font-medium">Forward it to</span>, choose your JobTrack address, then <span className="font-medium">Create filter</span>.</li>
           </ol>
-          <p className="mt-2 text-[13px] text-slate-500">Other email can be forwarded by hand any time. Anything that isn&apos;t an application confirmation is ignored.</p>
+          <p className="mt-2 text-[13px] text-slate-500">You can also forward any job email by hand. Anything that isn&apos;t a confirmation, rejection or interview invitation is ignored.</p>
         </div>
 
         {confirmation?.link && (

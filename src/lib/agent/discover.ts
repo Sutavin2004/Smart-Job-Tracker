@@ -2,7 +2,10 @@ import { AI_MODELS } from '@/lib/ai-models'
 import Anthropic from '@anthropic-ai/sdk'
 import type { ScopedDb } from '@/lib/scoped-db'
 import { fetchRealJobs } from '@/lib/job-boards'
+import { isoDate } from '@/lib/job-boards/jsearch'
 import { jobKey, scoreAndRankJobs } from '@/lib/scoring'
+import { loadLearnings } from '@/lib/insights/load'
+import { personalize } from '@/lib/insights/learn'
 import { normalizeUrl } from '@/lib/url'
 
 /** A job needs at least this fit score to be added, and a run adds at most this many. */
@@ -169,7 +172,8 @@ Each element must have exactly these fields:
   "jobDescription": "1-2 sentence description",
   "source": "LinkedIn or Indeed or Company Website or Glassdoor",
   "industry": "industry name or null",
-  "techStack": "comma-separated technologies or null"
+  "techStack": "comma-separated technologies or null",
+  "postedAt": "date the job was posted as YYYY-MM-DD if the results show it, else null"
 }
 
 Job search results to convert:
@@ -226,7 +230,7 @@ ${rawJobsText}`,
     const allRaw = [...realJobs, ...aiJobs]
     log(`Scoring ${allRaw.length} jobs against your profile…`, { step: 3 })
 
-    const scored = scoreAndRankJobs(allRaw, {
+    const baseScored = scoreAndRankJobs(allRaw, {
       targetRoles: profile.targetRoles,
       skills: profile.skills,
       yearsExperience: profile.yearsExperience,
@@ -237,6 +241,18 @@ ${rawJobsText}`,
       targetSalaryMax: profile.targetSalaryMax,
       excludeKeywords: profile.excludeKeywords,
     })
+
+    // Rank with what has worked for this user before (no change until there's enough evidence).
+    const learnings = await loadLearnings(db, profile.targetRoles)
+    if (learnings.ready) log(`Ranking with what your last ${learnings.resolved} applications showed`, { step: 3 })
+    const scored = learnings.ready
+      ? baseScored
+          .map(j => {
+            const p = personalize(j, j.fitScore, learnings, profile.targetRoles)
+            return p.note ? { ...j, fitScore: p.score, fitReason: `${j.fitReason} ${p.note}` } : j
+          })
+          .sort((a, b) => b.fitScore - a.fitScore)
+      : baseScored
 
     // Only jobs worth your time, best first, and no more than a day's reading.
     // (scoreAndRankJobs already sorted by score and dropped irrelevant or senior titles.)
@@ -293,6 +309,7 @@ ${rawJobsText}`,
           currency: profile.currency,
           jobUrl: job.jobUrl ?? null,
           jobDescription: job.jobDescription ?? null,
+          postedAt: isoDate(job.postedAt) ? new Date(isoDate(job.postedAt)!) : null,
           source: job.source ?? null,
           industry: job.industry ?? null,
           parsedTechStack: job.techStack ?? null,

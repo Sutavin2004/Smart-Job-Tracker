@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth, type Auth } from '@/lib/api'
+import { outcomeStamps } from '@/lib/insights/stamps'
+import { rescoreSaved } from '@/lib/agent/rescore'
 
 export const GET = withAuth(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }, { db }: Auth) => {
   const { id } = await params
@@ -64,6 +66,11 @@ export const PUT = withAuth(async (request: NextRequest, { params }: { params: P
     data.dateApplied = new Date()
   }
 
+  const stamps = body.status ? outcomeStamps(existing, body.status) : {}
+  Object.assign(data, stamps)
+  // A new outcome is new evidence: refresh the ranking of saved jobs afterwards.
+  const newEvidence = Boolean(stamps.respondedAt) || (body.status === 'ghosted' && existing.status !== 'ghosted')
+
   const job = await db.job.update({
     where: { id },
     data,
@@ -78,6 +85,7 @@ export const PUT = withAuth(async (request: NextRequest, { params }: { params: P
     },
   })
 
+  if (newEvidence) await rescoreSaved(db).catch(e => console.error('rescore', e))
   return NextResponse.json(job)
 })
 

@@ -4,7 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { scopedDb } from '@/lib/scoped-db'
 import { AI_MODELS } from '@/lib/ai-models'
 import { consumeQuota } from '@/lib/quota'
-import { parseInbound, looksLikeApplication, type InboundMessage, type Parsed } from './parse'
+import { parseInbound, looksLikeApplication, looksLikeReply, type InboundMessage, type Parsed } from './parse'
+import { outcomeStamps } from '@/lib/insights/stamps'
+import { rescoreSaved } from '@/lib/agent/rescore'
 
 export const INBOUND_DOMAIN = (process.env.INBOUND_DOMAIN ?? '').trim().toLowerCase()
 export const INBOUND_ENABLED = Boolean(INBOUND_DOMAIN && process.env.RESEND_WEBHOOK_SECRET && process.env.RESEND_API_KEY)
@@ -42,8 +44,9 @@ async function aiRead(userId: string, msg: InboundMessage): Promise<Parsed> {
     max_tokens: 300,
     messages: [{
       role: 'user',
-      content: `Is this email a confirmation that the recipient applied to a job? Answer with JSON only:
-{"isApplication": boolean, "company": string|null, "role": string|null, "location": string|null}
+      content: `What kind of job-search email is this? Answer with JSON only:
+{"kind": "application" | "rejection" | "interview" | "other", "company": string|null, "role": string|null, "location": string|null}
+"application" = confirms the recipient applied. "rejection" = the employer is not moving forward. "interview" = the employer wants to schedule an interview or call.
 Use only what the email says.
 
 From: ${msg.from}
@@ -55,8 +58,12 @@ ${(msg.text ?? '').slice(0, 6000)}`,
   const out = res.content.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('')
   try {
     const o = JSON.parse(out.match(/\{[\s\S]*\}/)?.[0] ?? '{}')
-    if (o.isApplication && typeof o.company === 'string' && o.company.trim()) {
-      return { kind: 'application', source: 'Email', company: o.company.trim(), role: o.role || null, location: o.location || null, jobUrl: null }
+    const company = typeof o.company === 'string' ? o.company.trim() : ''
+    if (company && (o.kind === 'application' || o.isApplication)) {
+      return { kind: 'application', source: 'Email', company, role: o.role || null, location: o.location || null, jobUrl: null }
+    }
+    if (company && (o.kind === 'rejection' || o.kind === 'interview')) {
+      return { kind: 'reply', outcome: o.kind === 'rejection' ? 'rejected' : 'interview', company, role: o.role || null }
     }
   } catch { /* fall through */ }
   return { kind: 'unknown' }
@@ -82,7 +89,7 @@ export async function recordApplication(userId: string, parsed: AppliedJob): Pro
     if (match.status !== 'saved') return { result: 'already-tracked', jobId: match.id, label, status: match.status }
     await db.job.update({
       where: { id: match.id },
-      data: { status: 'applied', dateApplied: now, jobUrl: match.jobUrl ?? parsed.jobUrl, source: match.source ?? parsed.source },
+      data: { status: 'applied', dateApplied: now, jobUrl: match.jobUrl ?? parsed.jobUrl, source: match.source ?? parsed.source, ...outcomeStamps(match, 'applied', now) },
     })
     await db.activity.create({ data: { jobId: match.id, type: 'status_change', message: `Marked applied from ${parsed.source}` } })
     return { result: 'moved', jobId: match.id, label }
@@ -99,6 +106,7 @@ export async function recordApplication(userId: string, parsed: AppliedJob): Pro
       status: 'applied',
       dateApplied: now,
       source: parsed.source,
+      appliedWith: 'master',
     },
   })
   await db.activity.create({ data: { jobId: job.id, type: 'created', message: `Added from ${parsed.source}` } })
@@ -110,7 +118,7 @@ export async function handleInbound(userId: string, msg: InboundMessage, provide
   if (providerId && await prisma.inboundEmail.findUnique({ where: { providerId } })) return 'duplicate'
 
   let parsed = parseInbound(msg)
-  if (parsed.kind === 'unknown' && looksLikeApplication(msg)) parsed = await aiRead(userId, msg).catch(() => ({ kind: 'unknown' as const }))
+  if (parsed.kind === 'unknown' && (looksLikeApplication(msg) || looksLikeReply(msg))) parsed = await aiRead(userId, msg).catch(() => ({ kind: 'unknown' as const }))
 
   const log = (outcome: string, extra: { jobId?: string; link?: string | null } = {}) =>
     prisma.inboundEmail.create({ data: { userId, fromAddr: msg.from.slice(0, 200), subject: msg.subject.slice(0, 300), outcome, providerId, ...extra } })
@@ -119,8 +127,16 @@ export async function handleInbound(userId: string, msg: InboundMessage, provide
     await log(parsed.code ? `Gmail forwarding confirmation code: ${parsed.code}` : 'Gmail forwarding confirmation', { link: parsed.link })
     return 'gmail-confirmation'
   }
+  if (parsed.kind === 'reply') {
+    const r = await recordReply(userId, parsed)
+    const what = parsed.outcome === 'rejected' ? 'a rejection' : 'an interview invitation'
+    if (r.result === 'updated') await log(`Recorded ${what} from ${r.label}`, { jobId: r.jobId })
+    else if (r.result === 'unchanged') await log(`${r.label} was already ${r.status}, so nothing changed`, { jobId: r.jobId })
+    else await log(`Looks like ${what} from ${parsed.company}, but that job isn't on your board`)
+    return r.result
+  }
   if (parsed.kind !== 'application') {
-    await log('Not an application confirmation, so nothing changed')
+    await log('Not an application confirmation or reply, so nothing changed')
     return 'ignored'
   }
 
@@ -131,3 +147,27 @@ export async function handleInbound(userId: string, msg: InboundMessage, provide
   return r.result
 }
 
+
+/**
+ * An employer replied: move the matching job to Rejected or Interviewing and record the outcome.
+ * Never creates a job, and never moves one backwards (an offer stays an offer).
+ */
+export async function recordReply(userId: string, reply: { outcome: 'rejected' | 'interview'; company: string; role: string | null }): Promise<{ result: 'updated' | 'unchanged' | 'not-found'; jobId?: string; label: string; status?: string }> {
+  const db = scopedDb(userId)
+  const candidates = await db.job.findMany({
+    where: { archived: false, status: { not: 'saved' }, company: { contains: reply.company.split(' ')[0], mode: 'insensitive' } },
+    orderBy: { dateApplied: 'desc' },
+  })
+  const match = candidates.find(j => !reply.role || norm(j.role).includes(norm(reply.role)) || norm(reply.role).includes(norm(j.role))) ?? candidates[0]
+  const label = `${reply.company}${reply.role ? `, ${reply.role}` : ''}`
+  if (!match) return { result: 'not-found', label }
+  const next = reply.outcome === 'rejected' ? 'rejected' : 'interviewing'
+  const order = ['applied', 'ghosted', 'interviewing', 'rejected', 'offered', 'withdrawn']
+  const forward = next === 'rejected' ? !['rejected', 'offered', 'withdrawn'].includes(match.status) : ['applied', 'ghosted'].includes(match.status)
+  if (!forward || !order.includes(match.status)) return { result: 'unchanged', jobId: match.id, label: `${match.company}, ${match.role}`, status: match.status }
+  const now = new Date()
+  await db.job.update({ where: { id: match.id }, data: { status: next, lastContactDate: now, ...outcomeStamps(match, next, now) } })
+  await db.activity.create({ data: { jobId: match.id, type: 'status_change', message: `${next === 'rejected' ? 'Rejection' : 'Interview invitation'} received by email` } })
+  await rescoreSaved(db).catch(e => console.error('rescore', e))
+  return { result: 'updated', jobId: match.id, label: `${match.company}, ${match.role}` }
+}

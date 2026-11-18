@@ -131,6 +131,10 @@ model Job {
   referralContact       String?
   resumeVersion         String?
   applicationPreparedAt DateTime? // when a tailored résumé, cover letter and answers were last generated
+  postedAt              DateTime? // when the employer posted it, if the source said
+  appliedWith           String? // 'tailored' or 'master': which résumé went out
+  respondedAt           DateTime? // first reply of any kind (interview, offer or rejection)
+  interviewAt           DateTime? // first time it reached an interview
   dateApplied           DateTime  @default(now())
   deadline              DateTime?
   followUpDate          DateTime?
