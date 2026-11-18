@@ -54,3 +54,28 @@ test.describe('signed out', () => {
     await page.screenshot({ path: 'e2e-screenshots/sign-in.png' })
   })
 })
+
+// What a brand-new account sees on every page (empty states, first-run guidance).
+test.describe('new user screenshots', () => {
+  test.use({ storageState: { cookies: [], origins: [] }, viewport: { width: 1440, height: 900 }, colorScheme: 'light' })
+  test('every page for a new account', async ({ page }) => {
+    await page.goto('/signup')
+    await page.waitForLoadState('networkidle')
+    await page.screenshot({ path: 'e2e-screenshots/new-signup.png' })
+    const email = `new-${Date.now()}@example.com`
+    const res = await page.request.post('/api/auth/signup', { data: { name: 'Priya Shah', email, password: 'a-long-password' } })
+    expect(res.ok()).toBe(true)
+    for (const [path, name] of [['/', 'home'], ['/profile', 'profile'], ['/agent', 'agent'], ['/apply', 'apply'], ['/jobs', 'board'], ['/tasks', 'tasks'], ['/calendar', 'calendar'], ['/analytics', 'analytics'], ['/templates', 'templates'], ['/settings', 'settings'], ['/resume', 'resume-check']] as const) {
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      await page.waitForTimeout(500)
+      await page.screenshot({ path: `e2e-screenshots/new-${name}.png`, fullPage: true })
+    }
+    await page.setViewportSize({ width: 390, height: 844 })
+    for (const [path, name] of [['/', 'home'], ['/profile', 'profile']] as const) {
+      await page.goto(path)
+      await page.waitForLoadState('networkidle')
+      await page.screenshot({ path: `e2e-screenshots/new-mobile-${name}.png`, fullPage: true })
+    }
+  })
+})
